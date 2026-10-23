@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.5.0 — 2026-10-23 (local visual review build)
+
+- Expanded the Blender pipeline to all five biomes: 124 environment assets, 13 rigged
+  characters and 15 PBR families, with three LODs throughout.
+- Preserved seeded gameplay generation. Authored modules follow existing walkable
+  tiles, connections and art seeds; visual detail does not alter collision or combat.
+- Restored darker regional lighting: blue/amber Ruins, teal Shrine, violet Fungal,
+  moonlit Frozen and smoky orange Foundry. Added seeded decals and reactive Shrine water.
+- Refined armor, cloth, weapon silhouettes, two-handed grips and the Saint phase-II cue.
+- Added meshoptimizer GLB compression, lazy pack/material loading, UV/color preservation
+  checks and three gameplay quality levels with legacy setting migration.
+- Added complete cast/biome review controls, screenshots and updated validation notes.
+  This remains a local review build with documented artistic and hardware limits.
+
 ## 0.5.0-benchmark — 2026-10-23 (Ruins art gate candidate)
 
 - Preserved v0.4 at `8c83c8c4baa3476aaa9caa7b37bb9debfe13efd4` and began the isolated

@@ -1,5 +1,8 @@
 # Original material asset
 
+The following records the older fallback presentation. Default v0.5 biome assets
+instead come from the original Blender pipeline described below.
+
 - File: `public/assets/weathered-stone.png`.
 - Use: shared stone albedo and low-amplitude bump input on independently modeled
   slabs, walls, foundations, and ruins. It is not a scene, screenshot, or backdrop.
@@ -21,3 +24,20 @@ models, animation, and sounds are code-generated. Dependency/font licenses are i
 The three `target-*.png` files are supplied quality references, with separate roles
 for exploration, dungeon structure, and combat. These files are documentation only;
 the renderer never imports them and they are not present in the production build.
+
+## v0.5 Blender content
+
+`tools/blender/` builds 124 environment assets and 13 rigs, each with three LODs,
+and fifteen material families. Runtime files live in `public/assets/v05/`; their
+manifest links packs, node names, material IDs, dimensions and triangle counts.
+The two v0.5 sheets and release brief stay in `docs/references/v05/` as reference.
+
+Base color is baked through an emission connection to isolate albedo, including
+metallic materials. Tangent normal, roughness and AO use their respective bake
+passes. Geometry AO and stone stains export in COLOR_0. Shared source PNGs remain
+in ignored `.cache/bakes/v05/`; `--rebake` refreshes them. Base-color cache version 2
+invalidates the earlier diffuse bake. GLB compression preserves UV/color attributes.
+Runtime maps are WebP at 1024 and 512 pixels; external textures use glTF's flipY=false
+convention. The images are original procedural sources, not sampled reference pixels.
+
+See [visual review](VISUAL_REVIEW-v0.5.md) for inventory, screenshots and art limits.

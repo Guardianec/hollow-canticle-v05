@@ -31,7 +31,7 @@ export function globalPosition(room: Room, x: number, y: number, height = 0): T.
 }
 
 export function buildDungeon(floor: Floor, m: Materials, assets?: AssetManager): DungeonArt {
-  if (floor.biome === 0 && assets?.has('ruins_floor_a'))
+  if (assets?.has(['ruins', 'shrine', 'fungal', 'frozen', 'foundry'][floor.biome] + '_floor_a'))
     return buildImportedDungeon(floor, m, assets);
   const group = new T.Group(),
     torches: Torch[] = [],

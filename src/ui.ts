@@ -47,7 +47,7 @@ export class Interface {
   constructor(private world: World) {
     document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
       <header class="topbar">
-        <a class="brand" href="#" aria-label="Hollow Canticle main menu">${sigil}<span>HOLLOW CANTICLE</span><span class="version">v0.5 art preview</span></a>
+        <a class="brand" href="#" aria-label="Hollow Canticle main menu">${sigil}<span>HOLLOW CANTICLE</span><span class="version">v0.5.0</span></a>
         <span class="header-caption">A VOW IN THE DARK</span>
         <div class="utility"><button data-action="sound" aria-label="Mute audio" title="Toggle audio">${icon('sound')}</button><span></span><button data-action="fullscreen" aria-label="Fullscreen" title="Fullscreen">${icon('expand')}</button><button data-action="pause" aria-label="Pause or open settings" title="Pause · Esc">${icon('pause')}</button></div>
       </header>
@@ -372,7 +372,9 @@ export class Interface {
       label: string,
       help: string,
     ) =>
-      `<label class="toggle-row"><span>${label}<small>${help}</small></span><input data-setting="${key}" type="checkbox" ${s[key] ? 'checked' : ''}/></label>`;
+      key === 'quality'
+        ? `<label class="toggle-row"><span>Visual quality<small>Texture detail, shadows and atmosphere.</small></span><select data-setting="detail" aria-label="Visual quality">${['high', 'medium', 'low'].map((level) => `<option value="${level}" ${s.detail === level ? 'selected' : ''}>${level[0].toUpperCase() + level.slice(1)}</option>`).join('')}</select></label>`
+        : `<label class="toggle-row"><span>${label}<small>${help}</small></span><input data-setting="${key}" type="checkbox" ${s[key] ? 'checked' : ''}/></label>`;
     this.show(
       'settings',
       'Tune the silence',
@@ -386,6 +388,9 @@ export class Interface {
     if (key === 'master' || key === 'music' || key === 'sfx') {
       s[key] = Math.max(0, Math.min(1, Number(input.value) / 100));
       input.parentElement!.querySelector('output')!.value = `${input.value}%`;
+    } else if (key === 'detail' && ['high', 'medium', 'low'].includes(input.value)) {
+      s.detail = input.value as 'high' | 'medium' | 'low';
+      s.quality = s.detail !== 'low';
     } else if (
       key === 'shake' ||
       key === 'flashes' ||

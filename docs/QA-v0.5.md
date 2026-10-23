@@ -1,78 +1,96 @@
-# v0.5 Ruins benchmark QA — 2026-10-23
+# v0.5.0 validation — 2026-10-23
 
-This record covers the first benchmark milestone, not full five-biome release acceptance.
-The art gate is still open. See [visual review](VISUAL_REVIEW-v0.5.md).
+Local review branch: `codex/v0.5.0-blender-visual-overhaul`. Accepted v0.4 remains at
+`8c83c8c4baa3476aaa9caa7b37bb9debfe13efd4`; main is unchanged. The user requested
+local work. No push, merge or deployment is part of this checkpoint.
 
-## Baseline and automated validation
+## Rebuild and automated checks
 
-Accepted v0.4 SHA: `8c83c8c4baa3476aaa9caa7b37bb9debfe13efd4`. Before edits,
-lint, 92 tests and production build passed. The Windows sandbox denied Vitest's default
-temporary-cache rename. Setting `TEMP` and `TMP` to the workspace `.cache/` resolved it.
+- `npm run assets:build`: Blender 4.5.15 LTS, cached lossless material bakes,
+  geometry AO, three LODs, six GLB packs, meshoptimizer compression and WebP maps.
+- `npm run assets:validate`: 137 assets, 15 PBR families, 488,476 unique LOD0 triangles.
+- `npm run lint`, `npm run test`, `npm run build`.
+- 97 tests in seven files retain simulation regression coverage. Asset checks load
+  every GLB through GLTFLoader/MeshoptDecoder, verify UVs, vertex colors, materials,
+  three LODs, finite dimensions and 16-bone cloned rigs. Extreme joint poses,
+  support-hand reach, outlines, missing-pack fallback, deterministic selection and
+  quality migration are covered. Unit tests do not judge visual quality.
 
-The candidate passes:
+Windows sandbox temp-directory rename failures were resolved by directing TEMP/TMP to
+ignored `.cache/test-tmp/`. No application behavior or test timeout was changed.
 
-- `npm install` (installed free Sharp and Node declarations; no runtime content service).
-- `npm run assets:build` with Blender 4.5.15 LTS, including bakes, LODs, GLBs,
-  WebP encoding and validation. Repeated builds use the lossless bake cache.
-- `npm run assets:validate`: 25 assets, seven material families, three LODs per asset.
-- `npm run lint` and `npm run build`.
-- `npm run test`: **96 passing tests in seven files**. All 92 prior tests remain.
+QA caught two material-pipeline errors: optimization had removed unused UVs, and
+Blender's default export put baked AO in COLOR_1 while COLOR_0 remained white. UVs are
+now explicitly retained and active vertex color exports to COLOR_0. Browser QA also
+caught and fixed a reserved GLSL identifier in the decal shader. Failed intermediate
+runs are not counted as successful validation.
 
-A second full asset build produced identical GLB SHA-256 hashes:
+Metallic albedo now bakes through emission: diffuse baking had incorrectly attenuated
+the metal color before runtime lighting. The validator checks the worn-iron base-color
+mean to catch that regression. Imported textures use glTF's flipY=false convention.
+Material-study spheres supply white vertex colors for the shared vertex-colored shader.
 
-```text
-ruins.glb    72dbc525ba1c1f4ad37a73eb7cb7663fc44afa53f181c2623a5a028e0d852985
-pilgrims.glb bb27ea738dbd2682d5f5351b84c0700595abd526ce83bdc31c863e3490badae7
-```
+## Procedural and rendering checks
 
-The new tests load the actual binary glTF files through GLTFLoader, validate named nodes,
-finite bounds, skeletons, LOD budgets, material IDs and referenced map existence. They
-exercise multi-material instancing, cloned skin deformation and focused-outline shells,
-seeded selection, biome fallback selection and missing-pack/fallback behavior. No unit
-test is claimed to judge image quality.
+Production output is served locally on port 4173. The fixed art scene supports all
+five regions, four Pilgrims, enemy selection, Saint phase II, attack/parry/dodge/
+finisher sampling, three quality levels, materials and old/new views. Captures in
+`docs/screenshots/v05/` come from the running browser, not reference composites.
 
-One intermediate 10,000-floor stress run timed out while Blender was baking on the same
-CPU. It passed again after the bake finished, with no simulation change or timeout increase.
-The supplied Node runtime is 22.12; npm reports an existing ESLint dependency engine
-warning. README continues to recommend Node 24 LTS.
+Generated rooms were inspected with seeds `V05-DARK-01`, `V05-DARK-02` and
+`V05-DARK-03`; the initial checkpoint also checked `V05-RUINS-A/B/C`. Regional lab
+scenes exercise the same imported renderer in gameplay, including Shrine water and
+focused outlines. The fixed scene never replaces procedural gameplay. Automated
+coverage retains navigation, encounters, projectiles, reflection, targeting, items,
+loot, boss patterns and combat semantics.
 
-## Browser checks
+Desktop, tablet and narrow layouts are inspected. Review controls scroll at short
+heights. Keyboard/mouse remain required for gameplay. Reduced motion pauses optional
+atmosphere animation in the review scene.
 
-Served the actual `dist/` build on localhost port 4173 and inspected its rendering and
-console. Reviewed exploration, close duel, bridge/void, surface study and old/new views.
-Reviewed overhead, thrust and finisher samples, along with the added parry/dodge scrubs.
-High, Medium and Low settings render; Low drops to about 49 main-view calls and 65k
-triangles in the fixed exploration view, compared with about 83 calls and 477k on High.
-These are scene counts, not comprehensive GPU throughput measurements.
+The real duel test recorded one parry and one perfect deflection, followed by a
+finisher using the imported models. The cathedral capture is generated room 13 at
+depth 3 for `V05-DARK-03`, not the fixed benchmark. High, Medium and Low were changed
+through game settings; the final saved preference was restored to High. The narrow
+menu was checked at 390×844, gameplay at 1440×900 and the art review at desktop sizes.
 
-Imported gameplay was inspected on seeds `V05-RUINS-A`, `V05-RUINS-B` and
-`V05-RUINS-C` via the seeded-run UI and regeneration controls. A spawned Warden in
-duel range rendered with a working skinned focus outline. Procedural fallback was
-checked using `?visual=fallback`. There were no captured JavaScript or shader compilation
-errors in those checks. Earlier development-only precision warnings came from the
-graphics driver; an obsolete shadow-map constant was replaced before final validation.
+Active review views around 60 FPS are observations, not minimum-spec guarantees.
+Background tabs throttle to about 1 FPS; those figures are not performance evidence.
+Draw-count snapshots are not timings and do not measure shadow, postprocessing or
+browser composition costs. Asset-library triangle counts are not per-frame budgets.
 
-The benchmark and fallback menu were inspected at 390px width, and the benchmark at
-768px width. Controls fit; the game
-retains its existing keyboard/mouse requirement. Viewport overrides were reset afterward.
-Background browser tabs throttle animation to approximately 1 FPS, so that figure must
-not be used as a performance result. Approximately 60 FPS was seen with an active view;
-there is no broad hardware, thermal, long-session or minimum-spec sign-off.
+## Download and memory
 
-Automated regression coverage includes simulation navigation, encounter generation,
-projectiles, reflection, targeting, items, loot, boss patterns and combat semantics.
-This session did not manually replay every combat mechanic, complete all five floors,
-test every extreme orbit angle or approve the visual quality target.
+All full-resolution GLBs/maps total about 29.0 MiB; initial Ruins/cast art about
+13.7 MiB. Other packs load on demand. Static deployment includes both map resolutions
+and all GLBs, so its on-disk size exceeds the initial network load. Blender, source
+bakes, reference sheets and screenshots are not shipped by Vite. Exact byte counts
+follow after the final build.
 
-## Known acceptance gaps
+| Measurement                             |      Bytes |   MiB |
+| --------------------------------------- | ---------: | ----: |
+| All GLBs and full-resolution maps       | 30,394,252 | 28.99 |
+| Initial Ruins/cast art, High            | 14,378,006 | 13.71 |
+| Initial Ruins/cast art, Medium/Low      |  9,146,768 |  8.72 |
+| Complete uncompressed static deployment | 40,335,087 | 38.47 |
 
-Only Ruins, Oathkeeper and Warden have imported benchmark assets. Other cast members,
-the Saint, four other biome kits, decals, water improvements and the complete requested
-screenshot set remain unfinished. Character posing is functional but armor design,
-shoulder transitions, cloak motion and grip fidelity need further art work. Platforms
-and wall fragments still expose repetition. Do not describe this branch as completed
-v0.5 or as matching the supplied art sheets.
+The initial art totals exclude application code/fonts and include all three GLB LODs.
+Network transfer can be smaller with server compression. Compressed file size does
+not represent decoded GPU memory.
 
-The initial branch push was rejected by automatic approval review because exporting
-repository contents to the GitHub remote had not been specifically authorized. Local
-work continued; remote publication requires explicit approval for that destination and data.
+Ten initial families mean forty 1024px textures on High. RGBA8 plus mipmaps implies
+approximately 213 MiB decoded texture storage before geometry, framebuffers, driver
+overhead and transient decode copies. Medium/Low reduce that estimate to 53 MiB.
+Visiting all regions can retain fifteen families, approximately 320/80 MiB respectively.
+These are estimates, not measured GPU-memory readings.
+
+## Limits
+
+No multi-hour GPU soak, broad browser/hardware matrix, every extreme orbit angle or
+complete five-floor manual combat replay is claimed. Reference parity and artistic
+acceptance remain open. The visual review records modeling and animation limitations.
+Do not infer those approvals from passing unit tests or successful asset export.
+
+Headroom compressed repetitive build logs on demand. Its configured proxy was
+unreachable, so source review used focused local reads; this was not automatic
+compression of all tool traffic.

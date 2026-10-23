@@ -10,6 +10,14 @@ FAMILIES = {
     'aged_bronze': ((.10,.08,.04),(.45,.30,.11),.52,.85,7,.045),
     'heavy_cloth': ((.025,.031,.035),(.13,.15,.16),.98,0,80,.035),
     'worn_leather': ((.035,.02,.012),(.19,.105,.05),.82,0,35,.04),
+    'crimson_cloth': ((.035,.008,.009),(.19,.035,.028),.95,0,70,.025),
+    'pilgrim_linen': ((.18,.17,.13),(.48,.44,.32),.96,0,65,.025),
+    'wet_stone': ((.025,.065,.07),(.15,.26,.25),.28,0,7,.075),
+    'fungal_skin': ((.035,.015,.055),(.23,.08,.31),.66,0,3,.12),
+    'frozen_stone': ((.16,.23,.29),(.42,.57,.65),.49,.08,12,.065),
+    'snow_crust': ((.5,.62,.69),(.85,.91,.93),.96,0,35,.11),
+    'burnt_stone': ((.018,.014,.012),(.12,.065,.035),.94,0,5,.2),
+    'rusted_iron': ((.025,.022,.018),(.29,.10,.035),.77,.8,11,.09),
 }
 
 def sources():
@@ -60,21 +68,33 @@ def bake(materials, output, force=False):
     scene.cycles.bake_type='DIFFUSE'
     bpy.ops.mesh.primitive_grid_add(x_subdivisions=32,y_subdivisions=32,size=2)
     plane=bpy.context.object
+    color_current=(output/'base-color-v2').exists()
     for mat in materials.values():
         plane.data.materials.clear(); plane.data.materials.append(mat)
         for kind,bake_type in [('baseColor','DIFFUSE'),('normal','NORMAL'),('roughness','ROUGHNESS'),('ao','AO')]:
             path=output/f'{mat.name}_{kind}.png'
-            if path.exists() and not force: continue
+            if path.exists() and not force and (kind!='baseColor' or color_current): continue
             image=bpy.data.images.new(f'{mat.name}_{kind}',width=1024,height=1024,alpha=False)
             image.colorspace_settings.name='sRGB' if kind=='baseColor' else 'Non-Color'
             tex=mat.node_tree.nodes.new('ShaderNodeTexImage'); tex.image=image
             mat.node_tree.nodes.active=tex
             bpy.context.view_layer.objects.active=plane
             plane.select_set(True)
-            bpy.ops.object.bake(type=bake_type)
+            # Diffuse baking attenuates metallic albedo; emission isolates the source color.
+            if kind=='baseColor':
+                bs=mat.node_tree.nodes.get('Principled BSDF')
+                out=mat.node_tree.nodes.get('Material Output')
+                emission=mat.node_tree.nodes.new('ShaderNodeEmission')
+                mat.node_tree.links.new(bs.inputs['Base Color'].links[0].from_socket,emission.inputs['Color'])
+                mat.node_tree.links.new(emission.outputs[0],out.inputs['Surface'])
+                bpy.ops.object.bake(type='EMIT')
+                mat.node_tree.links.new(bs.outputs[0],out.inputs['Surface'])
+                mat.node_tree.nodes.remove(emission)
+            else: bpy.ops.object.bake(type=bake_type)
             image.filepath_raw=str(path); image.file_format='PNG'; image.save()
             mat.node_tree.nodes.remove(tex); bpy.data.images.remove(image)
     bpy.data.objects.remove(plane,do_unlink=True)
+    (output/'base-color-v2').write_text('Unlit base-color bake, including metallic albedo.\n')
 
 def runtime_materials(materials):
     # Textures are external/shared in the manifest; avoid embedding them in every pack.

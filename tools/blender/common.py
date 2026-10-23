@@ -3,6 +3,7 @@ import bpy
 import math
 import random
 from mathutils import Vector
+from mathutils import noise
 
 RNG = random.Random(5050)
 
@@ -108,5 +109,21 @@ def bake_occlusion(obj):
         bpy.context.view_layer.objects.active=target
         target.data.color_attributes.new(name='Occlusion',type='FLOAT_COLOR',domain='CORNER')
         bpy.ops.object.bake(type='AO',target='VERTEX_COLORS')
+        # Broad mineral staining and low moss accompany actual self-occlusion.
+        colors=target.data.color_attributes.active_color
+        offset=sum(ord(c) for c in target.name)*.017
+        for polygon in target.data.polygons:
+            family=target.data.materials[polygon.material_index].name
+            if 'stone' not in family: continue
+            for corner in polygon.loop_indices:
+                vertex=target.data.vertices[target.data.loops[corner].vertex_index]
+                p=vertex.co
+                stain=noise.noise(Vector((p.x*.8+offset,p.y*.8,p.z*.65)))
+                mineral=.86+stain*.12
+                damp=max(0,noise.noise(Vector((p.x*2.1,p.y*2.1+offset,p.z*.8)))-.10)
+                moss=min(.42,damp*1.8)*math.exp(-max(0,p.z)*1.15)
+                color=colors.data[corner].color
+                for channel,tint in enumerate([.46,.61,.34]):
+                    color[channel]*=min(1,mineral)*(1-moss)+tint*moss
     for o,value in hidden.items(): o.hide_render=value
     scene.render.bake.target='IMAGE_TEXTURES'

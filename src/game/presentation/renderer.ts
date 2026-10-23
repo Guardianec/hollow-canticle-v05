@@ -17,6 +17,7 @@ import { directionalFocus } from '../combat';
 import { AssetManager } from './assets';
 import { heightFog, FOG_COLORS, chasmMist, voidBackground } from './atmosphere';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { BIOME_LIGHTING } from './lighting';
 
 export class Renderer {
   readonly webgl: T.WebGLRenderer;
@@ -25,7 +26,7 @@ export class Renderer {
   private materials = new Materials();
   private assets: AssetManager;
   private assetRevision = 0;
-  private appliedQuality?: boolean;
+  private appliedQuality?: string;
   private mist: T.Mesh[] = [];
   private backgrounds = FOG_COLORS.map((_, i) => voidBackground(i));
   private environment: T.WebGLRenderTarget;
@@ -39,6 +40,7 @@ export class Renderer {
   private effects: Effects;
   private lights: T.PointLight[] = [];
   private sun = new T.DirectionalLight('#b3d0ed', 1.6);
+  private ambient = new T.HemisphereLight();
   private rim = new T.PointLight('#a9d8fa', 5.5, 10, 1.4);
   private fogSprites: T.Sprite[] = [];
   private observer: ResizeObserver;
@@ -62,7 +64,7 @@ export class Renderer {
   ) {
     this.assets = new AssetManager(
       undefined,
-      world.save.settings.quality,
+      world.save.settings.detail === 'high',
       this.materials.playerPosition,
     );
     this.webgl = new T.WebGLRenderer({
@@ -87,7 +89,7 @@ export class Renderer {
     room.dispose();
     pmrem.dispose();
     this.scene.fog = new T.FogExp2(FOG_COLORS[0], 0.018);
-    this.scene.add(new T.HemisphereLight('#a4c7df', '#10151c', 0.65));
+    this.scene.add(this.ambient);
     for (const material of Object.values(this.materials.items))
       heightFog(material, this.assets.walkingHeight, this.assets.fogColor);
     this.sun.position.set(15, 35, 10);
@@ -190,8 +192,18 @@ export class Renderer {
   }
   draw(dt: number): void {
     const w = this.world;
+    const lighting = BIOME_LIGHTING[w.floor.biome];
+    this.ambient.color.set(lighting.sky);
+    this.ambient.groundColor.set(lighting.ground);
+    this.ambient.intensity = lighting.ambient;
+    this.sun.color.set(lighting.moon);
+    this.sun.intensity = lighting.sun;
+    this.scene.environmentIntensity = lighting.environment;
+    this.webgl.toneMappingExposure = lighting.exposure;
+    this.rim.color.set(lighting.rim);
+    (this.scene.fog as T.FogExp2).density = lighting.fog;
     void this.assets
-      .setTextureQuality(w.save.settings.quality)
+      .setTextureQuality(w.save.settings.detail === 'high')
       .catch((error) => console.warn('Texture quality change failed', error));
     if (this.assets.revision !== this.assetRevision) {
       this.assetRevision = this.assets.revision;
@@ -242,11 +254,22 @@ export class Renderer {
       this.travel = 1;
       this.travelFrom = undefined;
     }
-    if (changedFloor || this.appliedQuality !== w.save.settings.quality) {
-      this.appliedQuality = w.save.settings.quality;
+    if (changedFloor || this.appliedQuality !== w.save.settings.detail) {
+      this.appliedQuality = w.save.settings.detail;
+      const high = w.save.settings.detail === 'high';
+      this.webgl.setPixelRatio(
+        Math.min(devicePixelRatio, high ? 1.5 : w.save.settings.detail === 'medium' ? 1 : 0.8),
+      );
+      const shadowSize = high ? 2048 : 1024;
+      if (this.sun.shadow.mapSize.x !== shadowSize) {
+        this.sun.shadow.map?.dispose();
+        this.sun.shadow.map = null;
+        this.sun.shadow.mapSize.set(shadowSize, shadowSize);
+      }
       this.art?.group.traverse((obj) => {
+        if (obj.userData.surfaceDecal) obj.visible = w.save.settings.quality;
         if (obj instanceof T.LOD && obj.levels.length === 3) {
-          obj.levels[1].distance = w.save.settings.quality ? 32 : 16;
+          obj.levels[1].distance = high ? 32 : 16;
           obj.levels[2].distance = w.save.settings.quality ? 65 : 40;
         }
       });
@@ -360,11 +383,12 @@ export class Renderer {
     );
     this.lights.forEach((light, i) => {
       const torch = torches[i];
+      light.visible = Boolean(torch) && (w.save.settings.quality || i < 2);
       if (!torch) return;
       light.position.copy(torch.position);
       light.color.copy(torch.color);
       light.intensity =
-        (w.room.modifier === 'Darkness' ? 15 : 20) *
+        (w.room.modifier === 'Darkness' ? lighting.power * 0.65 : lighting.power) *
         (1 + Math.sin(w.visualTime * 8 + torch.seed) * 0.075);
     });
     for (const torch of this.art?.torches ?? []) {
@@ -389,6 +413,21 @@ export class Renderer {
       positions.needsUpdate = true;
     }
     for (const water of this.art?.waters ?? []) {
+      if (water.userData.shaderWater) {
+        const ripples = water.userData.ripples as { value: T.Vector4[] };
+        ripples.value[0].set(
+          playerPosition.x,
+          playerPosition.z,
+          (w.visualTime * 0.7) % 1,
+          walking ? 0.8 : 0,
+        );
+        w.effects.slice(-7).forEach((effect, i) => {
+          const p = globalPosition(w.room, effect.x, effect.y);
+          ripples.value[i + 1].set(p.x, p.z, effect.maxLife - effect.life, 1);
+        });
+        for (let i = w.effects.slice(-7).length + 1; i < 8; i++) ripples.value[i].w = 0;
+        continue;
+      }
       const positions = water.geometry.attributes.position,
         base = water.userData.baseZ as Float32Array | undefined;
       for (let i = 0; i < positions.count; i++) {
@@ -408,7 +447,8 @@ export class Renderer {
       gate.visible = closed || gate.position.y < 2.95;
     }
     this.fogSprites.forEach((sprite, i) => {
-      sprite.visible = w.save.settings.quality;
+      sprite.visible =
+        w.save.settings.quality && (w.save.settings.detail === 'high' || i % 2 === 0);
       sprite.position.set(
         playerPosition.x + Math.sin(i * 8 + w.visualTime * 0.025) * 22,
         -5 + (i % 3) * 1.3,
@@ -419,6 +459,7 @@ export class Renderer {
     dustMat.color.set(['#bbc5bb', '#9cbfc4', '#b49fda', '#d9eaf2', '#f7aa60'][w.floor.biome]);
     dustMat.size = w.floor.biome === 3 ? 0.15 : 0.09;
     this.dust.visible = w.save.settings.quality;
+    this.dust.geometry.setDrawRange(0, w.save.settings.detail === 'high' ? 180 : 90);
     for (let i = 0; i < 180; i++) {
       const speed = w.floor.biome === 4 ? -0.65 : w.floor.biome === 3 ? 0.6 : 0.05;
       this.dustPositions.set(

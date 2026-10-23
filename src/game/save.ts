@@ -10,6 +10,7 @@ export interface Settings {
   assist: boolean;
   reducedMotion: boolean;
   quality: boolean;
+  detail: 'high' | 'medium' | 'low';
   strongOutline: boolean;
 }
 export interface Save {
@@ -64,6 +65,7 @@ export const defaultSave = (): Save => ({
     reducedMotion:
       typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches,
     quality: true,
+    detail: 'high',
     strongOutline: false,
   },
   tutorial: false,
@@ -108,6 +110,13 @@ export function parseSave(raw: string | null): Save {
       'strongOutline',
     ] as const)
       if (typeof settings[key] === 'boolean') fallback.settings[key] = settings[key];
+    fallback.settings.detail =
+      settings.detail === 'high' || settings.detail === 'medium' || settings.detail === 'low'
+        ? settings.detail
+        : fallback.settings.quality
+          ? 'high'
+          : 'low';
+    fallback.settings.quality = fallback.settings.detail !== 'low';
     for (const key of ['runs', 'bestDepth', 'kills', 'embers'] as const) {
       const v = source[key];
       if (typeof v === 'number' && Number.isFinite(v)) fallback[key] = Math.max(0, Math.floor(v));

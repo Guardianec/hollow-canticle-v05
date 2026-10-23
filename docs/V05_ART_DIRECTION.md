@@ -2,9 +2,16 @@
 
 Both supplied sheets are preserved in [references/v05](references/v05/). They are shape, material, light and composition references, never runtime textures. The release brief is retained as source context. All generated meshes and textures are original.
 
-## Ruins benchmark gate
+## Ruins benchmark and procedural game
 
 Build and review one fixed Ruins scene before migrating the other four biomes. Include the Oathkeeper, Warden, slabs, damaged wall, true curved arch, fluted columns, stairs, bridge, statue, rubble, braziers and distant architecture. A model inventory alone does not pass this gate. Compare actual browser screenshots against both sheets.
+
+The first checkpoint established this benchmark; the user's continuation authorized
+the remaining biome/cast implementation. The benchmark remains a QA fixture. All
+playable rooms and connections must remain seeded and procedural. The user's later
+correction prioritizes darkness: use local light pools and readable shadows, with
+blue/amber Ruins, damp teal Shrine, low violet Fungal, dim moonlit Frozen and smoky
+orange Foundry. Do not brighten every region to the same exposure or ambient fill.
 
 ## Character rules
 
@@ -34,6 +41,6 @@ The playable route has the highest useful contrast. Broken parapets expose the c
 | Oathkeeper and Warden                               | panels 2, 3, 9 | panels 5, 6  |
 | Stone, iron, bronze, cloth                          | panel 6        | panel 3      |
 | Deep supports, distance structures, mist            | panel 8        | panel 4      |
-| Future biome expansion                              | panel 7        | panel 8      |
+| Shrine, Fungal, Frozen and Foundry kits             | panel 7        | panel 8      |
 
 Do not claim reference fidelity from successful asset export. Review silhouette, surface response, void depth, route readability and measured browser performance separately.

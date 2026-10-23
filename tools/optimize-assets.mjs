@@ -1,9 +1,38 @@
 import sharp from 'sharp';
-import { readFileSync, writeFileSync, statSync } from 'node:fs';
+import { readFileSync, writeFileSync, statSync, renameSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { NodeIO } from '@gltf-transform/core';
+import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
+import { dedup, prune, meshopt } from '@gltf-transform/functions';
+import { MeshoptEncoder, MeshoptDecoder } from 'meshoptimizer';
 const output = resolve('public/assets/v05');
 const source = resolve('.cache/bakes/v05');
 const manifest = JSON.parse(readFileSync(resolve(output, 'manifest.json'), 'utf8'));
+await Promise.all([MeshoptEncoder.ready, MeshoptDecoder.ready]);
+const io = new NodeIO()
+  .registerExtensions(ALL_EXTENSIONS)
+  .registerDependencies({ 'meshopt.encoder': MeshoptEncoder, 'meshopt.decoder': MeshoptDecoder });
+for (const pack of Object.values(manifest.packs)) {
+  const file = resolve(output, pack.file);
+  const document = await io.read(file);
+  await document.transform(
+    dedup(),
+    prune({ keepAttributes: true }),
+    meshopt({ encoder: MeshoptEncoder, level: 'medium' }),
+  );
+  const temporary = file + '.optimized.tmp';
+  writeFileSync(temporary, await io.writeBinary(document));
+  for (let attempt = 0; ; attempt++) {
+    try {
+      renameSync(temporary, file);
+      break;
+    } catch (error) {
+      if (attempt === 30) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+  }
+  pack.bytes = statSync(file).size;
+}
 for (const family of Object.values(manifest.materials)) {
   family.low = {};
   for (const kind of ['baseColor', 'normal', 'roughness', 'ao']) {

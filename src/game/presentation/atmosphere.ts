@@ -1,6 +1,6 @@
 import * as T from 'three';
 
-export const FOG_COLORS = ['#172a3b', '#123b40', '#241c39', '#596f83', '#2e201c'];
+export const FOG_COLORS = ['#172a3b', '#123b40', '#241c39', '#263e55', '#2e201c'];
 
 export function voidBackground(biome = 0) {
   const canvas = document.createElement('canvas');
@@ -8,7 +8,7 @@ export function voidBackground(biome = 0) {
   canvas.height = 256;
   const context = canvas.getContext('2d')!;
   const gradient = context.createLinearGradient(0, 0, 0, 256);
-  gradient.addColorStop(0, ['#070f1b', '#061a21', '#100b1e', '#25384c', '#100c0b'][biome]);
+  gradient.addColorStop(0, ['#070f1b', '#061a21', '#100b1e', '#101d2c', '#100c0b'][biome]);
   gradient.addColorStop(0.68, FOG_COLORS[biome]);
   gradient.addColorStop(1, FOG_COLORS[biome]);
   context.fillStyle = gradient;

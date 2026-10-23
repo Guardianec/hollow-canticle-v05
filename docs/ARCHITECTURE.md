@@ -171,3 +171,18 @@ Training/lab settlement never writes these summaries or progression. No networki
 Dungeon, attack choice and loot use separate seeded streams. Relic choices depend on owned relics
 and the same sequence of reward interactions. Cosmetic particle RNG is separate. Four new ranged
 relic hooks operate in Arsenal/recharge; the existing melee relic event system remains intact.
+
+## v0.5 presentation assets
+
+AssetManager owns shared textures, materials and named GLB templates. A promise per
+pack deduplicates requests; cast loading precedes biome loading and happens once.
+Only requested material families load. GLTFLoader uses MeshoptDecoder. SkeletonUtils
+clones rigs; environment parts instance by material and per-room LOD. Quantized root
+transforms are retained in instance matrices. ImportedActor owns its outline shells
+and isolated Saint phase materials, while shared maps/geometry belong to AssetManager.
+
+Imported dungeon assembly reads the existing room geometry and art seeds. It never
+changes simulation collision. Biome lighting, height fog, decals and Shrine water
+are presentation layers. Missing packs preserve the original procedural builder.
+High/Medium/Low settings choose texture size, DPR, shadows, LOD, particles and decals.
+Legacy quality booleans migrate to High/Low without changing the v2 storage key.

@@ -3,12 +3,16 @@ import { Actor } from './actors';
 import { Materials } from './materials';
 import { CHARACTERS } from '../characters';
 import type { World } from '../world';
+import { AssetManager } from './assets';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 export class CharacterGallery {
   private webgl = new T.WebGLRenderer({ antialias: true, alpha: true });
   private scene = new T.Scene();
   private camera = new T.OrthographicCamera(-4.2, 4.2, 1.4, -1.4, 0.1, 50);
   private materials = new Materials();
+  private assets = new AssetManager();
+  private environment: T.WebGLRenderTarget;
   private actors: Actor[] = [];
   private frame = 0;
   private observer: ResizeObserver;
@@ -21,6 +25,14 @@ export class CharacterGallery {
     this.webgl.setPixelRatio(Math.min(devicePixelRatio, 1.5));
     this.webgl.toneMapping = T.ACESFilmicToneMapping;
     this.webgl.toneMappingExposure = 1.6;
+    const pmrem = new T.PMREMGenerator(this.webgl),
+      room = new RoomEnvironment();
+    this.environment = pmrem.fromScene(room, 0.04);
+    this.scene.environment = this.environment.texture;
+    this.scene.environmentIntensity = 0.45;
+    room.dispose();
+    pmrem.dispose();
+    void this.assets.preloadCharacters();
     this.scene.add(new T.HemisphereLight('#dae7f0', '#3d3021', 2.3));
     const key = new T.DirectionalLight('#f9ddaa', 4);
     key.position.set(2, 4, 4);
@@ -29,7 +41,7 @@ export class CharacterGallery {
     rim.position.set(-3, 2, -2);
     this.scene.add(rim);
     CHARACTERS.forEach((c) => {
-      const actor = new Actor(this.materials, `player-${c.id}`, true);
+      const actor = new Actor(this.materials, `player-${c.id}`, true, this.assets);
       actor.setWeapon(c.id);
       this.actors.push(actor);
       this.scene.add(actor.root);
@@ -85,6 +97,8 @@ export class CharacterGallery {
     this.observer.disconnect();
     this.actors.forEach((a) => a.dispose());
     this.materials.dispose();
+    this.assets.dispose();
+    this.environment.dispose();
     this.webgl.dispose();
     this.webgl.domElement.remove();
   }

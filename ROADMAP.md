@@ -1,5 +1,15 @@
 # Next releases
 
+## v0.5 visual review
+
+All five Blender biome kits and the cast are integrated into the seeded game.
+Darkness and region-specific lighting are restored. See the v0.5 visual review and
+QA report for actual screenshots, download size and technical checks.
+
+Remaining sign-off focuses on art fidelity, extreme cloth/grip poses, repeated
+architecture silhouettes, full multi-floor playthroughs and sustained GPU profiling.
+This local review build does not claim parity with the supplied illustrations.
+
 ## v0.4 review and balance
 
 Implemented on the accepted v0.3 checkpoint: four Pilgrims, expanded melee vocabulary,

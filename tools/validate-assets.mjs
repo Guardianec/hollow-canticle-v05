@@ -10,6 +10,7 @@ for (const [pack, info] of Object.entries(manifest.packs)) {
   assert.equal(buffer.toString('utf8', 0, 4), 'glTF', pack);
   assert.equal(buffer.readUInt32LE(4), 2);
   assert.equal(buffer.readUInt32LE(8), buffer.length);
+  assert.equal(info.bytes, buffer.length, `${pack}: stale manifest byte count`);
   const json = JSON.parse(buffer.toString('utf8', 20, 20 + buffer.readUInt32LE(12)).trim());
   const names = new Set(json.nodes.map((n) => n.name));
   for (const [id, asset] of Object.entries(manifest.assets).filter(([, a]) => a.pack === pack)) {
@@ -22,6 +23,11 @@ for (const [pack, info] of Object.entries(manifest.packs)) {
     triangles += asset.lods[0].triangles;
   }
   for (const material of json.materials) assert(manifest.materials[material.name], material.name);
+  for (const mesh of json.meshes)
+    for (const primitive of mesh.primitives) {
+      assert(primitive.attributes.TEXCOORD_0 !== undefined, `${pack}: missing UVs`);
+      assert(primitive.attributes.COLOR_0 !== undefined, `${pack}: missing baked occlusion`);
+    }
   for (const accessor of json.accessors) {
     if (accessor.min) assert(accessor.min.every(Number.isFinite));
     if (accessor.max) assert(accessor.max.every(Number.isFinite));
@@ -35,6 +41,10 @@ for (const material of Object.values(manifest.materials))
     const metadata = await sharp(fileURLToPath(path)).metadata();
     assert.equal(metadata.width, material.resolution);
     assert.equal(metadata.height, material.resolution);
+    if (key === 'baseColor' && material === manifest.materials.worn_iron) {
+      const stats = await sharp(fileURLToPath(path)).stats();
+      assert(stats.channels[0].mean > 60, 'Metal albedo was attenuated by diffuse baking');
+    }
     const low = new URL(material.low[key], root);
     assert.equal((await sharp(fileURLToPath(low)).metadata()).width, 512);
   }

@@ -778,7 +778,12 @@ export class Actor {
         this.root.add(this.imported.root);
         this.importedLevel = level;
       }
-      this.imported.animate(pose, options?.reducedMotion ? 0 : clock);
+      this.imported.animate(
+        pose,
+        options?.reducedMotion ? 0 : clock,
+        this.weaponId === 'spear' || sample.name.includes('/thrust/'),
+        phase,
+      );
     }
     return sample;
   }

@@ -14,6 +14,15 @@ def column(m, broken=False):
     for h in [.35,.48,4.28,4.43]:
         if broken and h>2.5: continue
         objects.append(loft('molding',[(h,.45,.45,0,0),(h+.06,.46,.46,0,0),(h+.1,.4,.4,0,0)],m['ancient_stone'],32))
+    if not broken:
+        objects.append(stone('capital abacus',(0,0,4.91),(1.27,1.27,.18),m['carved_stone'],.025))
+        for i in range(8):
+            a=math.tau*i/8
+            points=[]
+            for k in range(9):
+                t=k/8; radius=.34+.14*math.sin(t*math.pi*.7)
+                points.append((math.cos(a)*radius,math.sin(a)*radius,4.08+t*.48))
+            objects.append(tube('carved capital leaf',points,.025,m['ancient_stone']))
     return objects
 
 def arch(m, broken=False, width=2.8):
@@ -43,11 +52,13 @@ def arch(m, broken=False, width=2.8):
 def wall(m, broken=False):
     objects=[]
     for row in range(6):
-        for j in range(5):
-            if broken and row>2 and j>(6-row): continue
-            x=-1.5+(j+.5)*.6
-            h=.49
-            objects.append(stone('eroded ashlar',(x,(row%2)*.025,row*.5+.25),(.6,.5,h),m['ancient_stone'],.035))
+        boundaries=[-1.5,-1.2,-.6,0,.6,1.2,1.5] if row%2 else [-1.5,-.9,-.3,.3,.9,1.5]
+        for j,(left,right) in enumerate(zip(boundaries,boundaries[1:])):
+            crown=[6,5,4,3,2,3][min(j,5)]
+            if broken and row>=crown: continue
+            x=(left+right)*.5
+            h=.49 if not broken or row<crown-1 else RNG.uniform(.28,.5)
+            objects.append(stone('eroded ashlar',(x,(row%2)*.025,row*.5+h*.5),(right-left+.015,.5,h),m['ancient_stone'],.035))
     objects.append(stone('plinth',(0,0,.14),(3.03,.71,.28),m['carved_stone']))
     if not broken:
         objects.append(stone('cornice',(0,0,3.06),(3.06,.73,.23),m['carved_stone']))

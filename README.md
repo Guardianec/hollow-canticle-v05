@@ -1,23 +1,24 @@
-# Hollow Canticle — v0.5 Ruins benchmark
+# Hollow Canticle — v0.5.0 visual rebuild
 
 A procedural melee action roguelike about reading a blade, breaking a guard, and keeping an oath.
 
 The v0.5 visual rebuild starts from accepted v0.4 commit
-`8c83c8c4baa3476aaa9caa7b37bb9debfe13efd4`. This branch is an **art benchmark,
-not the completed five-biome v0.5 release**. The Ruins quality gate remains open.
+`8c83c8c4baa3476aaa9caa7b37bb9debfe13efd4`. This is a local review build with all
+five imported biome kits and the complete cast. Main remains unchanged.
 
-![Blender-authored Ruins benchmark](docs/screenshots/v05/ruins-exploration.jpg)
+![Procedurally generated Blender environment](docs/screenshots/v05/procedural-seed-02.jpg)
 
-Open `?benchmark` for the fixed Ruins scene, close duel, bridge/void test, material study
+Open `?benchmark` for five-region lighting review, close duel, bridge/void test, material study
 and procedural/Blender comparison. Camera orbit, pose sampling, screenshot export and
-High/Medium/Low rendering controls are available there. Open `?visual=fallback` to play
-with the original procedural presentation. Normal gameplay uses the imported Ruins pack
-when it loads and retains the deterministic v0.4 simulation.
+High/Medium/Low rendering controls are available there and in game settings. Open
+`?visual=fallback` for the original presentation. Normal gameplay still generates its
+rooms, routes, encounters and module choices from the seed, using imported biome packs.
 
-The candidate includes 23 Blender-authored environment modules, two skinned character
-assets (Oathkeeper and Warden), three LODs, seven shared PBR families, geometry-baked
-occlusion, world-space height fog and chasm mist. Other characters and four biomes
-still use procedural art. [Visual review and remaining work](docs/VISUAL_REVIEW-v0.5.md).
+There are 124 Blender-authored environment assets, 13 skinned characters, three LODs,
+15 shared PBR families, geometry-baked occlusion, seeded decals, reactive Shrine water,
+height fog and deep chasms. Each region has its own darker lighting palette. Technical
+integration is complete; artistic and hardware acceptance limits remain documented in
+the [visual review](docs/VISUAL_REVIEW-v0.5.md) and [QA report](docs/QA-v0.5.md).
 
 ### Rebuild assets
 
@@ -31,10 +32,12 @@ npm run assets:validate
 ```
 
 `tools/blender/` generates original geometry, UVs, semantic rigs, LODs and baked maps.
-`tools/optimize-assets.mjs` generates 1024px/512px WebP maps from lossless bake sources
+`tools/optimize-assets.mjs` compresses GLBs with meshoptimizer and generates
+1024px/512px WebP maps from lossless bake sources
 in the ignored `.cache/bakes/v05/` directory. Pass `npm run assets:build -- --rebake`
 to refresh cached material sources. The full-resolution runtime art download is about
-12.7 MiB before HTTP compression; see the review for exact measurements and memory.
+29 MiB before HTTP compression, with about 14 MiB for initial Ruins/cast art; other
+packs load on demand. See the review for exact measurements and memory estimates.
 References are preserved in `docs/references/v05/` and never used as game textures.
 
 The v0.4 gameplay foundation is preserved.
@@ -42,7 +45,7 @@ Four Pilgrims bring different melee chains and rechargeable ranged offerings. Ar
 Acolytes add physical projectiles that can be deflected or perfectly reflected. Consumables,
 timed effects and seeded room loot vary the journey before relic combinations develop.
 
-![Four Pilgrims and the selected-character outline](docs/screenshots/v04/character-selection.jpg)
+![Four Pilgrims and the selected-character outline](docs/screenshots/v05/character-selection.jpg)
 
 ## Play
 
@@ -207,8 +210,8 @@ loot categories, 10,000-roll audit, collision/path display and local run statist
 
 ## Verification and limits
 
-See [v0.4 QA](docs/QA-v0.4.md), [architecture](docs/ARCHITECTURE.md),
-[screenshot review](docs/VISUAL_REVIEW-v0.4.md), and [roadmap](ROADMAP.md).
+See [v0.5 QA](docs/QA-v0.5.md), [architecture](docs/ARCHITECTURE.md),
+[screenshot review](docs/VISUAL_REVIEW-v0.5.md), and [roadmap](ROADMAP.md).
 
 This is a review candidate. Automated regressions, production input/visual checks and three
 short ordinary-run attempts were performed. Several complete multi-floor human playthroughs,

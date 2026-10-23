@@ -5,6 +5,9 @@ import { Random } from '../random';
 import { SCALE, type Materials } from './materials';
 import { globalPosition, type DungeonArt } from './architecture';
 import { AssetManager, assetVariant } from './assets';
+import { shrineWater } from './water';
+import { roomDecals } from './decals';
+import { BIOME_LIGHTING } from './lighting';
 
 /** Instance authored modules per room and per LOD. Collision remains in geometry.ts. */
 export function buildImportedDungeon(floor: Floor, m: Materials, assets: AssetManager): DungeonArt {
@@ -18,10 +21,12 @@ export function buildImportedDungeon(floor: Floor, m: Materials, assets: AssetMa
     interactables: new Map(),
   };
   const flameMaterial = new T.MeshBasicMaterial({
-    color: new T.Color(3.5, 0.8, 0.12),
+    color: new T.Color(BIOME_LIGHTING[floor.biome].torch).multiplyScalar(3),
     toneMapped: false,
   });
   const placements = new Map<string, T.Matrix4[]>();
+  const family = ['ruins', 'shrine', 'fungal', 'frozen', 'foundry'][floor.biome];
+  const distantPlacements = new Map<string, T.Matrix4[]>();
   const dummy = new T.Object3D();
   const place = (
     id: string,
@@ -33,13 +38,15 @@ export function buildImportedDungeon(floor: Floor, m: Materials, assets: AssetMa
     sz = 1,
     rotation = 0,
   ) => {
+    id = id.replace('ruins_', family + '_');
     dummy.position.set(x, y, z);
     dummy.scale.set(sx, sy, sz);
     dummy.rotation.set(0, rotation, 0);
     dummy.updateMatrix();
-    const list = placements.get(id) ?? [];
+    const target = y < -5 && !id.endsWith('_deep_support') ? distantPlacements : placements;
+    const list = target.get(id) ?? [];
     list.push(dummy.matrix.clone());
-    placements.set(id, list);
+    target.set(id, list);
   };
   const torch = (p: T.Vector3, seed: number) => {
     place('ruins_brazier', p.x, p.y, p.z);
@@ -49,7 +56,7 @@ export function buildImportedDungeon(floor: Floor, m: Materials, assets: AssetMa
     const halo = new T.Sprite(
       new T.SpriteMaterial({
         map: m.glow,
-        color: '#ff9b3c',
+        color: BIOME_LIGHTING[floor.biome].torch,
         transparent: true,
         opacity: 0.2,
         depthWrite: false,
@@ -64,11 +71,18 @@ export function buildImportedDungeon(floor: Floor, m: Materials, assets: AssetMa
       flame,
       halo,
       seed,
-      color: new T.Color('#ff9b3c'),
+      color: new T.Color(BIOME_LIGHTING[floor.biome].torch),
     });
   };
   for (const room of floor.rooms) {
+    art.group.add(roomDecals(room, floor.biome));
+    if (floor.biome === 1) {
+      const water = shrineWater(room, m);
+      art.group.add(water);
+      art.waters.push(water);
+    }
     placements.clear();
+    distantPlacements.clear();
     const geo = geometryFor(room),
       rng = new Random(room.artSeed + ':imported');
     const ox = (room.x * ROOM_PITCH.x - 560) * SCALE,
@@ -171,6 +185,32 @@ export function buildImportedDungeon(floor: Floor, m: Materials, assets: AssetMa
       }
     }
     const back = globalPosition(room, 560, 155);
+    if (floor.biome === 2)
+      for (const side of [-1, 1]) place('fungal_growth', back.x + side * 5, back.y, back.z + 2);
+    if (floor.biome === 3)
+      for (const side of [-1, 1]) place('frozen_snowbank', back.x + side * 5, back.y, back.z + 2);
+    if (floor.biome === 4) {
+      place('foundry_furnace', back.x + 4, back.y, back.z + 1);
+      place('foundry_chain', back.x - 4, back.y + 3, back.z);
+      const mechanism = new T.Group();
+      mechanism.position.set(back.x + 4, back.y + 2.2, back.z + 1);
+      const gear = assets.instantiate('foundry_gear', 1);
+      if (gear) {
+        gear.traverse((obj) => {
+          if (obj instanceof T.Mesh) obj.userData.imported = true;
+        });
+        mechanism.add(gear);
+      }
+      art.group.add(mechanism);
+      art.mechanisms.push(mechanism);
+      const fire = new T.Mesh(new T.PlaneGeometry(2, 0.9), m.items.lava);
+      fire.position.set(back.x + 4, back.y + 0.8, back.z + 0.35);
+      art.group.add(fire);
+    }
+    if (floor.biome === 1) {
+      place('shrine_lantern', back.x - 4, back.y, back.z + 1);
+      place('shrine_channel', back.x + 4, back.y, back.z + 1);
+    }
     place('ruins_doorway', back.x, back.y, back.z, 1.3, 1.3, 1.3);
     for (const side of [-1, 1]) {
       place('ruins_wall_broken', back.x + side * 5, back.y, back.z, 1.3, 1.3, 1.3);
@@ -202,6 +242,8 @@ export function buildImportedDungeon(floor: Floor, m: Materials, assets: AssetMa
       lod.addLevel(group, level === 0 ? 0 : level === 1 ? 32 : 65);
     }
     art.group.add(lod);
+    for (const [id, matrices] of distantPlacements)
+      art.group.add(...assets.instanceBatches(id, 2, matrices));
   }
   return art;
 }

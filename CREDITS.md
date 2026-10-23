@@ -7,20 +7,23 @@ tool; its prompt and file are recorded in `docs/ASSETS.md`.
 Supplied reference images are design targets, stored in `docs/references/` for comparison.
 They are never loaded by the game or copied into its runtime assets.
 
-The v0.5 benchmark meshes and PBR sources are original Blender Python creations in
+The v0.5 meshes and PBR sources are original Blender Python creations in
 `tools/blender/`, exported with Blender 4.5.15 LTS. Blender is free GPL software and is
 not shipped with the game. Sharp (Apache-2.0) is used only during asset builds to encode
 runtime WebP textures. No external model, texture library or paid generation service
 is used by this pipeline. Supplied v0.5 reference sheets remain reference documents.
+glTF Transform (MIT) and meshoptimizer (MIT) compress the authored GLBs during builds.
 
 Runtime dependencies:
 
 - Phaser — MIT, https://github.com/phaserjs/phaser
 - Three.js — MIT, https://github.com/mrdoob/three.js
+- meshoptimizer — MIT, https://github.com/zeux/meshoptimizer
 - Cormorant Garamond — SIL Open Font License 1.1, by Christian Thalmann and contributors; self-hosted through @fontsource/cormorant-garamond
 - Manrope — SIL Open Font License 1.1, by Mikhail Sharanda and contributors; self-hosted through @fontsource/manrope
 
 Phaser's MIT license is included in `public/licenses/Phaser.txt`.
 Three.js's MIT license is included in `public/licenses/Three.txt`.
+meshoptimizer's MIT license is included in `public/licenses/Meshoptimizer.txt`.
 Font license texts are reproduced in `public/licenses/`. Dependency license texts
 also ship with their npm packages. No commercial game assets or sounds are used.

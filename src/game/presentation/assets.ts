@@ -1,6 +1,7 @@
 import * as T from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { clone } from 'three/addons/utils/SkeletonUtils.js';
+import { MeshoptDecoder } from 'meshoptimizer';
 import { heightFog } from './atmosphere';
 import { Random } from '../random';
 
@@ -12,7 +13,7 @@ export interface AssetRecord {
 }
 export interface AssetManifest {
   assets: Record<string, AssetRecord>;
-  packs: Record<string, { file: string; bytes: number }>;
+  packs: Record<string, { file: string; bytes: number; materials?: string[] }>;
   materials: Record<
     string,
     {
@@ -27,17 +28,30 @@ export interface AssetManifest {
   >;
 }
 export function packForBiome(biome: number) {
-  return biome === 0 ? 'ruins' : undefined;
+  return ['ruins', 'shrine', 'fungal', 'frozen', 'foundry'][biome];
 }
 export function assetVariant(seed: string, variants: readonly string[]) {
   return new Random(seed).pick([...variants]);
 }
 export function characterAsset(id: string) {
-  return id === 'player-sword' || id === 'player'
-    ? 'oathkeeper'
-    : id === 'warden' || id === 'shield'
-      ? 'warden'
-      : undefined;
+  const names: Record<string, string> = {
+    player: 'oathkeeper',
+    'player-sword': 'oathkeeper',
+    'player-twins': 'moth',
+    'player-spear': 'lancer',
+    'player-great': 'bellbearer',
+    shield: 'warden',
+    warden: 'oathkeeper',
+    boss: 'saint',
+  };
+  return (
+    names[id] ??
+    (['warden', 'duelist', 'archer', 'assassin', 'monk', 'hexer', 'brute', 'beast'].includes(id)
+      ? id
+      : id === 'spear'
+        ? 'lancer'
+        : undefined)
+  );
 }
 
 /** One loader and one resource owner per renderer. Clones never own shared GPU data. */
@@ -50,8 +64,11 @@ export class AssetManager {
   readonly fogColor = { value: new T.Color('#172a3b') };
   readonly mode: 'imported' | 'fallback';
   revision = 0;
-  private loader = new GLTFLoader();
+  private loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
   private pending = new Map<string, Promise<void>>();
+  private requestedMaterials = new Set<string>();
+  private materialLoading = Promise.resolve();
+  private manifestLoading?: Promise<AssetManifest>;
   private textures = new Map<string, T.Texture>();
   private disposed = false;
   private textureHigh = true;
@@ -74,18 +91,40 @@ export class AssetManager {
   async preloadBiome(biome: number): Promise<void> {
     const pack = packForBiome(biome);
     if (this.mode === 'fallback' || !pack || this.disposed) return;
-    if (!this.pending.has(pack)) this.pending.set(pack, this.load(pack));
+    if (!this.pending.has(pack))
+      this.pending.set(
+        pack,
+        this.preloadCharacters().then(() => {
+          if (!this.manifest) {
+            this.missing.add(pack);
+            return;
+          }
+          return this.load(pack);
+        }),
+      );
     return this.pending.get(pack);
+  }
+  async preloadCharacters(): Promise<void> {
+    if (this.mode === 'fallback' || this.disposed) return;
+    if (!this.pending.has('pilgrims')) this.pending.set('pilgrims', this.load('pilgrims'));
+    return this.pending.get('pilgrims');
   }
   private async load(pack: string) {
     try {
       if (!this.manifest) {
-        const response = await fetch(this.base + 'manifest.json');
-        if (!response.ok) throw new Error(`manifest: HTTP ${response.status}`);
-        this.manifest = (await response.json()) as AssetManifest;
-        await this.loadMaterials();
+        this.manifestLoading ??= fetch(this.base + 'manifest.json').then(async (response) => {
+          if (!response.ok) throw new Error(`manifest: HTTP ${response.status}`);
+          return (await response.json()) as AssetManifest;
+        });
+        this.manifest = await this.manifestLoading;
       }
-      for (const name of [pack, 'pilgrims']) {
+      for (const name of [pack])
+        for (const material of this.manifest.packs[name].materials ??
+          Object.keys(this.manifest.materials))
+          this.requestedMaterials.add(material);
+      await this.prepareMaterials();
+      for (const name of [pack]) {
+        if (name === 'pilgrims' && this.has('oathkeeper')) continue;
         const gltf = await this.loader.loadAsync(this.base + this.manifest!.packs[name].file);
         if (this.disposed) {
           this.release(gltf.scene);
@@ -125,7 +164,12 @@ export class AssetManager {
   async setTextureQuality(high: boolean) {
     if (this.textureHigh === high) return;
     this.textureHigh = high;
-    if (this.manifest) await this.loadMaterials();
+    if (this.manifest) await this.prepareMaterials();
+  }
+  private prepareMaterials() {
+    const pending = this.materialLoading.then(() => this.loadMaterials());
+    this.materialLoading = pending.catch(() => {});
+    return pending;
   }
   private async loadMaterials() {
     const request = ++this.textureRequest;
@@ -139,6 +183,7 @@ export class AssetManager {
           throw new Error('Asset manager disposed during texture load');
         }
         t.colorSpace = srgb ? T.SRGBColorSpace : T.NoColorSpace;
+        t.flipY = false;
         t.wrapS = t.wrapT = T.RepeatWrapping;
         t.anisotropy = 4;
         this.textures.set(file, t);
@@ -146,44 +191,61 @@ export class AssetManager {
       return t;
     };
     await Promise.all(
-      Object.entries(this.manifest!.materials).map(async ([id, family]) => {
-        const maps = !this.textureHigh && family.low ? family.low : family;
-        const [map, normalMap, roughnessMap, aoMap] = await Promise.all([
-          texture(maps.baseColor, true),
-          texture(maps.normal),
-          texture(maps.roughness),
-          texture(maps.ao),
-        ]);
-        if (this.disposed || request !== this.textureRequest) return;
-        const existing = this.materials.get(id);
-        if (existing) {
-          Object.assign(existing, { map, normalMap, roughnessMap, aoMap });
-          existing.needsUpdate = true;
-          return;
-        }
-        const mat = new T.MeshStandardMaterial({
-          name: id,
-          map,
-          normalMap,
-          roughnessMap,
-          aoMap,
-          metalness: family.metalness,
-          roughness: 1,
-          vertexColors: true,
-          side: id === 'heavy_cloth' ? T.DoubleSide : T.FrontSide,
-        });
-        if (id.includes('stone')) mat.color.set('#858e91');
-        if (id === 'heavy_cloth') mat.color.set('#2b3441');
-        if (id === 'worn_leather') mat.color.set('#837568');
-        mat.normalScale.setScalar(id.includes('stone') ? 0.55 : 0.35);
-        heightFog(
-          mat,
-          this.walkingHeight,
-          this.fogColor,
-          id.includes('stone') ? this.occlusionTarget : undefined,
-        );
-        this.materials.set(id, mat);
-      }),
+      Object.entries(this.manifest!.materials)
+        .filter(([id]) => this.requestedMaterials.has(id))
+        .map(async ([id, family]) => {
+          const maps = !this.textureHigh && family.low ? family.low : family;
+          const [map, normalMap, roughnessMap, aoMap] = await Promise.all([
+            texture(maps.baseColor, true),
+            texture(maps.normal),
+            texture(maps.roughness),
+            texture(maps.ao),
+          ]);
+          if (this.disposed || request !== this.textureRequest) return;
+          const existing = this.materials.get(id);
+          if (existing) {
+            Object.assign(existing, { map, normalMap, roughnessMap, aoMap });
+            existing.needsUpdate = true;
+            return;
+          }
+          const mat = new T.MeshStandardMaterial({
+            name: id,
+            map,
+            normalMap,
+            roughnessMap,
+            aoMap,
+            metalness: family.metalness,
+            roughness: 1,
+            vertexColors: true,
+            envMapIntensity: family.metalness > 0.5 ? 2.4 : 1,
+            side: id.endsWith('cloth') || id === 'pilgrim_linen' ? T.DoubleSide : T.FrontSide,
+          });
+          if (id.includes('stone')) mat.color.set('#858e91');
+          if (id === 'heavy_cloth') mat.color.set('#2b3441');
+          if (id === 'worn_leather') mat.color.set('#837568');
+          if (id === 'fungal_skin') {
+            mat.emissive.set('#8d46cc');
+            mat.emissiveIntensity = 0.7;
+            mat.onBeforeCompile = (shader) => {
+              shader.fragmentShader = shader.fragmentShader.replace(
+                '#include <emissivemap_fragment>',
+                `#include <emissivemap_fragment>
+              vec2 cell=floor(vMapUv*90.); vec2 pore=fract(vMapUv*90.)-.5;
+              float seed=fract(sin(dot(cell,vec2(127.1,311.7)))*43758.5453);
+              float speck=(1.-smoothstep(.045,.16,length(pore)))*step(.64,seed);
+              totalEmissiveRadiance*=.06+speck;`,
+              );
+            };
+          }
+          mat.normalScale.setScalar(id.includes('stone') ? 0.55 : 0.35);
+          heightFog(
+            mat,
+            this.walkingHeight,
+            this.fogColor,
+            id.includes('stone') ? this.occlusionTarget : undefined,
+          );
+          this.materials.set(id, mat);
+        }),
     );
     if (request === this.textureRequest && !this.disposed) {
       const used = new Set(
@@ -215,10 +277,10 @@ export class AssetManager {
     const batches: T.InstancedMesh[] = [];
     root.traverse((obj) => {
       if (!(obj instanceof T.Mesh)) return;
-      const local = inverse.clone().multiply(obj.matrixWorld);
+      const local = root.matrix.clone().multiply(inverse).multiply(obj.matrixWorld);
       const batch = new T.InstancedMesh(obj.geometry, obj.material, matrices.length);
       matrices.forEach((matrix, i) => batch.setMatrixAt(i, matrix.clone().multiply(local)));
-      batch.castShadow = id !== 'ruins_deep_support';
+      batch.castShadow = !id.endsWith('_deep_support');
       batch.receiveShadow = true;
       batch.userData.imported = true;
       batches.push(batch);

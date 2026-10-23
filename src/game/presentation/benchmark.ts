@@ -7,6 +7,8 @@ import { Materials, Batches } from './materials';
 import { FOG_COLORS, heightFog, chasmMist, voidBackground } from './atmosphere';
 import { World } from '../world';
 import { defaultSave } from '../save';
+import { BIOME_LIGHTING } from './lighting';
+import { waterSurface } from './water';
 
 export async function startBenchmark() {
   const params = new URLSearchParams(location.search);
@@ -15,13 +17,17 @@ export async function startBenchmark() {
     <header><a href="${import.meta.env.BASE_URL}">HOLLOW CANTICLE</a><span>RUINS · ART BENCHMARK</span></header>
     <aside><label>View <select id="art-view"><option value="exploration">Exploration</option><option value="duel">Close duel</option><option value="void">Bridge & void</option><option value="materials">Surface study</option><option value="comparison">v0.4 / Blender</option></select></label>
     <label>Quality <select id="art-quality"><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></label>
+    <label>Region <select id="art-biome">${BIOME_LIGHTING.map((p, i) => `<option value="${i}">${p.name}</option>`).join('')}</select></label>
+    <label>Pilgrim <select id="art-player"><option value="sword">Oathkeeper</option><option value="twins">Moth</option><option value="spear">Lancer</option><option value="great">Bellbearer</option></select></label>
+    <label>Opponent <select id="art-enemy">${['warden', 'shield', 'duelist', 'spear', 'assassin', 'archer', 'monk', 'hexer', 'brute', 'beast', 'boss'].map((id) => `<option value="${id}">${id === 'boss' ? 'The Saint' : id}</option>`).join('')}</select></label>
     <label>Pose <select id="art-pose"><option value="live">Idle</option><option value="slash">Slash</option><option value="thrust">Thrust</option><option value="smash">Overhead</option><option value="parry">Parry</option><option value="dodge">Dodge</option><option value="finisher">Finisher</option></select></label>
     <label>Pose time <input id="art-time" type="range" min="0" max="1" value="0.55" step="0.01"></label>
+    <label><input id="art-phase" type="checkbox"> Saint phase II</label>
     <label><input id="art-motion" type="checkbox"> Animate atmosphere</label>
     <button id="art-capture">Save screenshot</button><output id="art-status" aria-live="polite">Loading Blender pack…</output></aside>
     <footer><span>THE FORGOTTEN RUINS</span><span>Drag to orbit · Scroll to inspect</span><output id="art-metrics"></output></footer></main>`;
   const style = document.createElement('style');
-  style.textContent = `.art-benchmark{position:fixed;inset:0;background:#172a3b;color:#ddd8c7}.art-benchmark canvas{width:100%;height:100%;display:block}.art-benchmark header{position:absolute;left:30px;top:24px;display:flex;gap:30px;align-items:center;font-size:11px;letter-spacing:.19em}.art-benchmark header a{font-family:'Cormorant Garamond',serif;font-size:23px;color:#e1d8bb;text-decoration:none}.art-benchmark header span{color:#a2b5bd}.art-benchmark aside{position:absolute;right:24px;top:24px;width:180px;display:grid;gap:12px;padding:17px;background:#0c141bda;border:1px solid #b1a27b40;font-size:11px}.art-benchmark label{display:grid;gap:5px}.art-benchmark select,.art-benchmark button{background:#18252c;color:#ded8c9;border:1px solid #89958c55;padding:7px;font:inherit}.art-benchmark input[type=checkbox]{width:auto}.art-benchmark footer{position:absolute;bottom:20px;left:30px;right:30px;display:flex;justify-content:space-between;gap:20px;font-size:10px;letter-spacing:.1em;color:#a7b5ba}.art-benchmark output{font-size:10px;color:#a9beb9}@media(max-width:600px){.art-benchmark aside{width:132px;right:10px;top:64px;gap:7px;padding:10px}.art-benchmark header{left:15px;gap:12px}.art-benchmark header span{font-size:8px}.art-benchmark footer{left:15px}.art-benchmark footer>span:nth-child(2){display:none}}`;
+  style.textContent = `.art-benchmark{position:fixed;inset:0;background:#172a3b;color:#ddd8c7}.art-benchmark canvas{width:100%;height:100%;display:block}.art-benchmark header{position:absolute;left:30px;top:24px;display:flex;gap:30px;align-items:center;font-size:11px;letter-spacing:.19em}.art-benchmark header a{font-family:'Cormorant Garamond',serif;font-size:23px;color:#e1d8bb;text-decoration:none}.art-benchmark header span{color:#a2b5bd}.art-benchmark aside{position:absolute;right:24px;top:24px;width:180px;max-height:calc(100vh - 100px);overflow:auto;display:grid;gap:12px;padding:17px;background:#0c141bda;border:1px solid #b1a27b40;font-size:11px}.art-benchmark label{display:grid;gap:5px}.art-benchmark select,.art-benchmark button{background:#18252c;color:#ded8c9;border:1px solid #89958c55;padding:7px;font:inherit}.art-benchmark input[type=checkbox]{width:auto}.art-benchmark footer{position:absolute;bottom:20px;left:30px;right:30px;display:flex;justify-content:space-between;gap:20px;font-size:10px;letter-spacing:.1em;color:#a7b5ba}.art-benchmark output{font-size:10px;color:#a9beb9}@media(max-width:600px){.art-benchmark aside{width:132px;right:10px;top:64px;gap:7px;padding:10px}.art-benchmark header{left:15px;gap:12px}.art-benchmark header span{font-size:8px}.art-benchmark footer{left:15px}.art-benchmark footer>span:nth-child(2){display:none}}`;
   document.head.append(style);
   const canvas = app.querySelector('canvas')!;
   const renderer = new T.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
@@ -44,7 +50,8 @@ export async function startBenchmark() {
   scene.environmentIntensity = 0.3;
   environment.dispose();
   pmrem.dispose();
-  scene.add(new T.HemisphereLight('#b0c9e0', '#13141c', 0.7));
+  const ambient = new T.HemisphereLight();
+  scene.add(ambient);
   const moon = new T.DirectionalLight('#acc8e2', 1.4);
   moon.position.set(-8, 18, 3);
   moon.castShadow = true;
@@ -52,6 +59,12 @@ export async function startBenchmark() {
   Object.assign(moon.shadow.camera, { left: -20, right: 20, top: 20, bottom: -20, far: 80 });
   moon.shadow.normalBias = 0.04;
   scene.add(moon);
+  const rim = new T.PointLight('#9ebce0', 6, 8, 1.4);
+  rim.position.set(0, 3, 2.5);
+  scene.add(rim);
+  const inspection = new T.DirectionalLight('#e5edf2', 2);
+  inspection.position.set(3, 6, 8);
+  scene.add(inspection);
   const assets = new AssetManager(
     'imported',
     !['low', 'medium'].includes(params.get('quality') ?? ''),
@@ -72,6 +85,7 @@ export async function startBenchmark() {
   scene.add(stage, compare, study);
   const dummy = new T.Object3D();
   const placements = new Map<string, T.Matrix4[]>();
+  const distantPlacements = new Map<string, T.Matrix4[]>();
   const place = (
     id: string,
     x: number,
@@ -86,9 +100,10 @@ export async function startBenchmark() {
     dummy.scale.set(sx, sy, sz);
     dummy.rotation.set(0, rotation, 0);
     dummy.updateMatrix();
-    const list = placements.get(id) ?? [];
+    const target = z < -10 ? distantPlacements : placements;
+    const list = target.get(id) ?? [];
     list.push(dummy.matrix.clone());
-    placements.set(id, list);
+    target.set(id, list);
   };
   // A continuous floor and exposed bridge, with silhouettes concentrated at the rear.
   for (let x = -6; x <= 6; x++)
@@ -97,6 +112,14 @@ export async function startBenchmark() {
   for (let x = -1; x <= 1; x++) for (let z = 5; z <= 17; z++) place('ruins_floor_a', x, 0, z);
   for (let x = -3; x <= 3; x++) for (let z = 18; z <= 22; z++) place('ruins_floor_b', x, 0, z);
   place('ruins_altar', 0, 0, 20);
+  // A lower cloister gives the chasm a middle distance between route and skyline.
+  for (let i = -4; i <= 4; i++) {
+    const x = i * 4;
+    place('ruins_bridge', x, -5, -19, 1, 1, 1.34, Math.PI / 2);
+    place('ruins_arch_a', x, -5, -19, 1.32, 1.32, 1.1);
+    place('ruins_deep_support', x - 1.9, -5, -19, 1.1, 1, 1.1);
+    if (i % 2 === 0) place('ruins_column_a', x - 1.9, -5, -19, 0.8, 2.4, 0.8);
+  }
   for (const side of [-1, 1]) {
     for (const z of [-4, 3, 9, 15, 19])
       place('ruins_deep_support', side * (z < 5 ? 5.5 : 1), 0, z, 1, 1, 1);
@@ -121,6 +144,7 @@ export async function startBenchmark() {
     place('ruins_rubble', Math.sin(i * 43) * 5.3, 0, Math.cos(i * 19) * 3.8, 0.6, 0.6, 0.6, i);
   const flames: T.Mesh[] = [];
   const lights: T.PointLight[] = [];
+  const halos: T.Sprite[] = [];
   for (const [x, z] of [
     [-4, -2],
     [4, -2],
@@ -155,21 +179,132 @@ export async function startBenchmark() {
     halo.position.copy(flame.position);
     halo.scale.set(2.2, 2.2, 1);
     stage.add(halo);
+    halos.push(halo);
   }
   const lod = new T.LOD();
-  stage.add(lod);
-  for (let level = 0; level < 3; level++) {
-    const group = new T.Group();
-    for (const [id, matrices] of placements) {
-      group.add(...assets.instanceBatches(id, level, matrices));
+  const skyline = new T.Group(),
+    biomeProps = new T.Group();
+  stage.add(lod, skyline, biomeProps);
+  const region = app.querySelector<HTMLSelectElement>('#art-biome')!;
+  let biomeRequest = 0;
+  async function updateBiome() {
+    const request = ++biomeRequest,
+      biome = Number(region.value);
+    status.value = `Loading ${BIOME_LIGHTING[biome].name}…`;
+    await assets.preloadBiome(biome);
+    if (request !== biomeRequest) return;
+    const prefix = ['ruins', 'shrine', 'fungal', 'frozen', 'foundry'][biome];
+    if (!assets.has(prefix + '_floor_a')) {
+      status.value = 'Region pack unavailable';
+      return;
     }
-    lod.addLevel(group, level === 0 ? 0 : level === 1 ? 34 : 65);
+    for (const group of [lod, skyline]) {
+      group.traverse((obj) => {
+        if (obj instanceof T.InstancedMesh) obj.dispose();
+      });
+      group.clear();
+    }
+    lod.levels.length = 0;
+    biomeProps.traverse((obj) => {
+      if (obj instanceof T.Mesh && obj.userData.shaderWater) {
+        obj.geometry.dispose();
+        (obj.material as T.Material).dispose();
+      }
+    });
+    biomeProps.clear();
+    const alias = (id: string) => id.replace(/^ruins_/, prefix + '_');
+    for (const [id, matrices] of distantPlacements)
+      skyline.add(...assets.instanceBatches(alias(id), 2, matrices));
+    for (let level = 0; level < 3; level++) {
+      const group = new T.Group();
+      for (const [id, matrices] of placements)
+        group.add(...assets.instanceBatches(alias(id), level, matrices));
+      lod.addLevel(group, level === 0 ? 0 : level === 1 ? 34 : 65);
+    }
+    const props: Record<number, string[]> = {
+      1: ['lantern'],
+      2: ['growth', 'root_cluster'],
+      3: ['snowbank', 'ice_shards'],
+      4: ['furnace', 'gear', 'chain'],
+    };
+    (props[biome] ?? []).forEach((id, i) => {
+      const prop = assets.instantiate(prefix + '_' + id);
+      if (prop) {
+        prop.position.set(-3 + i * 2.2, 0, -1.8);
+        biomeProps.add(prop);
+      }
+    });
+    if (biome === 1)
+      biomeProps.add(
+        waterSurface(
+          new T.PlaneGeometry(4, 3).rotateX(-Math.PI / 2).translate(0, 0.035, 2),
+          materials,
+        ),
+      );
+    const profile = BIOME_LIGHTING[biome];
+    ambient.color.set(profile.sky);
+    ambient.groundColor.set(profile.ground);
+    ambient.intensity = profile.ambient;
+    moon.color.set(profile.moon);
+    moon.intensity = profile.sun;
+    rim.color.set(profile.rim);
+    scene.environmentIntensity = profile.environment;
+    renderer.toneMappingExposure = profile.exposure;
+    (scene.background as T.Texture).dispose();
+    scene.background = voidBackground(biome);
+    scene.fog = new T.FogExp2(FOG_COLORS[biome], profile.fog);
+    assets.fogColor.value.set(FOG_COLORS[biome]);
+    lights.forEach((l) => {
+      l.color.set(profile.torch);
+      l.intensity = profile.power;
+    });
+    flames.forEach((f) =>
+      (f.material as T.MeshBasicMaterial).color.set(profile.torch).multiplyScalar(3),
+    );
+    halos.forEach((h) => h.material.color.set(profile.torch));
+    app.querySelector('header span')!.textContent = profile.name.toUpperCase() + ' · ART BENCHMARK';
+    app.querySelector('footer span')!.textContent = profile.name.toUpperCase();
+    status.value = `${Object.keys(assets.manifest!.assets).length} assets · Blender 4.5.15 · loaded`;
   }
-  const player = new Actor(materials, 'player-sword', true, assets),
+  region.addEventListener('change', () => {
+    void updateBiome()
+      .then(() => {
+        appliedQuality = '';
+      })
+      .catch((error) => {
+        status.value = String(error);
+      });
+  });
+  region.value = /^[0-4]$/.test(params.get('biome') ?? '') ? params.get('biome')! : '0';
+  await updateBiome();
+  let player = new Actor(materials, 'player-sword', true, assets),
     enemy = new Actor(materials, 'shield', false, assets);
   player.root.position.set(-1.1, 0, 1);
   enemy.root.position.set(1.1, 0, 0.1);
   stage.add(player.root, enemy.root);
+  const pilgrim = app.querySelector<HTMLSelectElement>('#art-player')!;
+  const opponent = app.querySelector<HTMLSelectElement>('#art-enemy')!;
+  opponent.value = 'shield';
+  pilgrim.addEventListener('change', () => {
+    player.dispose();
+    player.root.removeFromParent();
+    player = new Actor(materials, 'player-' + pilgrim.value, true, assets);
+    player.root.position.set(-1.1, 0, 1);
+    stage.add(player.root);
+  });
+  opponent.addEventListener('change', () => {
+    enemy.dispose();
+    enemy.root.removeFromParent();
+    enemy = new Actor(materials, opponent.value, false, assets);
+    enemy.root.position.set(1.1, 0, 0.1);
+    enemy.root.scale.setScalar(opponent.value === 'boss' ? 1.7 : 1);
+    stage.add(enemy.root);
+    if (opponent.value === 'boss') {
+      camera.position.set(-6, 4, 9);
+      controls.target.set(0, 1.8, 0.4);
+      controls.update();
+    }
+  });
   const old = new Actor(materials, 'player-sword', true);
   old.root.position.set(-2, 0, 0);
   compare.add(old.root);
@@ -206,8 +341,16 @@ export async function startBenchmark() {
     'heavy_cloth',
     'worn_leather',
   ].entries()) {
-    const ball = new T.Mesh(new T.SphereGeometry(0.65, 48, 32), assets.materials.get(name));
-    ball.position.set(((i % 4) - 1.5) * 1.6, i < 4 ? 1.3 : -0.3, 0);
+    const geometry = new T.SphereGeometry(0.65, 48, 32);
+    geometry.setAttribute(
+      'color',
+      new T.Float32BufferAttribute(
+        new Float32Array(geometry.attributes.position.count * 3).fill(1),
+        3,
+      ),
+    );
+    const ball = new T.Mesh(geometry, assets.materials.get(name));
+    ball.position.set(((i % 3) - 1) * 1.5, 2.2 - Math.floor(i / 3) * 1.5, 0);
     study.add(ball);
   }
   const clock = { value: 0 };
@@ -237,6 +380,7 @@ export async function startBenchmark() {
     stage.visible = !['comparison', 'materials'].includes(view.value);
     compare.visible = view.value === 'comparison';
     study.visible = view.value === 'materials';
+    inspection.visible = study.visible || compare.visible;
     lights.forEach((l) => (l.visible = stage.visible));
   }
   view.value =
@@ -277,6 +421,7 @@ export async function startBenchmark() {
     last = now;
     if (motion.checked && !matchMedia('(prefers-reduced-motion: reduce)').matches)
       clock.value += dt;
+    materials.time.value = clock.value;
     if (appliedQuality !== quality.value) {
       appliedQuality = quality.value;
       renderer.setPixelRatio(
@@ -312,11 +457,18 @@ export async function startBenchmark() {
       clock.value,
       false,
       view.value === 'duel' ? 1 : 0,
-      'sword',
+      pilgrim.value,
       options,
     );
     enemy.animate(
-      { ...entity, facing: Math.PI - 0.5 },
+      {
+        ...entity,
+        facing: Math.PI - 0.5,
+        phase:
+          opponent.value === 'boss' && app.querySelector<HTMLInputElement>('#art-phase')!.checked
+            ? 2
+            : 1,
+      },
       clock.value,
       clock.value,
       false,
