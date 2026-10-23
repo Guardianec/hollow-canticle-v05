@@ -5,6 +5,8 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { BODY_PROFILES } from './profiles';
 import { animateCharacter, JOINTS } from './animation';
 import { characterFor } from '../characters';
+import { AssetManager, characterAsset } from './assets';
+import { ImportedActor } from './imported-actor';
 
 export class Actor {
   readonly root = new T.Group();
@@ -38,10 +40,13 @@ export class Actor {
   private steel: T.MeshStandardMaterial;
   private outline?: T.ShaderMaterial;
   private outlineStrength = -1;
+  private imported?: ImportedActor;
+  private importedLevel = -1;
   constructor(
     private materials: Materials,
     readonly id: string,
     readonly player: boolean,
+    private assets?: AssetManager,
   ) {
     const m = materials;
     const profile = (this.profile = BODY_PROFILES[id] ?? BODY_PROFILES.warden);
@@ -525,6 +530,11 @@ export class Actor {
     }
   }
   setOutline(strength: number): void {
+    if (this.imported) {
+      this.outlineStrength = strength;
+      this.imported.setOutline(strength);
+      return;
+    }
     if (this.outlineStrength === strength) return;
     this.outlineStrength = strength;
     if (strength > 0) this.createOutline();
@@ -755,6 +765,21 @@ export class Actor {
     this.cape.rotation.z = Math.max(-0.25, Math.min(0.25, -this.turning * 1.2));
     positions.needsUpdate = true;
     if (duel > 0.1) this.cape.geometry.computeVertexNormals();
+    const asset = characterAsset(this.id);
+    if (asset && this.assets?.has(asset)) {
+      const level = duel > 0.45 && this.assets.highDetail ? 0 : 1;
+      if (!this.imported || this.importedLevel !== level) {
+        this.imported?.dispose();
+        this.root.traverse((obj) => {
+          if (obj instanceof T.Mesh && obj !== this.contact) obj.visible = false;
+        });
+        this.imported = new ImportedActor(this.assets, asset, level);
+        this.imported.setOutline(this.outlineStrength > 0 ? this.outlineStrength : 0);
+        this.root.add(this.imported.root);
+        this.importedLevel = level;
+      }
+      this.imported.animate(pose, options?.reducedMotion ? 0 : clock);
+    }
     return sample;
   }
 
@@ -784,6 +809,7 @@ export class Actor {
     this.leftForearm.quaternion.setFromUnitVectors(new T.Vector3(0, -1, 0), fore.normalize());
   }
   dispose(): void {
+    this.imported?.dispose();
     const shared = Object.values(this.materials.items),
       owned = new Set<T.Material>();
     this.root.traverse((obj) => {

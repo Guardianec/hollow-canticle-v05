@@ -47,7 +47,7 @@ export class Interface {
   constructor(private world: World) {
     document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
       <header class="topbar">
-        <a class="brand" href="#" aria-label="Hollow Canticle main menu">${sigil}<span>HOLLOW CANTICLE</span><span class="version">v0.4.0</span></a>
+        <a class="brand" href="#" aria-label="Hollow Canticle main menu">${sigil}<span>HOLLOW CANTICLE</span><span class="version">v0.5 art preview</span></a>
         <span class="header-caption">A VOW IN THE DARK</span>
         <div class="utility"><button data-action="sound" aria-label="Mute audio" title="Toggle audio">${icon('sound')}</button><span></span><button data-action="fullscreen" aria-label="Fullscreen" title="Fullscreen">${icon('expand')}</button><button data-action="pause" aria-label="Pause or open settings" title="Pause · Esc">${icon('pause')}</button></div>
       </header>

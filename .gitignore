@@ -4,3 +4,5 @@ coverage/
 *.local
 *.log
 .DS_Store
+.cache/
+tools/blender/__pycache__/

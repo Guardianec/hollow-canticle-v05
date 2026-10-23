@@ -14,12 +14,21 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { ArsenalArt } from './arsenal';
 import { directionalFocus } from '../combat';
+import { AssetManager } from './assets';
+import { heightFog, FOG_COLORS, chasmMist, voidBackground } from './atmosphere';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 export class Renderer {
   readonly webgl: T.WebGLRenderer;
   readonly director: CameraDirector;
   private scene = new T.Scene();
   private materials = new Materials();
+  private assets: AssetManager;
+  private assetRevision = 0;
+  private appliedQuality?: boolean;
+  private mist: T.Mesh[] = [];
+  private backgrounds = FOG_COLORS.map((_, i) => voidBackground(i));
+  private environment: T.WebGLRenderTarget;
   private art?: DungeonArt;
   private floor?: Floor;
   private player: Actor;
@@ -51,6 +60,11 @@ export class Renderer {
     private parent: HTMLElement,
     private world: World,
   ) {
+    this.assets = new AssetManager(
+      undefined,
+      world.save.settings.quality,
+      this.materials.playerPosition,
+    );
     this.webgl = new T.WebGLRenderer({
       antialias: true,
       alpha: false,
@@ -64,9 +78,18 @@ export class Renderer {
     this.webgl.outputColorSpace = T.SRGBColorSpace;
     this.webgl.domElement.className = 'dungeon-webgl';
     parent.append(this.webgl.domElement);
-    this.scene.background = new T.Color('#071622');
-    this.scene.fog = new T.FogExp2('#102d40', 0.022);
-    this.scene.add(new T.HemisphereLight('#a4c7df', '#18232b', 0.8));
+    this.scene.background = this.backgrounds[0];
+    const pmrem = new T.PMREMGenerator(this.webgl),
+      room = new RoomEnvironment();
+    this.environment = pmrem.fromScene(room, 0.04);
+    this.scene.environment = this.environment.texture;
+    this.scene.environmentIntensity = 0.3;
+    room.dispose();
+    pmrem.dispose();
+    this.scene.fog = new T.FogExp2(FOG_COLORS[0], 0.018);
+    this.scene.add(new T.HemisphereLight('#a4c7df', '#10151c', 0.65));
+    for (const material of Object.values(this.materials.items))
+      heightFog(material, this.assets.walkingHeight, this.assets.fogColor);
     this.sun.position.set(15, 35, 10);
     this.sun.castShadow = true;
     this.sun.shadow.mapSize.set(2048, 2048);
@@ -87,7 +110,7 @@ export class Renderer {
       this.lights.push(light);
     }
     this.director = new CameraDirector(world);
-    this.player = new Actor(this.materials, 'player', true);
+    this.player = new Actor(this.materials, 'player', true, this.assets);
     this.arsenal = new ArsenalArt(world, parent);
     this.scene.add(this.arsenal.root);
     this.scene.add(this.player.root);
@@ -122,6 +145,15 @@ export class Renderer {
     );
     this.dust.frustumCulled = false;
     this.scene.add(this.dust);
+    for (let i = 0; i < 3; i++) {
+      const plane = new T.Mesh(
+        new T.PlaneGeometry(130, 130),
+        chasmMist(this.materials.time, this.assets.fogColor.value),
+      );
+      plane.rotation.x = -Math.PI / 2;
+      this.scene.add(plane);
+      this.mist.push(plane);
+    }
     for (let i = 0; i < 9; i++) {
       const sprite = new T.Sprite(
         new T.SpriteMaterial({
@@ -158,10 +190,17 @@ export class Renderer {
   }
   draw(dt: number): void {
     const w = this.world;
+    void this.assets
+      .setTextureQuality(w.save.settings.quality)
+      .catch((error) => console.warn('Texture quality change failed', error));
+    if (this.assets.revision !== this.assetRevision) {
+      this.assetRevision = this.assets.revision;
+      this.floor = undefined;
+    }
     if (this.player.id !== `player-${w.weapon.id}`) {
       this.scene.remove(this.player.root);
       this.player.dispose();
-      this.player = new Actor(this.materials, `player-${w.weapon.id}`, true);
+      this.player = new Actor(this.materials, `player-${w.weapon.id}`, true, this.assets);
       this.scene.add(this.player.root);
     }
     this.player.setOutline(0);
@@ -184,6 +223,10 @@ export class Renderer {
           sharedMaterial = Object.values(this.materials.items);
         this.art.group.traverse((o) => {
           if (o instanceof T.Mesh) {
+            if (o.userData.imported) {
+              if (o instanceof T.InstancedMesh) o.dispose();
+              return;
+            }
             if (!sharedGeometry.includes(o.geometry)) o.geometry.dispose();
             const material = o.material as T.Material;
             if (!sharedMaterial.includes(material as T.MeshStandardMaterial)) material.dispose();
@@ -192,11 +235,21 @@ export class Renderer {
         });
       }
       this.materials.items.stone.roughness = w.floor.biome === 1 ? 0.57 : 0.94;
-      this.art = buildDungeon(w.floor, this.materials);
+      void this.assets.preloadBiome(w.floor.biome);
+      this.art = buildDungeon(w.floor, this.materials, this.assets);
       this.scene.add(this.art.group);
       this.floor = w.floor;
       this.travel = 1;
       this.travelFrom = undefined;
+    }
+    if (changedFloor || this.appliedQuality !== w.save.settings.quality) {
+      this.appliedQuality = w.save.settings.quality;
+      this.art?.group.traverse((obj) => {
+        if (obj instanceof T.LOD && obj.levels.length === 3) {
+          obj.levels[1].distance = w.save.settings.quality ? 32 : 16;
+          obj.levels[2].distance = w.save.settings.quality ? 65 : 40;
+        }
+      });
     }
     if (this.revision !== w.roomRevision) {
       if (!changedFloor && this.revision >= 0 && this.previousPlayer.lengthSq() > 0) {
@@ -210,7 +263,7 @@ export class Renderer {
       }
       this.actors.clear();
       for (const e of w.enemies) {
-        const actor = new Actor(this.materials, e.def.id, false);
+        const actor = new Actor(this.materials, e.def.id, false, this.assets);
         actor.root.scale.setScalar(e.def.scale);
         this.actors.set(e.id, actor);
         this.scene.add(actor.root);
@@ -224,7 +277,15 @@ export class Renderer {
     this.previousPlayer.copy(playerPosition);
     this.player.root.position.copy(playerPosition);
     this.materials.playerPosition.copy(playerPosition);
-    this.materials.time.value = w.visualTime;
+    this.materials.time.value = w.save.settings.reducedMotion ? 0 : w.visualTime;
+    this.assets.walkingHeight.value = playerPosition.y;
+    this.assets.fogColor.value.set(FOG_COLORS[w.floor.biome]);
+    this.scene.background = this.backgrounds[w.floor.biome];
+    (this.scene.fog as T.FogExp2).color.copy(this.assets.fogColor.value);
+    this.mist.forEach((plane, i) => {
+      plane.position.set(playerPosition.x, playerPosition.y - 7 - i * 5, playerPosition.z);
+      plane.visible = w.save.settings.quality || i === 2;
+    });
     this.director.update(dt, playerPosition);
     const duel = this.director.duel;
     const walking =
@@ -261,7 +322,7 @@ export class Renderer {
           this.scene.remove(actor.root);
           actor.dispose();
         }
-        actor = new Actor(this.materials, e.def.id, false);
+        actor = new Actor(this.materials, e.def.id, false, this.assets);
         actor.root.scale.setScalar(e.def.scale);
         this.actors.set(e.id, actor);
         this.scene.add(actor.root);
@@ -413,6 +474,13 @@ export class Renderer {
     for (const actor of this.actors.values()) actor.dispose();
     this.webgl.dispose();
     this.materials.dispose();
+    this.assets.dispose();
+    this.environment.dispose();
+    this.backgrounds.forEach((texture) => texture.dispose());
+    this.mist.forEach((mesh) => {
+      mesh.geometry.dispose();
+      (mesh.material as T.Material).dispose();
+    });
     this.hud.root.remove();
     this.veil.remove();
     this.canvas.remove();

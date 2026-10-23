@@ -1,8 +1,43 @@
-# Hollow Canticle — v0.4.0 review build
+# Hollow Canticle — v0.5 Ruins benchmark
 
 A procedural melee action roguelike about reading a blade, breaking a guard, and keeping an oath.
 
-v0.4 builds on accepted v0.3 commit `17dd5e932f48609993fee133185265fe0e701400`.
+The v0.5 visual rebuild starts from accepted v0.4 commit
+`8c83c8c4baa3476aaa9caa7b37bb9debfe13efd4`. This branch is an **art benchmark,
+not the completed five-biome v0.5 release**. The Ruins quality gate remains open.
+
+![Blender-authored Ruins benchmark](docs/screenshots/v05/ruins-exploration.jpg)
+
+Open `?benchmark` for the fixed Ruins scene, close duel, bridge/void test, material study
+and procedural/Blender comparison. Camera orbit, pose sampling, screenshot export and
+High/Medium/Low rendering controls are available there. Open `?visual=fallback` to play
+with the original procedural presentation. Normal gameplay uses the imported Ruins pack
+when it loads and retains the deterministic v0.4 simulation.
+
+The candidate includes 23 Blender-authored environment modules, two skinned character
+assets (Oathkeeper and Warden), three LODs, seven shared PBR families, geometry-baked
+occlusion, world-space height fog and chasm mist. Other characters and four biomes
+still use procedural art. [Visual review and remaining work](docs/VISUAL_REVIEW-v0.5.md).
+
+### Rebuild assets
+
+Blender 4.5 LTS and free npm tooling are the only content tools. Put `blender` on PATH,
+or set `BLENDER` to its executable. Normal development uses committed GLBs and maps;
+Blender is only needed to regenerate them.
+
+```sh
+npm run assets:build
+npm run assets:validate
+```
+
+`tools/blender/` generates original geometry, UVs, semantic rigs, LODs and baked maps.
+`tools/optimize-assets.mjs` generates 1024px/512px WebP maps from lossless bake sources
+in the ignored `.cache/bakes/v05/` directory. Pass `npm run assets:build -- --rebake`
+to refresh cached material sources. The full-resolution runtime art download is about
+12.7 MiB before HTTP compression; see the review for exact measurements and memory.
+References are preserved in `docs/references/v05/` and never used as game textures.
+
+The v0.4 gameplay foundation is preserved.
 Four Pilgrims bring different melee chains and rechargeable ranged offerings. Archers and
 Acolytes add physical projectiles that can be deflected or perfectly reflected. Consumables,
 timed effects and seeded room loot vary the journey before relic combinations develop.

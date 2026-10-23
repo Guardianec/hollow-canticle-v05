@@ -1,0 +1,2594 @@
+You are continuing development of **Hollow Canticle**.
+
+This release is:
+
+# Hollow Canticle v0.5.0 — Blender-Only Visual Rebuild
+
+This is NOT primarily a gameplay release.
+
+The current v0.4.0 gameplay foundation is strong enough that the largest remaining weakness is now unmistakably **visual fidelity**.
+
+The game currently has a recognizable style, but it still looks too much like a procedurally assembled low-poly/block game.
+
+The target is significantly closer to the supplied reference art:
+
+- seamless architecture;
+- sculpted environment silhouettes;
+- believable materials;
+- detailed but stylized characters;
+- strong fog;
+- deep voids;
+- monumental spaces;
+- sophisticated lighting;
+- far less obvious cube construction;
+- far greater texture variety;
+- visual cohesion across procedural rooms.
+
+The goal is NOT photorealism.
+
+The goal is:
+
+> **high-quality stylized dark-fantasy indie visuals**
+
+while retaining:
+
+- browser deployment;
+- Three.js;
+- procedural generation;
+- deterministic gameplay;
+- good performance.
+
+---
+
+# 1. ABSOLUTE TOOL CONSTRAINT
+
+This project must use **FREE tools only**.
+
+The only dedicated external 3D content tool available is:
+
+# Blender
+
+Assume:
+
+```bash
+blender --version
+```
+
+works locally.
+
+Do NOT depend on:
+
+- Meshy;
+- paid AI 3D generators;
+- Substance Painter;
+- Substance Designer;
+- Adobe software;
+- paid texture libraries;
+- paid asset stores;
+- paid plugins;
+- commercial APIs.
+
+Do NOT require the developer to purchase anything.
+
+Everything must be achievable using:
+
+- Blender;
+- Blender Python API (`bpy`);
+- Three.js;
+- open-source npm tooling;
+- code;
+- original reference imagery supplied with the project;
+- freely usable procedural generation.
+
+---
+
+# 2. GIT SAFETY
+
+The deployed v0.4.0 must remain recoverable.
+
+First inspect repository history and identify the accepted v0.4.0 commit.
+
+Run existing validation.
+
+Then create:
+
+```text
+codex/v0.5.0-blender-visual-overhaul
+```
+
+from the accepted v0.4 state.
+
+Push it immediately.
+
+All work happens there.
+
+Do NOT merge to `main`.
+
+Do NOT rewrite v0.4 history.
+
+At the end, push the completed review branch for manual inspection.
+
+---
+
+# 3. REFERENCE IMAGE PACK
+
+A set of custom reference images will be supplied specifically for this release.
+
+They should live under something like:
+
+```text
+docs/references/v05/
+```
+
+Expected categories:
+
+```text
+00-master-visual-direction.png
+
+characters/
+    01-player-oathkeeper.png
+    02-player-moth.png
+    03-player-lancer.png
+    04-player-bellbearer.png
+    05-enemy-warden.png
+    06-enemy-duelist.png
+    07-enemy-archer.png
+    08-enemy-monk.png
+    09-enemy-brute.png
+    10-boss-saint.png
+
+architecture/
+    01-ruins-kit.png
+    02-shrine-kit.png
+    03-fungal-kit.png
+    04-frozen-kit.png
+    05-foundry-kit.png
+    06-chasm-architecture.png
+    07-bridges-and-stairs.png
+    08-landmarks.png
+
+materials/
+    01-stone-materials.png
+    02-wet-stone-and-water.png
+    03-metal-materials.png
+    04-wood-cloth-leather.png
+    05-fungal-organics.png
+    06-ice-snow.png
+    07-foundry-surfaces.png
+
+atmosphere/
+    01-void-fog.png
+    02-depth-fog.png
+    03-torch-lighting.png
+    04-fungal-lighting.png
+    05-foundry-lighting.png
+
+world/
+    01-ruins-exploration.png
+    02-flooded-shrine.png
+    03-fungal-depths.png
+    04-frozen-depths.png
+    05-ember-foundry.png
+
+combat/
+    01-close-duel.png
+    02-perfect-parry.png
+    03-finisher.png
+```
+
+Actual filenames may vary.
+
+You MUST inspect all supplied reference images before beginning the major modeling pass.
+
+Do not use them as textures.
+
+Do not literally trace pixels.
+
+Treat them as:
+
+- shape language;
+- material direction;
+- silhouette direction;
+- lighting reference;
+- color reference;
+- composition reference;
+- character design reference;
+- architectural proportion reference.
+
+---
+
+# 4. REFERENCE ANALYSIS DOCUMENT
+
+Before creating assets, produce:
+
+```text
+docs/V05_ART_DIRECTION.md
+```
+
+Analyze the supplied images.
+
+Extract clear rules.
+
+For example:
+
+## Character rules
+
+- proportion style;
+- armor layering;
+- cloth amount;
+- weapon scale;
+- silhouette;
+- face abstraction;
+- helmet shapes.
+
+## Environment rules
+
+- arch dimensions;
+- stone scale;
+- platform thickness;
+- amount of damage;
+- architectural curvature;
+- verticality.
+
+## Material rules
+
+- roughness ranges;
+- dominant hue;
+- edge wear;
+- moss frequency;
+- metal brightness.
+
+## Lighting rules
+
+- ambient color;
+- torch color;
+- shadow depth;
+- fog values;
+- bloom strength.
+
+## Composition rules
+
+- playable area contrast;
+- darkness outside navigation;
+- foreground occlusion;
+- distant architecture.
+
+This document should become a practical production guide.
+
+---
+
+# 5. CURRENT SYSTEM LIMITATION
+
+The current game builds most environment geometry from primitives such as:
+
+- boxes;
+- rounded boxes;
+- cylinders;
+- cones;
+- low-poly spheres.
+
+This was a successful prototype strategy.
+
+But v0.5 must deliberately move beyond it.
+
+Do NOT attempt to achieve the reference by writing another 2,000 lines of:
+
+```ts
+box(...)
+cylinder(...)
+sphere(...)
+```
+
+That is specifically what this release is replacing.
+
+---
+
+# 6. THREE.JS REMAINS
+
+Do NOT change engine.
+
+Three.js remains the renderer.
+
+The authoritative simulation remains 2D.
+
+Imported Blender geometry is purely presentation.
+
+Keep:
+
+- deterministic simulation;
+- dungeon generation;
+- combat logic;
+- procedural encounter generation;
+- camera system;
+- ranged combat;
+- items;
+- relics;
+- v0.4 gameplay.
+
+---
+
+# 7. BLENDER PIPELINE
+
+Create a real Blender asset workflow.
+
+Add:
+
+```text
+tools/blender/
+```
+
+Possible scripts:
+
+```text
+bootstrap.py
+common.py
+
+architecture/
+    ruins.py
+    shrine.py
+    fungal.py
+    frozen.py
+    foundry.py
+
+characters/
+    base_humanoid.py
+    oathkeeper.py
+    moth.py
+    lancer.py
+    bellbearer.py
+    warden.py
+    duelist.py
+    archer.py
+    monk.py
+    brute.py
+    saint.py
+
+materials/
+    stone.py
+    metals.py
+    cloth.py
+    wet.py
+    fungal.py
+    ice.py
+
+pipeline/
+    uv.py
+    lod.py
+    bake.py
+    export.py
+    validate.py
+```
+
+Exact structure is your decision.
+
+The important requirement:
+
+asset generation must be reproducible.
+
+---
+
+# 8. HEADLESS BLENDER
+
+Codex should actively use Blender from the command line.
+
+Example:
+
+```bash
+blender --background --python tools/blender/build_ruins.py
+```
+
+and:
+
+```bash
+blender --background --python tools/blender/export_runtime_assets.py
+```
+
+Do NOT expect the human developer to manually model and export dozens of objects.
+
+Automate as much as reasonably possible.
+
+---
+
+# 9. PROCEDURAL MODELING IN BLENDER
+
+Blender Python should generate sophisticated assets using real mesh operations.
+
+Use:
+
+- bevels;
+- subdivision where useful;
+- booleans;
+- extrusions;
+- inset faces;
+- displacement;
+- curves;
+- geometry nodes if useful;
+- sculpt-like procedural deformation;
+- remesh;
+- decimation;
+- smooth shading;
+- weighted normals.
+
+Do NOT simply recreate the Three.js box system inside Blender.
+
+---
+
+# 10. SHAPE LANGUAGE
+
+Use the reference images.
+
+The environment should move toward:
+
+- rounded arches;
+- chipped corners;
+- eroded surfaces;
+- asymmetrical ruins;
+- leaning stone;
+- partially collapsed structures;
+- curved forms;
+- sculpted pillars;
+- irregular silhouettes.
+
+Avoid obvious primitive geometry.
+
+---
+
+# 11. RUINS KIT FIRST
+
+Do NOT rebuild all five biomes simultaneously.
+
+The first milestone is a high-quality **Ruins benchmark kit**.
+
+Create:
+
+- floor slabs;
+- floor variations;
+- broken slabs;
+- large cracked slabs;
+- walls;
+- broken walls;
+- tall walls;
+- corners;
+- arches;
+- damaged arches;
+- massive doorway;
+- columns;
+- broken columns;
+- stairs;
+- damaged stairs;
+- balcony;
+- railings;
+- bridge;
+- broken bridge end;
+- rubble;
+- altar;
+- pedestal;
+- statues;
+- tombs;
+- ruined shrine;
+- large structural debris.
+
+At least several variants of common pieces.
+
+---
+
+# 12. ASSET QUALITY
+
+Architecture must look sculpted.
+
+Examples:
+
+A wall should not be:
+
+```text
+perfect rectangular prism
++
+texture
+```
+
+It should contain:
+
+- slight silhouette irregularity;
+- edge damage;
+- beveling;
+- erosion;
+- varied thickness;
+- believable stone breakup.
+
+Do this mostly in geometry where silhouette matters.
+
+Use normal maps for smaller detail.
+
+---
+
+# 13. MODULARITY
+
+Procedural generation remains important.
+
+Create high-quality **modular** assets.
+
+Example:
+
+```text
+ruins_wall_a
+ruins_wall_b
+ruins_wall_broken_a
+ruins_wall_broken_b
+
+ruins_arch_small_a
+ruins_arch_large_a
+ruins_arch_broken_a
+
+ruins_column_a
+ruins_column_b
+ruins_column_broken
+```
+
+Dungeon generation selects them.
+
+---
+
+# 14. CONNECTION STANDARD
+
+Define consistent modular measurements.
+
+Example conceptual units:
+
+```text
+small doorway
+large doorway
+wall segment
+wide wall segment
+stair width
+bridge width
+```
+
+Connection points must align.
+
+No obvious cracks between modules.
+
+No floating architecture.
+
+---
+
+# 15. VISUAL COLLISION SEPARATION
+
+Do NOT replace deterministic collision with imported mesh physics.
+
+Maintain:
+
+```text
+visual mesh
++
+simple navigation/collision representation
+```
+
+Complex visual wall:
+
+simple rectangular/segment collision.
+
+Detailed rubble:
+
+possibly no collision.
+
+Large statue:
+
+simple circular/box obstacle.
+
+This preserves gameplay quality.
+
+---
+
+# 16. GLTF / GLB
+
+Runtime models should be exported as:
+
+```text
+.glb
+```
+
+Use a central loader.
+
+Do not load `.blend` files in the browser.
+
+---
+
+# 17. CENTRAL ASSET MANAGER
+
+Create something conceptually like:
+
+```text
+AssetManager
+```
+
+Responsibilities:
+
+- preload GLBs;
+- cache assets;
+- clone meshes;
+- clone skinned characters;
+- manage textures;
+- handle fallbacks;
+- dispose resources;
+- load biome packs;
+- report missing assets.
+
+Do not scatter `GLTFLoader` everywhere.
+
+---
+
+# 18. FALLBACKS
+
+Keep the current procedural model system as fallback.
+
+That code is useful.
+
+Possible configuration:
+
+```text
+visualMode = imported | fallback
+```
+
+If asset fails:
+
+use existing procedural version.
+
+Debug menu may toggle both for comparison.
+
+Do NOT delete the old art pipeline immediately.
+
+---
+
+# 19. SIDE-BY-SIDE COMPARISON MODE
+
+Create a development option that allows comparing:
+
+```text
+V0.4 procedural asset
+
+vs
+
+V0.5 imported Blender asset
+```
+
+This is extremely useful.
+
+Examples:
+
+Warden old/new.
+
+Arch old/new.
+
+Column old/new.
+
+Stone floor old/new.
+
+---
+
+# 20. TEXTURE PIPELINE
+
+The game currently lacks meaningful texture variety.
+
+Build a proper PBR texture system using Blender only.
+
+No paid texture generators.
+
+Use procedural Blender nodes to create source materials.
+
+Bake texture maps.
+
+---
+
+# 21. PBR MAPS
+
+Primary materials should support:
+
+```text
+Base Color
+Normal
+Roughness
+Ambient Occlusion
+Metallic
+Emissive where relevant
+```
+
+Use proper color spaces.
+
+Do not use a base-color image as an improvised bump map everywhere.
+
+---
+
+# 22. TEXTURE RESOLUTION
+
+Default:
+
+```text
+1024x1024
+```
+
+Important hero assets:
+
+possibly:
+
+```text
+2048x2048
+```
+
+Small props:
+
+```text
+512x512
+```
+
+Do not casually use 4K.
+
+Browser download and memory matter.
+
+---
+
+# 23. STONE VARIETY
+
+The reference image pack will include several stone treatments.
+
+Implement multiple reusable stone materials.
+
+Examples:
+
+### Ancient dry stone
+
+gray/beige;
+
+high roughness;
+
+subtle cracks.
+
+### Carved stone
+
+slightly smoother;
+
+cleaner edges;
+
+engraved motifs.
+
+### Moss stone
+
+green staining;
+
+dark crevices.
+
+### Wet shrine stone
+
+dark;
+
+lower roughness;
+
+water staining.
+
+### Burnt stone
+
+soot;
+
+warmer tint;
+
+foundry damage.
+
+### Frozen stone
+
+pale;
+
+frost accumulation.
+
+These should NOT look like recolors of one texture.
+
+---
+
+# 24. MACRO + MICRO DETAIL
+
+Materials need two scales of detail.
+
+Macro:
+
+- discoloration;
+- stains;
+- moss patches;
+- cracks.
+
+Micro:
+
+- stone grain;
+- cloth weave;
+- metal scratches.
+
+Avoid visibly repeating tiny textures across huge walls.
+
+---
+
+# 25. UV VARIATION
+
+Use multiple UV transforms.
+
+Rotate and offset materials where appropriate.
+
+Create mesh variants.
+
+Use decals.
+
+Do not let rooms reveal obvious texture tiling.
+
+---
+
+# 26. DECAL SYSTEM
+
+Create optional decal textures for:
+
+- cracks;
+- dirt;
+- moss;
+- soot;
+- leaks;
+- carved symbols;
+- frost;
+- ash.
+
+Use them procedurally.
+
+Different seeds can choose different decal placement.
+
+---
+
+# 27. CHARACTERS — PHILOSOPHY
+
+Current procedural characters are charming and mechanically expressive.
+
+Do not lose their identity.
+
+But move from:
+
+> animated geometric mannequin
+
+to:
+
+> stylized fantasy character.
+
+The supplied character reference sheets will define the target.
+
+---
+
+# 28. CHARACTERS — DO NOT CHASE FACES
+
+Faces are low priority.
+
+Focus on:
+
+- silhouette;
+- armor;
+- cloth;
+- weapon;
+- posture;
+- proportions;
+- helmet;
+- shoulders;
+- cape.
+
+The camera does not require realistic facial animation.
+
+---
+
+# 29. SHARED HUMANOID BASE
+
+Create a Blender humanoid base mesh.
+
+Stylized anatomy.
+
+Not excessively detailed.
+
+Use it as a starting point for:
+
+- Oathkeeper;
+- Moth;
+- Lancer;
+- Bellbearer;
+- Warden;
+- Duelist;
+- Archer;
+- Assassin;
+- Monk.
+
+Modify proportions per archetype.
+
+---
+
+# 30. PLAYER — OATHKEEPER
+
+Use supplied reference.
+
+Create a real model with:
+
+- layered chest armor;
+- cloth underlayer;
+- asymmetrical shoulder treatment;
+- cloak;
+- belts;
+- proper boots;
+- gauntlets;
+- sword sheath if suitable;
+- detailed sword.
+
+Silhouette should remain readable at exploration scale.
+
+---
+
+# 31. PLAYER — MOTH
+
+Visual identity:
+
+lighter;
+
+narrower;
+
+cloth-heavy;
+
+asymmetrical;
+
+twin blades clearly visible.
+
+Movement silhouette should suggest speed.
+
+---
+
+# 32. PLAYER — LANCER
+
+Visual identity:
+
+long vertical lines;
+
+long coat/tabard;
+
+spear dominates silhouette;
+
+more disciplined armor.
+
+---
+
+# 33. PLAYER — BELLBEARER
+
+Visual identity:
+
+heaviest player;
+
+large shoulder mass;
+
+thicker armor;
+
+large greatblade;
+
+cloth beneath armor.
+
+Should appear powerful without looking like a giant.
+
+---
+
+# 34. ENEMY — WARDEN
+
+Create the first enemy benchmark.
+
+The Warden should look:
+
+- militaristic;
+- grounded;
+- worn;
+- disciplined;
+- dangerous.
+
+Avoid generic fantasy knight design.
+
+Use Hollow Canticle's visual language.
+
+---
+
+# 35. ENEMY SILHOUETTES
+
+Imported enemies must remain identifiable by shape.
+
+At a glance:
+
+Warden ≠ Duelist.
+
+Duelist ≠ Assassin.
+
+Archer ≠ Monk.
+
+Brute ≠ Bellbearer.
+
+Do not let better model fidelity make silhouettes more similar.
+
+---
+
+# 36. RIG
+
+Create one reusable skeleton where practical.
+
+Suggested minimum:
+
+```text
+root
+pelvis
+spine
+chest
+neck
+head
+
+upper_arm.L
+forearm.L
+hand.L
+
+upper_arm.R
+forearm.R
+hand.R
+
+thigh.L
+shin.L
+foot.L
+
+thigh.R
+shin.R
+foot.R
+```
+
+Optional:
+
+cape bones.
+
+robe bones.
+
+weapon bones.
+
+---
+
+# 37. SKINNING
+
+Use automatic weights as a starting point.
+
+Then fix obvious deformation through Blender scripting/manual-style procedural corrections where possible.
+
+Check:
+
+- shoulders;
+- elbows;
+- knees;
+- cloak;
+- weapon hands.
+
+---
+
+# 38. ANIMATION PRESERVATION
+
+v0.3/v0.4 built good animation semantics.
+
+Do NOT discard them.
+
+The animation system already understands:
+
+- slash;
+- thrust;
+- sweep;
+- smash;
+- grab;
+- feint;
+- counters;
+- finishers.
+
+Adapt these animations to imported rigs.
+
+The simulation remains authoritative.
+
+---
+
+# 39. ANIMATION RETARGETING
+
+Create an adapter from semantic animation pose to skeleton bones.
+
+If useful, export animations as glTF clips after generating them in Blender.
+
+Either is acceptable.
+
+But combat timing MUST continue to match simulation.
+
+---
+
+# 40. BETTER SKIN DEFORMATION
+
+Imported characters should finally remove:
+
+- rectangular limbs;
+- spherical shoulders;
+- block torsos.
+
+Use smooth geometry.
+
+Do not over-subdivide.
+
+Aim for stylized mid-poly.
+
+---
+
+# 41. WEAPONS
+
+Move weapons to authored Blender meshes.
+
+Create proper:
+
+- sword;
+- twin blades;
+- spear;
+- greatblade;
+- bows;
+- enemy blades;
+- boss weapon.
+
+Weapon silhouette is extremely important in close combat.
+
+---
+
+# 42. METAL MATERIALS
+
+Use several metals.
+
+Examples:
+
+worn iron;
+
+polished steel;
+
+blackened steel;
+
+bronze;
+
+ceremonial gold/brass.
+
+Use:
+
+- metallic maps;
+- roughness;
+- subtle scratches;
+- edge variation.
+
+Do not make everything equally reflective.
+
+---
+
+# 43. CLOTH
+
+Create cloth textures/materials.
+
+Examples:
+
+dark heavy cloak;
+
+monk robe;
+
+scarves;
+
+banners.
+
+Use visible weave only at close range.
+
+Keep silhouette strong.
+
+---
+
+# 44. FOG IS A MAJOR FEATURE
+
+The supplied fog/void references are mandatory visual targets.
+
+The current fog system is insufficient.
+
+The user specifically dislikes being able to see pillars terminate below the level.
+
+Fix this properly.
+
+---
+
+# 45. FOUR-LAYER ATMOSPHERE
+
+Implement atmosphere using several layers.
+
+### Layer 1 — global distance fog
+
+Keeps distant structures subdued.
+
+### Layer 2 — height fog
+
+Fog density increases below playable elevation.
+
+### Layer 3 — chasm fog
+
+Very dense low fog around voids/pits.
+
+### Layer 4 — localized atmospheric particles
+
+Mist;
+
+dust;
+
+spores;
+
+snow;
+
+ash.
+
+---
+
+# 46. HEIGHT FOG SHADER
+
+Implement world-space height fog.
+
+Conceptually:
+
+```glsl
+density increases as worldPosition.y decreases
+```
+
+Above floor:
+
+small effect.
+
+Below floor:
+
+rapid increase.
+
+Far below floor:
+
+essentially opaque.
+
+Tune per biome.
+
+---
+
+# 47. VOID SHOULD NOT HAVE A BOTTOM
+
+The player should perceive:
+
+```text
+architecture
+↓
+darkness
+↓
+fog
+↓
+nothing
+```
+
+Never:
+
+```text
+pillar
+↓
+flat bottom
+↓
+empty blue background
+```
+
+This is an explicit acceptance requirement.
+
+---
+
+# 48. EXTEND DEEP ARCHITECTURE
+
+For columns/pillars that visually descend:
+
+extend them much farther downward than necessary.
+
+Fog hides the excess.
+
+Do not model them ending just outside visible play area.
+
+---
+
+# 49. VOID BACKGROUND
+
+Below the world, use:
+
+- deep gradient;
+- dense fog;
+- subtle noise;
+- extremely faint distant silhouettes.
+
+No clearly visible ground plane.
+
+---
+
+# 50. CHASM MIST
+
+Use large slow volumetric-style mist layers.
+
+Possible implementation:
+
+- camera-facing quads;
+- shader noise;
+- layered planes;
+- sprites.
+
+Do NOT attempt expensive full volumetric raymarching unless proven performant.
+
+The illusion is enough.
+
+---
+
+# 51. FOG MOVEMENT
+
+Fog should move very slowly.
+
+Several layers at different directions/speeds.
+
+Avoid:
+
+obvious repeating sprite movement.
+
+---
+
+# 52. BIOME-SPECIFIC FOG
+
+### Ruins
+
+deep desaturated blue-gray.
+
+### Shrine
+
+blue-green wet mist.
+
+### Fungal
+
+dark purple/teal.
+
+### Frozen
+
+pale blue haze.
+
+### Foundry
+
+black/brown smoke with dim red illumination.
+
+---
+
+# 53. RUINS LIGHTING
+
+Use the reference.
+
+Desired:
+
+cold ambient environment
+
++
+
+warm torch pools.
+
+Unlit stone should remain dark.
+
+Do not illuminate the entire room uniformly.
+
+---
+
+# 54. LIGHTING PRINCIPLE
+
+Light should guide attention.
+
+Brightest objects should generally be:
+
+- player;
+- active enemy;
+- torch;
+- important architecture;
+- interactable;
+- attack VFX.
+
+Background should fall away.
+
+---
+
+# 55. TORCHES
+
+Upgrade torch meshes.
+
+Create:
+
+- wall sconce;
+- standing brazier;
+- candle clusters.
+
+Use actual emissive materials.
+
+Add subtle smoke.
+
+---
+
+# 56. SHADOWS
+
+Use baked AO plus runtime shadows.
+
+Avoid expecting dynamic shadows alone to create all depth.
+
+PBR assets should contain baked occlusion.
+
+---
+
+# 57. AMBIENT OCCLUSION
+
+Bake AO into static architecture.
+
+Optionally test lightweight screen-space AO.
+
+Do not add expensive SSAO until measured.
+
+---
+
+# 58. RUINS BENCHMARK SCENE
+
+Before migrating the whole dungeon, build one dedicated art benchmark.
+
+Create a fixed development scene matching a supplied Ruins reference.
+
+It should include:
+
+- Oathkeeper;
+- Warden;
+- detailed floor;
+- arch;
+- columns;
+- broken walls;
+- stairs;
+- bridge;
+- statue;
+- rubble;
+- torchlight;
+- distant architecture;
+- void fog;
+- height fog.
+
+---
+
+# 59. BENCHMARK GATE
+
+Capture benchmark screenshot.
+
+Compare with reference.
+
+Do NOT move to all five biomes until:
+
+- architecture no longer reads as cubes;
+- materials feel varied;
+- character looks intentionally modeled;
+- fog hides the void;
+- lighting has strong depth.
+
+This is critical.
+
+---
+
+# 60. ART PIPELINE BEFORE CONTENT
+
+Do not create 100 assets using a mediocre pipeline.
+
+Create:
+
+10 excellent assets.
+
+Then improve pipeline.
+
+Then scale.
+
+---
+
+# 61. ASSET VALIDATION
+
+Create automated checks.
+
+Validate:
+
+- GLB exists;
+- file loads;
+- scale reasonable;
+- bounding box reasonable;
+- texture paths valid;
+- materials valid;
+- triangle count under budget;
+- skeleton exists where required;
+- animation clips valid.
+
+---
+
+# 62. POLYGON TARGETS
+
+Reasonable starting targets.
+
+Environment module:
+
+```text
+500–8,000 triangles
+```
+
+Hero prop:
+
+```text
+2,000–15,000
+```
+
+Exploration character:
+
+```text
+10,000–25,000
+```
+
+Close LOD:
+
+possibly:
+
+```text
+20,000–40,000
+```
+
+Boss:
+
+potentially higher.
+
+These are guidelines.
+
+Measure actual browser performance.
+
+---
+
+# 63. LOD GENERATION
+
+Use Blender decimation or custom simplified variants.
+
+Generate:
+
+```text
+LOD0
+LOD1
+LOD2
+```
+
+For characters and large architecture where worthwhile.
+
+---
+
+# 64. LOD RULES
+
+Close combat:
+
+LOD0.
+
+Exploration:
+
+LOD1.
+
+Far background:
+
+LOD2.
+
+Do not render close-detail models when tiny on screen.
+
+---
+
+# 65. NORMAL MAP BAKING
+
+Where appropriate:
+
+generate a more detailed source shape;
+
+bake to optimized runtime model.
+
+Do this especially for:
+
+- stone damage;
+- armor;
+- statues.
+
+Do not ship excessive high-poly models.
+
+---
+
+# 66. PROCEDURAL STONE DAMAGE
+
+Blender scripts should create controlled damage.
+
+Methods:
+
+- displacement;
+- boolean chips;
+- random edge damage;
+- cracks;
+- broken corners.
+
+Seed it deterministically for asset variants.
+
+---
+
+# 67. PROCEDURAL RUBBLE
+
+Generate reusable rubble clusters.
+
+Use:
+
+- fractured stone shapes;
+- different scales;
+- rotation;
+- partial burial.
+
+Avoid scattering identical cubes.
+
+---
+
+# 68. STATUES
+
+Create several damaged statue models.
+
+They can be stylized and faceless.
+
+Examples:
+
+- kneeling knight;
+- robed saint;
+- broken angelic figure;
+- headless pilgrim.
+
+Use as landmarks.
+
+---
+
+# 69. ARCHES
+
+Arches are critical.
+
+The current box-built arches must be replaced.
+
+Create real curved stone arches.
+
+Variants:
+
+- intact;
+- cracked;
+- partially collapsed;
+- narrow;
+- monumental.
+
+---
+
+# 70. COLUMNS
+
+Create sculpted columns.
+
+Include:
+
+- base;
+- shaft;
+- capital;
+- chips;
+- cracks;
+- erosion.
+
+Broken variants should expose irregular fracture.
+
+---
+
+# 71. STAIRS
+
+Current block stairs should become proper staircase meshes.
+
+Use:
+
+- worn edges;
+- broken steps;
+- varying width;
+- occasional missing section.
+
+Collision remains simple.
+
+---
+
+# 72. BRIDGES
+
+Bridge silhouettes should be dramatic.
+
+Create:
+
+- stone bridge;
+- ruined stone bridge;
+- wooden emergency bridge;
+- narrow monastery bridge.
+
+Bridge undersides should disappear into fog.
+
+---
+
+# 73. WORLD SCALE
+
+Use large background assets.
+
+Examples:
+
+- enormous columns;
+- distant towers;
+- cathedral wall;
+- huge broken statue;
+- giant chains;
+- distant bridge.
+
+These create visual scale.
+
+---
+
+# 74. BACKGROUND GEOMETRY
+
+Background does not require detailed textures.
+
+Use lower-detail meshes.
+
+Fog heavily.
+
+The purpose is silhouette and scale.
+
+---
+
+# 75. BIOME 2 — SHRINE
+
+Only after Ruins is successful.
+
+Create:
+
+- curved shrine roof elements;
+- statues;
+- lanterns;
+- water channels;
+- wet floors;
+- wooden details;
+- bridges;
+- waterfalls.
+
+Materials should clearly differ from Ruins.
+
+---
+
+# 76. WATER
+
+Improve water.
+
+Use a dedicated shader.
+
+Desired:
+
+- subtle normal movement;
+- reflections approximation;
+- shallow color variation;
+- ripples around player/projectile impacts.
+
+Do not attempt expensive raytraced reflection.
+
+---
+
+# 77. BIOME 3 — FUNGAL
+
+Use organic Blender curves and meshes.
+
+Create:
+
+- giant mushrooms;
+- root systems;
+- bulbous growth;
+- vine clusters;
+- fungal wall infestation.
+
+Avoid primitive spheres/cones.
+
+---
+
+# 78. FUNGAL MATERIALS
+
+Use emissive masks.
+
+Not whole-model emission.
+
+Glow should originate from:
+
+- veins;
+- spots;
+- cap edges;
+- spores.
+
+---
+
+# 79. BIOME 4 — FROZEN
+
+Create:
+
+- snow build-up;
+- icicles;
+- frost;
+- broken wood;
+- snowbanks;
+- frozen statues.
+
+Use distinct surface response.
+
+---
+
+# 80. SNOW ACCUMULATION
+
+If practical, create vertex/normal-based snow blending.
+
+Upward surfaces receive more snow.
+
+Vertical walls receive less.
+
+---
+
+# 81. BIOME 5 — FOUNDRY
+
+This biome must move beyond cube machinery.
+
+Create real:
+
+- gears;
+- pipes;
+- valves;
+- furnace doors;
+- grates;
+- chains;
+- vats;
+- rails;
+- mechanical arches.
+
+Use curves and cylinders intelligently.
+
+---
+
+# 82. FOUNDRY MATERIALS
+
+Use:
+
+- rust;
+- soot;
+- burnt metal;
+- black stone;
+- bronze;
+- glowing furnace interiors.
+
+---
+
+# 83. PROCEDURAL ROOM GENERATION
+
+Do not lose variety.
+
+Instead of procedural primitives:
+
+procedural rooms now select:
+
+```text
+architectural modules
++
+material variations
++
+decals
++
+props
++
+fog
++
+lighting
+```
+
+---
+
+# 84. ROOM ART SEED
+
+Use existing room art seed.
+
+It should drive:
+
+- mesh variants;
+- damage variants;
+- decal placement;
+- rubble placement;
+- prop selection.
+
+Same game seed should reproduce same visuals.
+
+---
+
+# 85. MATERIAL RANDOMIZATION
+
+Use small controlled variation.
+
+Stone hue.
+
+Roughness.
+
+Moss amount.
+
+Damage.
+
+Do not produce rainbow variation.
+
+---
+
+# 86. CHARACTER MATERIAL CONSISTENCY
+
+All imported characters should belong to the same art style.
+
+Use shared material families.
+
+Reuse:
+
+- armor materials;
+- cloth families;
+- leather;
+- skin.
+
+This reduces download size and increases cohesion.
+
+---
+
+# 87. CHARACTER DETAIL PRIORITY
+
+Spend geometry on:
+
+- silhouette;
+- helmet;
+- armor plates;
+- weapon;
+- cloak.
+
+Do not spend excessive geometry on invisible fingers/faces.
+
+---
+
+# 88. COMBAT CAMERA TEST
+
+Imported characters must look good in:
+
+- exploration;
+- combat-wide;
+- duel;
+- boss;
+- finisher camera.
+
+Test every LOD transition.
+
+---
+
+# 89. ANIMATION DEFORMATION TEST
+
+Capture:
+
+- overhead swing;
+- thrust;
+- parry;
+- dodge;
+- finisher.
+
+Check:
+
+- shoulders;
+- elbows;
+- knees;
+- cloak.
+
+No catastrophic stretching.
+
+---
+
+# 90. CLOTH
+
+Simple skinned cape is sufficient.
+
+Do not implement full cloth physics.
+
+Use:
+
+- 2–4 cape bones;
+- procedural secondary motion;
+- attack acceleration.
+
+---
+
+# 91. TEXTURE MEMORY
+
+Track texture memory.
+
+Do not create a unique 2K material set for every wall variant.
+
+Share materials.
+
+Use atlases where useful.
+
+---
+
+# 92. MESH OPTIMIZATION
+
+Use Blender:
+
+- merge by distance;
+- clean normals;
+- remove hidden faces;
+- decimate where safe;
+- apply transforms.
+
+Run validation before export.
+
+---
+
+# 93. GLB OPTIMIZATION
+
+Use free/open tooling.
+
+You may add npm tooling such as glTF Transform if useful.
+
+Do not depend on paid services.
+
+Compress intelligently.
+
+---
+
+# 94. ASSET BUILD COMMAND
+
+Create:
+
+```bash
+npm run assets:build
+```
+
+It should perform as much automation as practical.
+
+Possible:
+
+```text
+run Blender generation
+export GLBs
+optimize GLBs
+validate assets
+generate asset manifest
+```
+
+---
+
+# 95. DEVELOPMENT COMMAND
+
+Normal developers should NOT have to regenerate all Blender assets every time they run the game.
+
+Generated runtime assets may be committed.
+
+`npm run dev`
+
+should use existing generated assets.
+
+`npm run assets:build`
+
+rebuilds them.
+
+---
+
+# 96. REFERENCE IMAGE TRACEABILITY
+
+Document which reference inspired which asset family.
+
+Example:
+
+```text
+ruins_arch_a → architecture/01-ruins-kit.png
+
+warden → characters/05-enemy-warden.png
+
+stone_wet → materials/02-wet-stone-and-water.png
+```
+
+This helps maintain consistency.
+
+---
+
+# 97. DO NOT COPY COPYRIGHTED GAME ASSETS
+
+Reference images are art-direction guidance.
+
+Create original Hollow Canticle designs.
+
+Do not import Sekiro assets or other commercial game models/textures.
+
+---
+
+# 98. VOID ACCEPTANCE TEST
+
+Create a dedicated screenshot scene:
+
+bridge over deep void.
+
+Tall pillars descend downward.
+
+Camera can clearly see below floor level.
+
+Pass condition:
+
+No pillar bottom is visibly identifiable.
+
+No ground plane is visible.
+
+Architecture dissolves into fog.
+
+Distant structures fade naturally.
+
+The void feels deep.
+
+---
+
+# 99. TEXTURE ACCEPTANCE TEST
+
+Close screenshot of:
+
+- stone wall;
+- floor;
+- metal;
+- cloth.
+
+Pass condition:
+
+The surfaces are visibly different in:
+
+- roughness;
+- normal response;
+- color;
+- wear.
+
+Not simply different RGB values.
+
+---
+
+# 100. MODEL ACCEPTANCE TEST
+
+Close duel screenshot.
+
+Pass condition:
+
+Player and enemy no longer look primarily assembled from:
+
+- cubes;
+- spheres;
+- cylinders.
+
+Their armor and clothing have continuous forms.
+
+Weapons look authored.
+
+Silhouette resembles supplied reference.
+
+---
+
+# 101. ARCHITECTURE ACCEPTANCE TEST
+
+Exploration screenshot.
+
+Pass condition:
+
+Viewer cannot immediately identify:
+
+> "This wall is made from repeated boxes."
+
+Arches are curved.
+
+Walls have damaged silhouettes.
+
+Columns feel sculpted.
+
+Platforms have natural edges.
+
+---
+
+# 102. WORLD ACCEPTANCE TEST
+
+Compare to reference.
+
+Questions:
+
+Does it feel ancient?
+
+Does it feel enormous?
+
+Does the architecture disappear into darkness?
+
+Are materials rich enough?
+
+Is there meaningful vertical depth?
+
+Does the playable route remain readable?
+
+Does it still feel like Hollow Canticle?
+
+---
+
+# 103. DO NOT DESTROY PERFORMANCE
+
+A beautiful 20 FPS browser game is not acceptable.
+
+Test High / Medium / Low.
+
+Target stable gameplay.
+
+Reduce:
+
+- texture resolution;
+- background detail;
+- LOD;
+- shadow quality;
+
+before damaging core gameplay.
+
+---
+
+# 104. QUALITY SETTINGS
+
+High:
+
+- LOD0 closer;
+- denser fog particles;
+- better shadows;
+- higher texture resolution;
+- distant architecture;
+- full decals.
+
+Medium:
+
+- LOD1 earlier;
+- fewer particles;
+- normal shadows;
+- moderate distance geometry.
+
+Low:
+
+- procedural fallback for some background;
+- reduced textures;
+- simpler fog;
+- fewer dynamic lights.
+
+---
+
+# 105. INITIAL DOWNLOAD SIZE
+
+Report final static download size.
+
+Do not let v0.5 silently turn the game into a massive download.
+
+Optimize.
+
+---
+
+# 106. GAMEPLAY REGRESSION
+
+After visual work:
+
+test all mechanics.
+
+Imported art must not break:
+
+- projectiles;
+- parry;
+- ranged reflection;
+- target focus;
+- consumables;
+- loot;
+- combat camera;
+- finishers;
+- boss;
+- procedural navigation.
+
+---
+
+# 107. AUTOMATED TESTS
+
+Existing tests must remain.
+
+Add tests for:
+
+- asset manifest;
+- GLB existence;
+- fallback behavior;
+- deterministic asset selection;
+- biome pack selection;
+- material IDs.
+
+Do not attempt image-quality tests in unit tests.
+
+Use screenshot review.
+
+---
+
+# 108. VISUAL REVIEW DOCUMENT
+
+Create:
+
+```text
+docs/VISUAL_REVIEW-v0.5.md
+```
+
+Include:
+
+- old v0.4 screenshot;
+- reference;
+- v0.5 screenshot.
+
+Compare:
+
+- architecture;
+- character;
+- material;
+- fog;
+- lighting.
+
+Do not hide weaknesses.
+
+---
+
+# 109. SCREENSHOT SET
+
+Capture:
+
+### Characters
+
+Oathkeeper.
+
+Moth.
+
+Lancer.
+
+Bellbearer.
+
+Warden.
+
+Boss.
+
+### Environment
+
+Ruins.
+
+Shrine.
+
+Fungal.
+
+Frozen.
+
+Foundry.
+
+### Special
+
+Void.
+
+Bridge.
+
+Large cathedral room.
+
+Perfect parry.
+
+Finisher.
+
+---
+
+# 110. BENCHMARK FIRST
+
+Again:
+
+DO NOT rebuild the full game immediately.
+
+The first goal is:
+
+> One incredible Ruins scene.
+
+If that scene is not visually convincing:
+
+improve pipeline.
+
+Do not scale a bad pipeline.
+
+---
+
+# 111. CODING DISCIPLINE
+
+Do not spend enormous amounts of time rewriting systems unrelated to visuals.
+
+The most valuable work in this release is:
+
+- Blender scripts;
+- assets;
+- PBR materials;
+- asset loading;
+- fog;
+- lighting;
+- visual integration.
+
+---
+
+# 112. TAKE TIME
+
+This task is deliberately large.
+
+Do not rush it.
+
+Do not choose the fastest possible mesh just so you can say it exists.
+
+Spend substantial effort designing:
+
+- silhouette;
+- proportions;
+- material response;
+- architectural details.
+
+v0.5 is specifically the release where visual quality matters more than feature count.
+
+---
+
+# 113. NO PLACEHOLDERS IN FINAL
+
+During development, placeholders are acceptable.
+
+Before v0.5 review:
+
+do not leave final foreground hero architecture as boxes because:
+
+> "the system supports better models later."
+
+This release is supposed to CREATE those better models.
+
+---
+
+# 114. README
+
+Update README honestly.
+
+Show real screenshots.
+
+Explain the new Blender pipeline.
+
+Do NOT claim:
+
+photorealistic graphics.
+
+Do claim:
+
+Blender-authored modular environment assets;
+
+PBR materials;
+
+height/void fog;
+
+imported character assets;
+
+procedural assembly of authored modules.
+
+Only if actually implemented.
+
+---
+
+# 115. QA
+
+Run:
+
+```bash
+npm install
+npm run assets:build
+npm run lint
+npm run test
+npm run build
+```
+
+Serve production build.
+
+Inspect console.
+
+Test several seeds.
+
+---
+
+# 116. GIT FINALIZATION
+
+Confirm:
+
+```bash
+git branch --show-current
+```
+
+must show:
+
+```text
+codex/v0.5.0-blender-visual-overhaul
+```
+
+Push branch.
+
+Do NOT merge.
+
+---
+
+# 117. FINAL REPORT
+
+Report:
+
+1. starting v0.4 SHA;
+2. v0.5 branch;
+3. final SHA;
+4. Blender version used;
+5. new Blender scripts;
+6. number of environment assets;
+7. number of character assets;
+8. texture/material sets;
+9. GLB pipeline;
+10. fog implementation;
+11. height-fog implementation;
+12. void solution;
+13. LOD strategy;
+14. performance;
+15. initial download size;
+16. screenshot comparisons;
+17. remaining procedural fallback assets;
+18. remaining blocky areas;
+19. what should be improved in v0.5.1.
+
+---
+
+# FINAL DIRECTIVE
+
+Do not approach the supplied reference image pack as decoration.
+
+Treat it as the **art bible**.
+
+The current game already has the systems.
+
+It now needs a world worthy of them.
+
+Use Blender extensively.
+
+Use procedural modeling intelligently.
+
+Use proper meshes.
+
+Use proper PBR materials.
+
+Use atmospheric fog.
+
+Use sculpted silhouettes.
+
+Hide the technical boundaries of the world.
+
+The player should stop seeing:
+
+blocks
+
+tiles
+
+primitive assemblies
+
+pillar bottoms
+
+obvious modular seams.
+
+They should see:
+
+ruins
+
+cathedrals
+
+shrines
+
+chasm
+
+stone
+
+metal
+
+fog
+
+ancient architecture
+
+characters.
+
+Preserve procedural generation.
+
+Replace procedural-looking graphics.
+
+Build **Hollow Canticle v0.5.0** now.

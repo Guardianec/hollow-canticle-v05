@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.5.0-benchmark — 2026-10-23 (Ruins art gate candidate)
+
+- Preserved v0.4 at `8c83c8c4baa3476aaa9caa7b37bb9debfe13efd4` and began the isolated
+  `codex/v0.5.0-blender-visual-overhaul` branch. Main is unchanged.
+- Added a reproducible, headless Blender 4.5 pipeline: 23 Ruins modules, Oathkeeper and
+  Warden rigs, authored sword/shield, UVs, three LODs and geometry-baked vertex AO.
+- Baked seven shared PBR families; generated 1024px/512px WebP runtime maps with Sharp.
+- Added a central GLB resource owner, skinned cloning, seeded module selection, per-room
+  instancing, imported/procedural modes and graceful pack failure fallback.
+- Retargeted existing semantic poses to Blender rest frames, including skinned focus outlines.
+- Added world-space height extinction, deep supports, gradient void and slow chasm mist.
+- Added a fixed Ruins benchmark, material study, close duel and old/new comparison.
+- This is not complete v0.5 acceptance. Four biome rebuilds, the remaining cast and further
+  art refinement are gated on a convincing Ruins benchmark. See the visual review.
+
 ## 0.4.0 — 2026-10-23 (arsenal review build)
 
 - Built from accepted v0.3 SHA `17dd5e932f48609993fee133185265fe0e701400` on

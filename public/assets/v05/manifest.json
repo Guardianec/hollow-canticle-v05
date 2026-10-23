@@ -1,0 +1,618 @@
+{
+  "version": "0.5.0-benchmark",
+  "blender": "4.5.15 LTS",
+  "units": "meters",
+  "materials": {
+    "ancient_stone": {
+      "baseColor": "ancient_stone_baseColor.webp",
+      "normal": "ancient_stone_normal.webp",
+      "roughness": "ancient_stone_roughness.webp",
+      "ao": "ancient_stone_ao.webp",
+      "metalness": 0,
+      "resolution": 1024,
+      "low": {
+        "baseColor": "ancient_stone_baseColor_512.webp",
+        "normal": "ancient_stone_normal_512.webp",
+        "roughness": "ancient_stone_roughness_512.webp",
+        "ao": "ancient_stone_ao_512.webp"
+      }
+    },
+    "carved_stone": {
+      "baseColor": "carved_stone_baseColor.webp",
+      "normal": "carved_stone_normal.webp",
+      "roughness": "carved_stone_roughness.webp",
+      "ao": "carved_stone_ao.webp",
+      "metalness": 0,
+      "resolution": 1024,
+      "low": {
+        "baseColor": "carved_stone_baseColor_512.webp",
+        "normal": "carved_stone_normal_512.webp",
+        "roughness": "carved_stone_roughness_512.webp",
+        "ao": "carved_stone_ao_512.webp"
+      }
+    },
+    "moss_stone": {
+      "baseColor": "moss_stone_baseColor.webp",
+      "normal": "moss_stone_normal.webp",
+      "roughness": "moss_stone_roughness.webp",
+      "ao": "moss_stone_ao.webp",
+      "metalness": 0,
+      "resolution": 1024,
+      "low": {
+        "baseColor": "moss_stone_baseColor_512.webp",
+        "normal": "moss_stone_normal_512.webp",
+        "roughness": "moss_stone_roughness_512.webp",
+        "ao": "moss_stone_ao_512.webp"
+      }
+    },
+    "worn_iron": {
+      "baseColor": "worn_iron_baseColor.webp",
+      "normal": "worn_iron_normal.webp",
+      "roughness": "worn_iron_roughness.webp",
+      "ao": "worn_iron_ao.webp",
+      "metalness": 0.95,
+      "resolution": 1024,
+      "low": {
+        "baseColor": "worn_iron_baseColor_512.webp",
+        "normal": "worn_iron_normal_512.webp",
+        "roughness": "worn_iron_roughness_512.webp",
+        "ao": "worn_iron_ao_512.webp"
+      }
+    },
+    "aged_bronze": {
+      "baseColor": "aged_bronze_baseColor.webp",
+      "normal": "aged_bronze_normal.webp",
+      "roughness": "aged_bronze_roughness.webp",
+      "ao": "aged_bronze_ao.webp",
+      "metalness": 0.85,
+      "resolution": 1024,
+      "low": {
+        "baseColor": "aged_bronze_baseColor_512.webp",
+        "normal": "aged_bronze_normal_512.webp",
+        "roughness": "aged_bronze_roughness_512.webp",
+        "ao": "aged_bronze_ao_512.webp"
+      }
+    },
+    "heavy_cloth": {
+      "baseColor": "heavy_cloth_baseColor.webp",
+      "normal": "heavy_cloth_normal.webp",
+      "roughness": "heavy_cloth_roughness.webp",
+      "ao": "heavy_cloth_ao.webp",
+      "metalness": 0,
+      "resolution": 1024,
+      "low": {
+        "baseColor": "heavy_cloth_baseColor_512.webp",
+        "normal": "heavy_cloth_normal_512.webp",
+        "roughness": "heavy_cloth_roughness_512.webp",
+        "ao": "heavy_cloth_ao_512.webp"
+      }
+    },
+    "worn_leather": {
+      "baseColor": "worn_leather_baseColor.webp",
+      "normal": "worn_leather_normal.webp",
+      "roughness": "worn_leather_roughness.webp",
+      "ao": "worn_leather_ao.webp",
+      "metalness": 0,
+      "resolution": 1024,
+      "low": {
+        "baseColor": "worn_leather_baseColor_512.webp",
+        "normal": "worn_leather_normal_512.webp",
+        "roughness": "worn_leather_roughness_512.webp",
+        "ao": "worn_leather_ao_512.webp"
+      }
+    }
+  },
+  "assets": {
+    "ruins_floor_a": {
+      "pack": "ruins",
+      "kind": "environment",
+      "biome": 0,
+      "lods": [
+        {
+          "node": "ruins_floor_a_LOD0",
+          "triangles": 440
+        },
+        {
+          "node": "ruins_floor_a_LOD1",
+          "triangles": 242
+        },
+        {
+          "node": "ruins_floor_a_LOD2",
+          "triangles": 110
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "ruins_floor_b": {
+      "pack": "ruins",
+      "kind": "environment",
+      "biome": 0,
+      "lods": [
+        {
+          "node": "ruins_floor_b_LOD0",
+          "triangles": 440
+        },
+        {
+          "node": "ruins_floor_b_LOD1",
+          "triangles": 242
+        },
+        {
+          "node": "ruins_floor_b_LOD2",
+          "triangles": 110
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "ruins_floor_c": {
+      "pack": "ruins",
+      "kind": "environment",
+      "biome": 0,
+      "lods": [
+        {
+          "node": "ruins_floor_c_LOD0",
+          "triangles": 440
+        },
+        {
+          "node": "ruins_floor_c_LOD1",
+          "triangles": 242
+        },
+        {
+          "node": "ruins_floor_c_LOD2",
+          "triangles": 110
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "ruins_floor_broken": {
+      "pack": "ruins",
+      "kind": "environment",
+      "biome": 0,
+      "lods": [
+        {
+          "node": "ruins_floor_broken_LOD0",
+          "triangles": 564
+        },
+        {
+          "node": "ruins_floor_broken_LOD1",
+          "triangles": 310
+        },
+        {
+          "node": "ruins_floor_broken_LOD2",
+          "triangles": 140
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "ruins_column_a": {
+      "pack": "ruins",
+      "kind": "environment",
+      "biome": 0,
+      "lods": [
+        {
+          "node": "ruins_column_a_LOD0",
+          "triangles": 1708
+        },
+        {
+          "node": "ruins_column_a_LOD1",
+          "triangles": 938
+        },
+        {
+          "node": "ruins_column_a_LOD2",
+          "triangles": 426
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "ruins_column_b": {
+      "pack": "ruins",
+      "kind": "environment",
+      "biome": 0,
+      "lods": [
+        {
+          "node": "ruins_column_b_LOD0",
+          "triangles": 1708
+        },
+        {
+          "node": "ruins_column_b_LOD1",
+          "triangles": 938
+        },
+        {
+          "node": "ruins_column_b_LOD2",
+          "triangles": 426
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "ruins_column_broken": {
+      "pack": "ruins",
+      "kind": "environment",
+      "biome": 0,
+      "lods": [
+        {
+          "node": "ruins_column_broken_LOD0",
+          "triangles": 948
+        },
+        {
+          "node": "ruins_column_broken_LOD1",
+          "triangles": 520
+        },
+        {
+          "node": "ruins_column_broken_LOD2",
+          "triangles": 236
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "ruins_arch_a": {
+      "pack": "ruins",
+      "kind": "environment",
+      "biome": 0,
+      "lods": [
+        {
+          "node": "ruins_arch_a_LOD0",
+          "triangles": 6572
+        },
+        {
+          "node": "ruins_arch_a_LOD1",
+          "triangles": 3614
+        },
+        {
+          "node": "ruins_arch_a_LOD2",
+          "triangles": 1642
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "ruins_arch_broken": {
+      "pack": "ruins",
+      "kind": "environment",
+      "biome": 0,
+      "lods": [
+        {
+          "node": "ruins_arch_broken_LOD0",
+          "triangles": 6140
+        },
+        {
+          "node": "ruins_arch_broken_LOD1",
+          "triangles": 3376
+        },
+        {
+          "node": "ruins_arch_broken_LOD2",
+          "triangles": 1535
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "ruins_doorway": {
+      "pack": "ruins",
+      "kind": "environment",
+      "biome": 0,
+      "lods": [
+        {
+          "node": "ruins_doorway_LOD0",
+          "triangles": 6572
+        },
+        {
+          "node": "ruins_doorway_LOD1",
+          "triangles": 3614
+        },
+        {
+          "node": "ruins_doorway_LOD2",
+          "triangles": 1642
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "ruins_wall_a": {
+      "pack": "ruins",
+      "kind": "environment",
+      "biome": 0,
+      "lods": [
+        {
+          "node": "ruins_wall_a_LOD0",
+          "triangles": 7408
+        },
+        {
+          "node": "ruins_wall_a_LOD1",
+          "triangles": 4074
+        },
+        {
+          "node": "ruins_wall_a_LOD2",
+          "triangles": 1852
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "ruins_wall_broken": {
+      "pack": "ruins",
+      "kind": "environment",
+      "biome": 0,
+      "lods": [
+        {
+          "node": "ruins_wall_broken_LOD0",
+          "triangles": 4940
+        },
+        {
+          "node": "ruins_wall_broken_LOD1",
+          "triangles": 2716
+        },
+        {
+          "node": "ruins_wall_broken_LOD2",
+          "triangles": 1234
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "ruins_stairs": {
+      "pack": "ruins",
+      "kind": "environment",
+      "biome": 0,
+      "lods": [
+        {
+          "node": "ruins_stairs_LOD0",
+          "triangles": 1248
+        },
+        {
+          "node": "ruins_stairs_LOD1",
+          "triangles": 686
+        },
+        {
+          "node": "ruins_stairs_LOD2",
+          "triangles": 312
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "ruins_stairs_broken": {
+      "pack": "ruins",
+      "kind": "environment",
+      "biome": 0,
+      "lods": [
+        {
+          "node": "ruins_stairs_broken_LOD0",
+          "triangles": 1248
+        },
+        {
+          "node": "ruins_stairs_broken_LOD1",
+          "triangles": 686
+        },
+        {
+          "node": "ruins_stairs_broken_LOD2",
+          "triangles": 312
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "ruins_railing": {
+      "pack": "ruins",
+      "kind": "environment",
+      "biome": 0,
+      "lods": [
+        {
+          "node": "ruins_railing_LOD0",
+          "triangles": 892
+        },
+        {
+          "node": "ruins_railing_LOD1",
+          "triangles": 490
+        },
+        {
+          "node": "ruins_railing_LOD2",
+          "triangles": 222
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "ruins_bridge": {
+      "pack": "ruins",
+      "kind": "environment",
+      "biome": 0,
+      "lods": [
+        {
+          "node": "ruins_bridge_LOD0",
+          "triangles": 7040
+        },
+        {
+          "node": "ruins_bridge_LOD1",
+          "triangles": 3872
+        },
+        {
+          "node": "ruins_bridge_LOD2",
+          "triangles": 1759
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "ruins_rubble": {
+      "pack": "ruins",
+      "kind": "environment",
+      "biome": 0,
+      "lods": [
+        {
+          "node": "ruins_rubble_LOD0",
+          "triangles": 2158
+        },
+        {
+          "node": "ruins_rubble_LOD1",
+          "triangles": 1186
+        },
+        {
+          "node": "ruins_rubble_LOD2",
+          "triangles": 538
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "ruins_statue": {
+      "pack": "ruins",
+      "kind": "environment",
+      "biome": 0,
+      "lods": [
+        {
+          "node": "ruins_statue_LOD0",
+          "triangles": 1044
+        },
+        {
+          "node": "ruins_statue_LOD1",
+          "triangles": 574
+        },
+        {
+          "node": "ruins_statue_LOD2",
+          "triangles": 260
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "ruins_altar": {
+      "pack": "ruins",
+      "kind": "environment",
+      "biome": 0,
+      "lods": [
+        {
+          "node": "ruins_altar_LOD0",
+          "triangles": 516
+        },
+        {
+          "node": "ruins_altar_LOD1",
+          "triangles": 282
+        },
+        {
+          "node": "ruins_altar_LOD2",
+          "triangles": 128
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "ruins_tomb": {
+      "pack": "ruins",
+      "kind": "environment",
+      "biome": 0,
+      "lods": [
+        {
+          "node": "ruins_tomb_LOD0",
+          "triangles": 344
+        },
+        {
+          "node": "ruins_tomb_LOD1",
+          "triangles": 188
+        },
+        {
+          "node": "ruins_tomb_LOD2",
+          "triangles": 86
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "ruins_pedestal": {
+      "pack": "ruins",
+      "kind": "environment",
+      "biome": 0,
+      "lods": [
+        {
+          "node": "ruins_pedestal_LOD0",
+          "triangles": 344
+        },
+        {
+          "node": "ruins_pedestal_LOD1",
+          "triangles": 188
+        },
+        {
+          "node": "ruins_pedestal_LOD2",
+          "triangles": 86
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "ruins_brazier": {
+      "pack": "ruins",
+      "kind": "environment",
+      "biome": 0,
+      "lods": [
+        {
+          "node": "ruins_brazier_LOD0",
+          "triangles": 492
+        },
+        {
+          "node": "ruins_brazier_LOD1",
+          "triangles": 270
+        },
+        {
+          "node": "ruins_brazier_LOD2",
+          "triangles": 122
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "ruins_deep_support": {
+      "pack": "ruins",
+      "kind": "environment",
+      "biome": 0,
+      "lods": [
+        {
+          "node": "ruins_deep_support_LOD0",
+          "triangles": 124
+        },
+        {
+          "node": "ruins_deep_support_LOD1",
+          "triangles": 68
+        },
+        {
+          "node": "ruins_deep_support_LOD2",
+          "triangles": 30
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "oathkeeper": {
+      "pack": "pilgrims",
+      "kind": "character",
+      "biome": 0,
+      "lods": [
+        {
+          "node": "oathkeeper_LOD0",
+          "triangles": 5408
+        },
+        {
+          "node": "oathkeeper_LOD1",
+          "triangles": 2974
+        },
+        {
+          "node": "oathkeeper_LOD2",
+          "triangles": 1352
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "warden": {
+      "pack": "pilgrims",
+      "kind": "character",
+      "biome": 0,
+      "lods": [
+        {
+          "node": "warden_LOD0",
+          "triangles": 5660
+        },
+        {
+          "node": "warden_LOD1",
+          "triangles": 3112
+        },
+        {
+          "node": "warden_LOD2",
+          "triangles": 1414
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    }
+  },
+  "packs": {
+    "ruins": {
+      "file": "ruins.glb",
+      "bytes": 6962792
+    },
+    "pilgrims": {
+      "file": "pilgrims.glb",
+      "bytes": 1436424
+    }
+  },
+  "downloadBytes": 13275038
+}

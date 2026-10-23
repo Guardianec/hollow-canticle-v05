@@ -7,6 +7,12 @@ tool; its prompt and file are recorded in `docs/ASSETS.md`.
 Supplied reference images are design targets, stored in `docs/references/` for comparison.
 They are never loaded by the game or copied into its runtime assets.
 
+The v0.5 benchmark meshes and PBR sources are original Blender Python creations in
+`tools/blender/`, exported with Blender 4.5.15 LTS. Blender is free GPL software and is
+not shipped with the game. Sharp (Apache-2.0) is used only during asset builds to encode
+runtime WebP textures. No external model, texture library or paid generation service
+is used by this pipeline. Supplied v0.5 reference sheets remain reference documents.
+
 Runtime dependencies:
 
 - Phaser — MIT, https://github.com/phaserjs/phaser

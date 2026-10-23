@@ -3,6 +3,8 @@ import { ROOM_PITCH, doorPosition, type Floor, type Room } from '../dungeon';
 import { geometryFor, elevationAt, insideRoom } from '../geometry';
 import { Random } from '../random';
 import { Batches, Materials, SCALE, type MaterialName } from './materials';
+import { AssetManager } from './assets';
+import { buildImportedDungeon } from './imported-dungeon';
 
 export interface Torch {
   position: T.Vector3;
@@ -28,7 +30,9 @@ export function globalPosition(room: Room, x: number, y: number, height = 0): T.
   );
 }
 
-export function buildDungeon(floor: Floor, m: Materials): DungeonArt {
+export function buildDungeon(floor: Floor, m: Materials, assets?: AssetManager): DungeonArt {
+  if (floor.biome === 0 && assets?.has('ruins_floor_a'))
+    return buildImportedDungeon(floor, m, assets);
   const group = new T.Group(),
     torches: Torch[] = [],
     banners: T.Mesh[] = [],
