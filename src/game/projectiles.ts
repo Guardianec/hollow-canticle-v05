@@ -10,8 +10,8 @@ export interface Projectile extends Point {
   vx: number;
   vy: number;
   radius: number;
-  owner: number | 'player';
-  team: 'player' | 'enemy';
+  owner: number | string;
+  team: string;
   damage: number;
   postureDamage: number;
   lifetime: number;
@@ -21,11 +21,11 @@ export interface Projectile extends Point {
   kind: ProjectileKind;
   visualType: ProjectileKind;
   pierce: number;
-  hit: number[];
+  hit: (number | string)[];
 }
 export interface ProjectileTarget extends Point {
-  id: number | 'player';
-  team: 'player' | 'enemy';
+  id: number | string;
+  team: string;
   radius: number;
 }
 /** First swept circle contact, including a projectile already overlapping the target. */
@@ -97,10 +97,7 @@ export class Projectiles {
       const end = { x: shot.x + shot.vx * dt, y: shot.y + shot.vy * dt };
       const wall = wallContact(room, obstacles, shot, end, shot.radius);
       const contacts = targets
-        .filter(
-          (target) =>
-            target.team !== shot.team && (target.id === 'player' || !shot.hit.includes(target.id)),
-        )
+        .filter((target) => target.team !== shot.team && !shot.hit.includes(target.id))
         .map((target) => ({
           target,
           t: segmentContact(shot, end, target, shot.radius + target.radius),

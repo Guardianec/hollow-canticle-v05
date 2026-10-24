@@ -1,0 +1,19 @@
+{
+  "scenario": "5 rooms × 4 players × 8 enemies including Saint, ranged enemies and player projectiles",
+  "seconds": 20.004387299999998,
+  "tickRates": [
+    30.193376629935578,
+    30.143387595780055,
+    30.193376629935578,
+    30.143387595780055,
+    30.143387595780055
+  ],
+  "cpuOneCorePercent": 25.07949843582563,
+  "rssMiB": 167.26953125,
+  "heapMiB": 58.93034362792969,
+  "eventLoopP95Ms": 26.034175,
+  "eventLoopMaxMs": 61.145087,
+  "downstreamBytesPerClientSecond": 3346.4858981209586,
+  "upstreamBytesPerClientSecond": 588.7208552495882,
+  "notes": "Combined server and 20 SDK clients in one Node process. WebSocket payload bytes; excludes framing/TLS. Invincible clients keep workload active. Local hardware, not Render measurement."
+}

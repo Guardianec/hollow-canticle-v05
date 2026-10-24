@@ -35,6 +35,10 @@ export class Renderer {
   private player: Actor;
   private arsenal: ArsenalArt;
   private actors = new Map<number, Actor>();
+  private pilgrims = new Map<
+    string,
+    { actor: Actor; ring: T.Mesh<T.RingGeometry, T.MeshBasicMaterial>; weapon: string }
+  >();
   private revision = -1;
   private hud: Hud;
   private effects: Effects;
@@ -365,6 +369,7 @@ export class Renderer {
         this.scene.add(actor.root);
       }
       actor.root.position.copy(globalPosition(w.room, e.x, e.y));
+      actor.root.visible = w.onlineMode !== 'duel';
       actor.setOutline(
         e === w.target && w.mode !== 'menu' && e.state !== 'dead'
           ? w.save.settings.strongOutline
@@ -387,6 +392,55 @@ export class Renderer {
         w.lab.hitWindow = animation.clip?.hitWindow?.map((n) => n.toFixed(2)).join('–') ?? 'none';
         w.lab.rootMotion = animation.pose.advance;
       }
+    }
+    const visiblePilgrims = new Set(w.remotePlayers.map((p) => p.id));
+    for (const [id, entry] of this.pilgrims) {
+      if (visiblePilgrims.has(id)) continue;
+      this.scene.remove(entry.actor.root, entry.ring);
+      entry.actor.dispose();
+      entry.ring.geometry.dispose();
+      entry.ring.material.dispose();
+      this.pilgrims.delete(id);
+    }
+    for (const remote of w.remotePlayers) {
+      let entry = this.pilgrims.get(remote.id);
+      if (entry && entry.weapon !== remote.weapon) {
+        this.scene.remove(entry.actor.root);
+        entry.actor.dispose();
+        entry.actor = new Actor(this.materials, `player-${remote.weapon}`, true, this.assets);
+        entry.weapon = remote.weapon;
+        this.scene.add(entry.actor.root);
+      }
+      if (!entry) {
+        const actor = new Actor(this.materials, `player-${remote.weapon}`, true, this.assets);
+        const ring = new T.Mesh(
+          new T.RingGeometry(0.35, 0.39, 40),
+          new T.MeshBasicMaterial({
+            color: remote.color,
+            transparent: true,
+            opacity: 0.6,
+            depthWrite: false,
+          }),
+        );
+        ring.rotation.x = -Math.PI / 2;
+        entry = { actor, ring, weapon: remote.weapon };
+        this.pilgrims.set(remote.id, entry);
+        this.scene.add(actor.root, ring);
+      }
+      entry.actor.root.position.copy(globalPosition(w.room, remote.player.x, remote.player.y));
+      entry.actor.root.visible = remote.connected;
+      entry.ring.position.copy(entry.actor.root.position);
+      entry.ring.position.y += 0.05;
+      entry.ring.material.opacity = remote.connected ? (remote.player.hp > 0 ? 0.55 : 0.18) : 0.1;
+      entry.actor.animate(
+        remote.player,
+        w.time,
+        w.visualTime,
+        remote.player.state === 'idle',
+        duel,
+        remote.weapon,
+        animationOptions,
+      );
     }
     this.sun.position.copy(playerPosition).add(new T.Vector3(15, 30, 10));
     this.sun.target.position.copy(playerPosition);
@@ -528,6 +582,12 @@ export class Renderer {
     this.arsenal.dispose();
     this.player.dispose();
     for (const actor of this.actors.values()) actor.dispose();
+    for (const entry of this.pilgrims.values()) {
+      entry.actor.dispose();
+      entry.ring.geometry.dispose();
+      entry.ring.material.dispose();
+    }
+    this.pilgrims.clear();
     this.webgl.dispose();
     this.materials.dispose();
     this.assets.dispose();

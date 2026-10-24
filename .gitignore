@@ -1,8 +1,10 @@
 node_modules/
 dist/
+dist-server/
 coverage/
 *.local
 *.log
 .DS_Store
 .cache/
+.agents/skills/
 tools/blender/__pycache__/

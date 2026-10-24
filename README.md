@@ -1,4 +1,25 @@
-# Hollow Canticle — v0.5.0 visual rebuild
+# Hollow Canticle — v0.6.0 Online Co-op & Duels
+
+**Online Co-op: 2–4 players · 1v1 Duels · Free friend-room codes**
+
+The multiplayer branch adds server-authoritative friend rooms on Colyseus 0.18,
+personal co-op loot, room-clear revival at exactly 20 HP, and normalized
+first-to-three duels. Single-player still works independently.
+
+The free multiplayer service may take a short moment to wake after inactivity.
+Rooms live in memory and can disappear when the server restarts. There are no
+accounts, paid services or multiplayer databases.
+
+This is a release candidate: local simulation/network tests and browser smoke
+checks are documented in [v0.6 QA](docs/QA-v0.6.md). Public multiplayer deployment
+is pending Render account sign-in. The existing v0.5 site below remains on its
+preserved baseline, rather than claiming an online service that is not deployed.
+
+Run `npm run dev:server` and `npm run dev` in two terminals. See
+[multiplayer architecture and exact free deployment](docs/MULTIPLAYER.md),
+[Render Blueprint](render.yaml) and [release status](docs/RELEASE-v0.6.md).
+
+## Preserved v0.5 visual foundation
 
 A procedural melee action roguelike about reading a blade, breaking a guard, and keeping an oath.
 
@@ -231,7 +252,7 @@ This is a review candidate. Automated regressions, production input/visual check
 short ordinary-run attempts were performed. Several complete multi-floor human playthroughs,
 experienced-player balance sign-off, sustained GPU profiling and broader browser testing
 remain outstanding. No minimum FPS or full release-acceptance claim is made. There are no
-accounts, remote analytics, premium currency, multiplayer, touch/controller gameplay, active-run
+accounts, remote analytics, premium currency, touch/controller gameplay, active-run
 resume, terrain IK or physics-driven projectiles.
 
 Code and original assets: MIT. Third-party attributions are in [CREDITS.md](CREDITS.md).

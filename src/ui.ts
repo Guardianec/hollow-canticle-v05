@@ -7,6 +7,7 @@ import { CharacterGallery } from './game/presentation/gallery';
 import { ITEMS } from './game/items';
 import { BUFFS } from './game/buffs';
 import { LOOT_WEIGHTS, LootDirector } from './game/loot';
+import { Online } from './net/online';
 
 const escape = (value: string): string =>
   value.replace(
@@ -33,6 +34,7 @@ const icon = (name: string, size = 18): string => {
 const sigil = `<svg class="sigil" aria-hidden="true" viewBox="0 0 80 80"><circle cx="40" cy="40" r="31"/><circle cx="40" cy="40" r="26"/><path d="m40 5 7 26 22 9-22 9-7 26-7-26-22-9 22-9Zm0 18 4 17-4 17-4-17Z"/></svg>`;
 
 export class Interface {
+  private online: Online;
   private dialog: HTMLDialogElement;
   private menu: HTMLElement;
   private lastMode = '';
@@ -47,7 +49,7 @@ export class Interface {
   constructor(private world: World) {
     document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
       <header class="topbar">
-        <a class="brand" href="#" aria-label="Hollow Canticle main menu">${sigil}<span>HOLLOW CANTICLE</span><span class="version">v0.5.0</span></a>
+        <a class="brand" href="#" aria-label="Hollow Canticle main menu">${sigil}<span>HOLLOW CANTICLE</span><span class="version">v0.6.0</span></a>
         <span class="header-caption">A VOW IN THE DARK</span>
         <div class="utility"><button data-action="sound" aria-label="Mute audio" title="Toggle audio">${icon('sound')}</button><span></span><button data-action="fullscreen" aria-label="Fullscreen" title="Fullscreen">${icon('expand')}</button><button data-action="pause" aria-label="Pause or open settings" title="Pause · Esc">${icon('pause')}</button></div>
       </header>
@@ -58,6 +60,7 @@ export class Interface {
           <h1>HOLLOW<br><span>CANTICLE</span></h1>
           <p class="menu-copy">The bells have fallen silent.<br>Let your blade be the last thing they hear.</p>
           <button class="begin-button" data-action="new"><span>Begin the descent</span>${icon('arrow', 21)}</button>
+          <button class="online-menu-button" data-action="online"><span>Online</span><small>CO-OP DESCENT & DUELS</small>${icon('arrow', 18)}</button>
           <div class="secondary-actions"><button data-action="training">${icon('sword', 17)} Learn the rhythm</button><button data-action="seeded">${icon('seed', 17)} Seeded run</button></div>
           <div class="menu-line"></div>
           <nav class="menu-links"><button data-action="archive">Chronicle <span>DISCOVERIES & OATHS</span></button><button data-action="settings">Settings ${icon('gear', 15)}</button><button data-action="credits">Credits</button></nav>
@@ -71,6 +74,10 @@ export class Interface {
       <footer class="bottombar"><div class="control-guide"><span><kbd>W A S D</kbd> Move</span><span><kbd>J</kbd> Strike</span><span><kbd>K</kbd> Deflect</span><span><kbd>SPACE</kbd> Evade</span><span><kbd>E</kbd> Interact</span><span><kbd>R</kbd> Ranged</span><span><kbd>Q</kbd> Item</span></div><button data-action="controls">Field guide ${icon('book', 14)}</button><span class="footer-end">DEATH IS A LESSON. <b>DESCEND AGAIN.</b></span></footer>`;
     this.dialog = document.querySelector('#overlay')!;
     this.menu = document.querySelector('#main-menu')!;
+    this.online = new Online(world, {
+      show: (screen, title, body, wide) => this.show(screen, title, body, wide),
+      close: () => this.close(),
+    });
     document.addEventListener('click', (event) => {
       const button = (event.target as HTMLElement).closest<HTMLElement>('[data-action]');
       if (button) {
@@ -136,6 +143,14 @@ export class Interface {
   private action(action: string): void {
     const w = this.world;
     w.audio.play('ui');
+    if (action === 'online') {
+      void this.online.open();
+      return;
+    }
+    if (action.startsWith('net:')) {
+      void this.online.action(action);
+      return;
+    }
     if (action.startsWith('weapon:')) {
       this.runWeapon = action.split(':')[1];
       w.selection = this.runWeapon;
@@ -288,6 +303,10 @@ export class Interface {
     this.screen = '';
   }
   private closeOrBack(): void {
+    if (this.online.visible) {
+      this.online.back();
+      return;
+    }
     if (['reward', 'death', 'trained'].includes(this.screen)) return;
     if (this.screen === 'settings' && this.settingsBack === 'pause') {
       this.pauseMenu();
@@ -305,6 +324,10 @@ export class Interface {
     } else this.close();
   }
   private pause(): void {
+    if (this.online.active) {
+      this.online.pause();
+      return;
+    }
     if (this.world.mode === 'menu') {
       this.settingsBack = 'menu';
       this.settings();
@@ -493,6 +516,7 @@ export class Interface {
 
   update(): void {
     const w = this.world;
+    this.online.update();
     if (this.lastMode !== w.mode) {
       this.menu.hidden = w.mode !== 'menu';
       document.body.classList.toggle('in-game', w.mode !== 'menu');

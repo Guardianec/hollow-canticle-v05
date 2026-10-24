@@ -28,6 +28,7 @@ export function insideRoom(room: Room, x: number, y: number): boolean {
   if (x < 50 || x > 1070 || y < 65 || y > 700) return false;
   const rect = (cx: number, cy: number, w: number, h: number) =>
     Math.abs(x - cx) <= w / 2 && Math.abs(y - cy) <= h / 2;
+  if (room.template === 'duel-arena') return rect(560, 380, 800, 480);
   const arms = rect(560, 380, 1040, 104) || rect(560, 380, 104, 650),
     t = room.template;
   if (t === 'split-shrine')
@@ -74,6 +75,7 @@ export function canStand(room: Room, x: number, y: number, radius = 16): boolean
   return true;
 }
 export function elevationAt(room: Room, _x: number, y: number): number {
+  if (room.template === 'duel-arena') return 0;
   if (room.template === 'sunken-court') return y > 475 ? -10 : Math.max(0, (250 - y) * 0.18);
   if (room.template === 'processional-stair' || room.template === 'split-shrine')
     return Math.max(0, (270 - y) * 0.32);
@@ -121,12 +123,16 @@ export function geometryFor(room: Room): Geometry {
         });
       }
     }
-  const columns = [
-    { x: 380, y: 260 },
-    { x: 750, y: 500 },
-    { x: 340, y: 555 },
-    { x: 800, y: 235 },
-  ].filter((p) => canStand(room, p.x, p.y, 28));
+  const columns = (
+    room.template === 'duel-arena'
+      ? []
+      : [
+          { x: 380, y: 260 },
+          { x: 750, y: 500 },
+          { x: 340, y: 555 },
+          { x: 800, y: 235 },
+        ]
+  ).filter((p) => canStand(room, p.x, p.y, 28));
   const obstacles: Obstacle[] = columns.map((p, i) => ({
     ...p,
     radius: 24,
@@ -155,7 +161,7 @@ export function geometryFor(room: Room): Geometry {
     { x: 450, y: 240 },
     { x: 680, y: 290 },
   ].find((p) => canStand(room, p.x, p.y, 32));
-  if (feature) {
+  if (feature && room.template !== 'duel-arena') {
     const kind =
       room.landmark === 'library' ? 'shelf' : room.landmark === 'cage' ? 'chain' : 'statue';
     decorations.push({

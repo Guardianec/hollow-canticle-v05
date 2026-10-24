@@ -2364,3 +2364,404 @@ kbd {
     bottom: 135px;
   }
 }
+/* Friend rooms use the same candlelit metal and parchment as the offline menus. */
+.online-menu-button {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  max-width: 355px;
+  margin: 12px 0 8px;
+  padding: 14px 18px;
+  border: 1px solid #9c855345;
+  background: #10202a9e;
+  color: #e1cfa9;
+  text-align: left;
+}
+.online-menu-button > span {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 25px;
+}
+.online-menu-button small {
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  flex: 1;
+}
+.online-modes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 28px 0;
+}
+.online-modes button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 185px;
+  padding: 24px;
+  text-align: left;
+  border: 1px solid #ad925345;
+  background: #0b171ecc;
+}
+.online-modes strong {
+  letter-spacing: 0.13em;
+  font-size: 13px;
+  color: #dfc69b;
+}
+.online-modes small {
+  line-height: 1.7;
+  color: #a7b5b9;
+}
+.online-mark {
+  font-size: 30px;
+  color: #c9aa70;
+}
+.online-modes button:hover:not(:disabled),
+.online-characters button.selected {
+  border-color: #c5a774;
+  background: #283239;
+}
+.server-status {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-block: 1px solid #a18b5133;
+  padding: 18px 0;
+  margin: 20px 0;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+}
+.server-status small {
+  font-size: 11px;
+  color: #a5b2b5;
+  letter-spacing: 0;
+  line-height: 1.6;
+}
+.server-status.awake > span {
+  color: #b1cfac;
+}
+.server-status.waking > span {
+  color: #e0c58f;
+}
+.online-error,
+.online-warning {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #e3b091;
+  padding: 12px 0;
+}
+.online-warning {
+  letter-spacing: 0.12em;
+  color: #dfbf81;
+}
+.online-label {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  color: #aeb5ac;
+  margin: 20px 0 9px;
+}
+#online-name,
+#online-code,
+#online-seed {
+  box-sizing: border-box;
+  background: #07111699;
+  border: 1px solid #ad92534f;
+  color: #ead8b7;
+  padding: 13px;
+  font: inherit;
+  max-width: 100%;
+}
+#online-name {
+  width: 100%;
+}
+#online-code {
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  min-width: 0;
+  width: 100%;
+}
+.online-divider {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  color: #a7a393;
+  margin-top: 28px;
+}
+.online-join {
+  display: flex;
+  gap: 10px;
+}
+.online-join button {
+  padding-inline: 20px;
+  white-space: nowrap;
+}
+.room-code {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+  margin: 20px 0 26px;
+}
+.room-code > span {
+  font-size: 10px;
+  letter-spacing: 0.2em;
+}
+.room-code button {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 38px;
+  letter-spacing: 0.16em;
+  color: #e4c68e;
+  background: none;
+  border: 0;
+}
+.room-code small {
+  font-size: 10px;
+  color: #a3adaf;
+}
+.party-lobby {
+  display: grid;
+  gap: 1px;
+  background: #ab945122;
+  border-block: 1px solid #ab945144;
+}
+.party-slot {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 15px;
+  background: #0b171e;
+  min-height: 52px;
+}
+.party-slot > div {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.party-slot strong {
+  font-weight: 400;
+  color: var(--pilgrim);
+}
+.party-slot strong small {
+  font:
+    8px Manrope,
+    sans-serif;
+  margin-left: 8px;
+  letter-spacing: 0.12em;
+}
+.party-slot div > span {
+  font-size: 10px;
+  color: #b4c0c1;
+}
+.party-slot > b {
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  color: #c9bc99;
+}
+.party-number {
+  color: var(--pilgrim);
+  font:
+    25px 'Cormorant Garamond',
+    serif;
+}
+.party-slot.vacant {
+  font-size: 12px;
+  color: #68767a;
+}
+.online-characters {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.online-characters button {
+  padding: 12px 6px;
+  font-size: 11px;
+  border: 1px solid #a18b5133;
+}
+.online-seed {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 24px 0;
+  font-size: 10px;
+}
+.online-seed > span {
+  letter-spacing: 0.1em;
+  margin-right: 8px;
+}
+#online-seed {
+  flex: 1;
+  min-width: 0;
+  font-size: 12px;
+}
+.online-seed button {
+  padding: 8px;
+  font-size: 10px;
+}
+.online-lobby-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.online-lobby-actions button {
+  flex: 1;
+  padding: 14px;
+}
+.online-hud {
+  position: absolute;
+  right: 24px;
+  top: 250px;
+  z-index: 4;
+  width: 230px;
+  max-width: 300px;
+  pointer-events: none;
+  color: #d0d9d9;
+  font-size: 11px;
+  text-shadow: 0 2px 4px #000;
+}
+.online-hud[hidden] {
+  display: none;
+}
+.online-hud-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 30px;
+  color: #b7ab8a;
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  margin-bottom: 13px;
+}
+.online-hud-top .poor {
+  color: #e4a285;
+}
+.party-list {
+  display: grid;
+  gap: 9px;
+  margin: 15px 0;
+}
+.party-line {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 5px 18px;
+  padding: 9px 12px;
+  border-left: 2px solid var(--pilgrim);
+  background: #071219a8;
+}
+.party-line > strong {
+  color: var(--pilgrim);
+  font-size: 12px;
+  font-weight: 400;
+}
+.party-line > span {
+  font-size: 10px;
+  color: #b4c1c4;
+}
+.party-line > small {
+  font-size: 9px;
+  color: #8d9fa4;
+}
+.party-line p {
+  grid-column: 1/-1;
+  color: #bdc8c7;
+  font-size: 10px;
+  line-height: 1.7;
+}
+.duel-score {
+  display: flex;
+  gap: 20px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 22px;
+}
+.duel-score b {
+  color: #e5c38b;
+}
+.duel-countdown {
+  position: fixed;
+  left: 50%;
+  top: 42%;
+  transform: translate(-50%, -50%);
+  font:
+    100px 'Cormorant Garamond',
+    serif;
+  color: #f1d9ac;
+}
+.online-caption {
+  margin-top: 14px;
+  letter-spacing: 0.2em;
+  color: #e5c38b;
+}
+.fallen-caption {
+  position: fixed;
+  left: 50%;
+  bottom: 110px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 90vw;
+  text-align: center;
+}
+.fallen-caption strong {
+  font:
+    40px 'Cormorant Garamond',
+    serif;
+  letter-spacing: 0.3em;
+  color: #e4d5b6;
+}
+.fallen-caption span {
+  font-size: 13px;
+}
+.fallen-caption small {
+  color: #a2b3b8;
+  font-size: 10px;
+}
+.online-debug {
+  font-size: 9px;
+  line-height: 1.7;
+  background: #000a;
+  padding: 10px;
+  white-space: pre-wrap;
+}
+@media (max-width: 650px) {
+  .online-modes {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .online-modes button {
+    min-height: 130px;
+    padding: 18px;
+    gap: 9px;
+  }
+  .online-characters {
+    grid-template-columns: 1fr 1fr;
+  }
+  .online-hud {
+    left: 10px;
+    top: 10px;
+    max-width: 220px;
+  }
+  .party-slot {
+    padding: 12px 8px;
+    gap: 10px;
+  }
+  .party-slot > b {
+    font-size: 8px;
+  }
+  .online-seed {
+    flex-wrap: wrap;
+  }
+  .room-code {
+    gap: 10px;
+  }
+  .room-code small {
+    width: 100%;
+  }
+}
+
+.party-slot strong,
+.party-line > strong {
+  overflow-wrap: anywhere;
+}

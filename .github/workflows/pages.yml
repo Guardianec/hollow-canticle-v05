@@ -3,6 +3,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      multiplayer_url:
+        description: 'Secure free Render endpoint (wss://…onrender.com); leave empty for offline-only build'
+        required: false
+        type: string
 permissions:
   contents: read
   pages: write
@@ -24,6 +29,8 @@ jobs:
       - run: npm run assets:validate
       - run: npm run test
       - run: npm run build
+        env:
+          VITE_MULTIPLAYER_URL: ${{ inputs.multiplayer_url || vars.VITE_MULTIPLAYER_URL }}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -1,3 +1,17 @@
+# v0.6.0 — Online Co-op & Duels (review candidate)
+
+- Add authoritative Colyseus 0.18 friend rooms: 2–4 co-op and normalized 1v1.
+- Reuse the existing combat simulation, with sequenced inputs, local movement
+  prediction, reconciliation, remote interpolation and bounded defensive history.
+- Add room codes, independent ready/character selection, host transfer and
+  30-second reconnection reservations.
+- Scale encounter composition, distribute threats and support physical rescue
+  parries, interception and cross counters. Revive only after combat clears,
+  at exactly 20 HP; party wipes end the run.
+- Add first-to-three duel rounds, fair arena collision and mutual rematches.
+- Add a Free Render Blueprint, local network delay/load tools and multiplayer QA.
+- Public deployment and sustained human balance acceptance remain pending.
+
 # Changelog
 
 ## 0.5.0 polish — 2026-10-24 (local checkpoint)

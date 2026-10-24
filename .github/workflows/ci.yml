@@ -16,3 +16,4 @@ jobs:
       - run: npm run assets:validate
       - run: npm run test
       - run: npm run build
+      - run: npm run build:server

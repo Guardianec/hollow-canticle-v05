@@ -1,6 +1,6 @@
 import { BALANCE, type Strike } from './data';
 import { resolveDefense } from './combat';
-import { lineOfSight, segmentContact, type Projectile } from './projectiles';
+import { lineOfSight, segmentContact, type Projectile, type ProjectileTarget } from './projectiles';
 import { distance, type Enemy, type World } from './world';
 import { pathBetween } from './geometry';
 
@@ -27,13 +27,13 @@ export class Arsenal {
       vx: Math.cos(p.facing) * r.speed,
       vy: Math.sin(p.facing) * r.speed,
       radius: r.radius,
-      owner: 'player',
-      team: 'player',
+      owner: w.network ? `p:${w.network.id}` : 'player',
+      team: w.network?.team ?? 'player',
       damage: r.damage * w.buffs.modifier('damage') * (w.hasRelic('glass-arrow') ? 1.4 : 1),
       postureDamage: r.pressure * w.buffs.modifier('pressure'),
       lifetime: r.lifetime,
-      parryable: false,
-      reflectable: false,
+      parryable: Boolean(w.network?.strike),
+      reflectable: Boolean(w.network?.strike),
       kind: r.kind,
       pierce: r.pierce,
     });
@@ -125,7 +125,17 @@ export class Arsenal {
     const pattern =
       w.debug && w.lab.pattern >= 0 ? w.lab.pattern : e.variant % e.def.patterns.length;
     const strike = { ...e.def.patterns[pattern % e.def.patterns.length][0] };
-    if (!w.threats.reserve(e.id, w.time, strike, w.floor.depth, this.travel(strike, dist))) return;
+    if (
+      !w.threats.reserve(
+        e.id,
+        w.time,
+        strike,
+        w.floor.depth,
+        this.travel(strike, dist),
+        w.network?.id,
+      )
+    )
+      return;
     e.strike = strike;
     e.variant++;
     this.hooks.beginTell(e);
@@ -135,9 +145,17 @@ export class Arsenal {
     const w = this.world;
     const p = w.player;
     const targets = [
-      { ...p, id: 'player' as const, team: 'player' as const, radius: 19 },
+      ...(w.network
+        ? w.network.active().map((other) => ({
+            ...other.player,
+            id: `p:${other.network!.id}`,
+            team: other.network!.team,
+            radius: 19,
+          }))
+        : [{ ...p, id: 'player', team: 'player', radius: 19 }]),
       ...w.alive
         .filter((e) => e.state !== 'broken')
+        .filter(() => !w.network?.strike)
         .map((e) => ({ ...e, team: 'enemy' as const, radius: 22 * e.def.scale })),
     ];
     w.projectiles.update(
@@ -146,69 +164,81 @@ export class Arsenal {
       w.obstacles,
       targets,
       (shot, target) => {
-        const enemyTarget =
-          target.id === 'player' ? undefined : w.enemies.find((e) => e.id === target.id);
-        if (enemyTarget) {
-          const enemy = enemyTarget;
-          shot.hit.push(enemy.id);
-          enemy.hp -= shot.damage;
-          w.pressure(
-            enemy,
-            shot.postureDamage * (w.hasRelic('hunter') && enemy.state === 'tell' ? 1.3 : 1),
-          );
-          if (enemy.hp <= 0) this.hooks.breakEnemy(enemy);
-          if (['archer', 'hexer'].includes(enemy.def.id) && enemy.state === 'tell') {
-            enemy.state = 'recover';
-            enemy.stateAt = w.time;
-            enemy.readyAt = w.time + 0.7;
-            w.threats.release(enemy.id);
-          }
-          enemy.recoilAt = w.time;
-          w.stats.rangedHits++;
-          w.impact(
-            shot.x,
-            shot.y,
-            shot.reflected ? '#fff0bf' : w.character.color,
-            14,
-            shot.reflected ? 'perfect' : 'ring',
-            0.7,
-            true,
-            Math.atan2(shot.vy, shot.vx),
-          );
-          w.audio.play('hit', shot.kind);
-          if (shot.pierce-- <= 0) shot.lifetime = 0;
-          return;
-        }
-        if (
-          p.state === 'finisher' ||
-          w.time < p.immunity ||
-          (w.time - p.dodgeAt >= 0 && w.time - p.dodgeAt <= BALANCE.dodgeInvulnerable)
-        ) {
-          shot.lifetime = 0;
-          return;
-        }
-        const defense = resolveDefense({
-          strike: { kind: 'thrust', windup: 0, recovery: 0, damage: shot.damage, reach: 100 },
-          distance: 0,
-          parryAge: shot.parryable ? w.time - p.parryAt : 99,
-          dodgeAge: w.time - p.dodgeAt,
-          weapon: w.weapon,
-          assist: w.save.settings.assist || w.training,
-          bonusWindow: w.bonusWindow,
-        });
-        if (defense === 'perfect' || defense === 'parry')
-          this.parryProjectile(shot, defense === 'perfect');
-        else {
-          this.hooks.hurt(shot.damage, shot.kind === 'arrow' ? 'ASHEN ARROW' : 'RESONANT ORB');
-          shot.lifetime = 0;
-        }
+        const recipient =
+          w.network?.owner(typeof target.id === 'string' ? target.id : shot.owner) ?? w;
+        recipient.arsenal.hitProjectile(shot, target);
       },
       (shot) =>
         w.impact(shot.x, shot.y, shot.kind === 'orb' ? '#a8cfd9' : '#d9bf91', 6, 'ring', 0.3),
     );
   }
 
-  private parryProjectile(shot: Projectile, perfect: boolean): void {
+  hitProjectile(shot: Projectile, target: ProjectileTarget): void {
+    const w = this.world,
+      p = w.player;
+    const enemyTarget =
+      typeof target.id === 'string' ? undefined : w.enemies.find((e) => e.id === target.id);
+    if (enemyTarget) {
+      const enemy = enemyTarget;
+      const previousPosture = enemy.posture;
+      shot.hit.push(enemy.id);
+      enemy.hp -= shot.damage;
+      w.pressure(
+        enemy,
+        shot.postureDamage * (w.hasRelic('hunter') && enemy.state === 'tell' ? 1.3 : 1),
+      );
+      if (enemy.hp <= 0) this.hooks.breakEnemy(enemy);
+      w.network?.hit?.(enemy, shot.damage, Math.max(0, enemy.posture - previousPosture));
+      if (['archer', 'hexer'].includes(enemy.def.id) && enemy.state === 'tell') {
+        enemy.state = 'recover';
+        enemy.stateAt = w.time;
+        enemy.readyAt = w.time + 0.7;
+        w.threats.release(enemy.id);
+      }
+      enemy.recoilAt = w.time;
+      w.stats.rangedHits++;
+      w.impact(
+        shot.x,
+        shot.y,
+        shot.reflected ? '#fff0bf' : w.character.color,
+        14,
+        shot.reflected ? 'perfect' : 'ring',
+        0.7,
+        true,
+        Math.atan2(shot.vy, shot.vx),
+      );
+      w.audio.play('hit', shot.kind);
+      if (shot.pierce-- <= 0) shot.lifetime = 0;
+      return;
+    }
+    if (
+      p.state === 'finisher' ||
+      w.time < p.immunity ||
+      (w.time - p.dodgeAt >= 0 && w.time - p.dodgeAt <= BALANCE.dodgeInvulnerable)
+    ) {
+      shot.lifetime = 0;
+      return;
+    }
+    const defense = resolveDefense({
+      strike: { kind: 'thrust', windup: 0, recovery: 0, damage: shot.damage, reach: 100 },
+      distance: 0,
+      parryAge: shot.parryable ? w.time - p.parryAt : 99,
+      dodgeAge: w.time - p.dodgeAt,
+      weapon: w.weapon,
+      assist: w.save.settings.assist || w.training,
+      bonusWindow: w.bonusWindow,
+    });
+    if (defense === 'perfect' || defense === 'parry')
+      this.parryProjectile(shot, defense === 'perfect');
+    else {
+      const before = { ...p };
+      this.hooks.hurt(shot.damage, shot.kind === 'arrow' ? 'ASHEN ARROW' : 'RESONANT ORB');
+      w.network?.projectileContact?.(shot, Math.max(0, before.hp - p.hp), before);
+      shot.lifetime = 0;
+    }
+  }
+
+  parryProjectile(shot: Projectile, perfect: boolean): void {
     const w = this.world;
     const p = w.player,
       magic = shot.kind === 'orb';
@@ -253,7 +283,8 @@ export class Arsenal {
     const speed = Math.hypot(shot.vx, shot.vy) * 1.3;
     shot.vx = Math.cos(angle) * speed;
     shot.vy = Math.sin(angle) * speed;
-    shot.team = 'player';
+    shot.team = w.network?.team ?? 'player';
+    if (w.network) shot.owner = `p:${w.network.id}`;
     shot.reflected = true;
     shot.damage *= 1.6;
     shot.postureDamage = 62 * (w.weapon.id === 'spear' ? 1.2 : 1);

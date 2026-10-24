@@ -1,3 +1,4 @@
+import { moveBody } from '../../shared/movement';
 import {
   BALANCE,
   BIOMES,
@@ -30,6 +31,7 @@ import { Buffs } from './buffs';
 import { Inventory, ITEMS, type ItemDef } from './items';
 import { LootDirector, type LootKind } from './loot';
 import { EXECUTIONS, EXECUTION_CONTACT, EXECUTION_DURATION, executionVariant } from './executions';
+import type { Projectile } from './projectiles';
 
 export type Mode = 'menu' | 'playing' | 'paused' | 'reward' | 'dead' | 'trained';
 export type PlayerState =
@@ -75,6 +77,7 @@ export interface Player {
   recharge: number;
 }
 export interface Enemy {
+  elite?: boolean;
   path?: { x: number; y: number }[];
   pathAt?: number;
   id: number;
@@ -161,12 +164,42 @@ export interface RunStats {
 export interface WorldEvent {
   type: 'reward' | 'death' | 'trained' | 'floor';
 }
+/** Optional authority hooks. Offline play uses the same rules without a session. */
+export interface NetworkRules {
+  team: string;
+  id: number;
+  active: () => World[];
+  owner: (id: number | string) => World | undefined;
+  strike?: (enemy: Enemy, damage: number, pressure: number) => boolean;
+  finish?: (enemy: Enemy) => void;
+  pressure?: (enemy: Enemy, amount: number) => boolean;
+  transition: (world: World) => void;
+  contact?: (enemy: Enemy, damage: number, before: Player) => void;
+  perfect?: (enemy: Enemy) => void;
+  hit?: (enemy: Enemy, damage: number, pressure: number) => void;
+  parryTime?: number;
+  projectileContact?: (shot: Projectile, damage: number, before: Player) => void;
+}
 export const distance = (a: { x: number; y: number }, b: { x: number; y: number }): number =>
   Math.hypot(a.x - b.x, a.y - b.y);
 export const angleDifference = (a: number, b: number): number =>
   Math.atan2(Math.sin(a - b), Math.cos(a - b));
 
 export class World {
+  network?: NetworkRules;
+  remotePlayers: {
+    id: string;
+    name: string;
+    weapon: string;
+    color: string;
+    connected: boolean;
+    player: Player;
+  }[] = [];
+  onlineInput?: (action: Action) => void;
+  onlineFrame?: (dt: number) => void;
+  onlinePause?: () => void;
+  onlineCycle?: (direction: number) => void;
+  onlineMode?: 'coop' | 'duel';
   mode: Mode = 'menu';
   seed = 'THE-FIRST-CANDLE';
   floor: Floor = makeFloor(this.seed, 1);
@@ -203,7 +236,7 @@ export class World {
   lastMoved = 0;
   roomDamage = 0;
   roomPerfects = 0;
-  debug = new URLSearchParams(location.search).has('debug');
+  debug = typeof location !== 'undefined' && new URLSearchParams(location.search).has('debug');
   invincible = false;
   timeScale = 1;
   presentation = { mode: 'exploration', duel: 0, fps: 0, drawCalls: 0, triangles: 0 };
@@ -222,7 +255,16 @@ export class World {
   readonly buffs = new Buffs();
   readonly inventory = new Inventory();
   loot = new LootDirector(this.seed);
-  pickups: { id: number; room: number; depth: number; x: number; y: number; item: string }[] = [];
+  pickupOwner?: string;
+  pickups: {
+    id: number;
+    room: number;
+    depth: number;
+    x: number;
+    y: number;
+    item: string;
+    owner?: string;
+  }[] = [];
   selection?: string;
   private pendingItem?: ItemDef;
   get character() {
@@ -292,7 +334,11 @@ export class World {
     );
     if (broken) return { text: 'Deliver the final toll', sub: 'E  /  J', x: broken.x, y: broken.y };
     const pickup = this.pickups.find(
-      (i) => i.room === this.roomId && i.depth === this.floor.depth && distance(i, p) < 75,
+      (i) =>
+        (!i.owner || i.owner === this.pickupOwner) &&
+        i.room === this.roomId &&
+        i.depth === this.floor.depth &&
+        distance(i, p) < 75,
     );
     if (pickup)
       return {
@@ -594,9 +640,17 @@ export class World {
   }
 
   input(action: Action): void {
+    if (this.onlineInput) {
+      this.onlineInput(action);
+      return;
+    }
     if (this.mode === 'playing') this.buffer.push(action, this.time);
   }
   pause(): void {
+    if (this.onlinePause) {
+      this.onlinePause();
+      return;
+    }
     if (this.mode === 'playing') {
       this.mode = 'paused';
       this.buffer.clear();
@@ -620,7 +674,7 @@ export class World {
     this.shake = Math.max(0, this.shake - realDt * 25);
     this.flash = Math.max(0, this.flash - realDt * 3);
     if (this.mode !== 'playing') return;
-    if (this.hitStop > 0) {
+    if (this.hitStop > 0 && !this.network) {
       this.hitStop -= realDt;
       return;
     }
@@ -637,8 +691,10 @@ export class World {
       this.hitStop = this.save.settings.reducedMotion ? 0.025 : 0.09;
     }
     this.threats.prune(this.time);
-    for (const enemy of this.enemies) this.updateEnemy(enemy, dt);
-    this.arsenal.update(dt);
+    if (!this.network) {
+      for (const enemy of this.enemies) this.updateEnemy(enemy, dt);
+      this.arsenal.update(dt);
+    }
     this.separateEnemies();
     this.updateHazards();
     for (const echo of this.echoes) {
@@ -652,7 +708,7 @@ export class World {
         this.hurt(16, 'THE BELL RETURNS — LEAVE THE ECHO');
     }
     this.echoes = this.echoes.filter((e) => e.at > this.time);
-    if (!this.combat && !this.room.cleared) this.clearRoom();
+    if (!this.network && !this.combat && !this.room.cleared) this.clearRoom();
     if (this.clearAt && this.time > this.clearAt) {
       this.clearAt = 0;
       if (this.training) {
@@ -664,7 +720,7 @@ export class World {
     }
     this.player.focus = Math.max(0, Math.min(100, this.player.focus));
     this.player.hp = Math.max(0, Math.min(BALANCE.playerHp, this.player.hp));
-    this.autoPassage();
+    if (!this.network) this.autoPassage();
     if (this.training) {
       this.player.hp = Math.max(40, this.player.hp);
       if (
@@ -704,11 +760,20 @@ export class World {
         persist(this.save);
         this.events.push({ type: 'trained' });
       }
-    } else if (this.player.hp <= 0 && this.mode === 'playing') this.die();
+    } else if (this.player.hp <= 0 && this.mode === 'playing') {
+      if (this.network) {
+        this.player.hp = 0;
+        this.player.state = 'dead';
+        this.buffer.clear();
+        this.pendingItem = undefined;
+        this.buffs.clear();
+      } else this.die();
+    }
   }
 
   private updatePlayer(dt: number): void {
     const p = this.player;
+    if (p.state === 'dead' || p.hp <= 0) return;
     const age = this.time - p.stateAt;
     this.buffs.expire(this.time);
     if (this.buffs.active.length) this.stats.buffUptime += dt;
@@ -804,7 +869,10 @@ export class World {
       if (this.focusedEnemy !== undefined && this.target && p.state === 'idle')
         p.facing = Math.atan2(this.target.y - p.y, this.target.x - p.x);
     }
-    const onIce = (this.floor.biome === 3 || this.floor.hybrid === 3) && this.inZone(p, 'ice');
+    const onIce =
+      !this.network?.strike &&
+      (this.floor.biome === 3 || this.floor.hybrid === 3) &&
+      this.inZone(p, 'ice');
     const slide = 1 - Math.exp(-dt * (onIce ? 3 : 12));
     this.iceDrift.x += ((onIce ? this.movement.x * 75 : 0) - this.iceDrift.x) * slide;
     this.iceDrift.y += ((onIce ? this.movement.y * 75 : 0) - this.iceDrift.y) * slide;
@@ -903,7 +971,8 @@ export class World {
       this.trainingDone.add('attack');
     }
     if (action === 'parry') {
-      p.parryAt = this.time;
+      p.parryAt = this.network?.parryTime ?? this.time;
+      if (this.network) this.network.parryTime = undefined;
       p.parryLanded = false;
       this.effect(p.x, p.y, 'ring', '#b9e1de', 0.32, 0.55);
     }
@@ -951,6 +1020,15 @@ export class World {
       attackKind: p.move.kind,
     });
     for (const enemy of this.alive) {
+      if (this.network?.strike && enemy.state !== 'broken') {
+        this.network.strike(
+          enemy,
+          this.weapon.damage * p.move.damage * this.buffs.modifier('damage') * (counter ? 1.4 : 1),
+          posturePressure(this.weapon.pressure, p.focus, counter, this.weapon.id === 'spear') *
+            p.move.pressure,
+        );
+        continue;
+      }
       if (
         enemy.state === 'broken' ||
         distance(p, enemy) > this.weapon.reach * p.move.reach + 22 ||
@@ -958,6 +1036,8 @@ export class World {
       )
         continue;
       const block = enemy.def.reaction === 'block' && enemy.state === 'idle' && !counter;
+      const previousHp = enemy.hp,
+        previousPosture = enemy.posture;
       enemy.hp -=
         (this.weapon.damage + this.hunger) *
         p.move.damage *
@@ -1018,6 +1098,11 @@ export class World {
       }
       this.emit('attack', enemy);
       if (enemy.hp <= 0) this.breakEnemy(enemy);
+      this.network?.hit?.(
+        enemy,
+        Math.max(0, previousHp - enemy.hp),
+        Math.max(0, enemy.posture - previousPosture),
+      );
     }
   }
 
@@ -1102,7 +1187,7 @@ export class World {
     if (loot.kind === 'item') this.dropItem(loot.item!);
   }
 
-  private updateEnemy(e: Enemy, dt: number): void {
+  updateEnemy(e: Enemy, dt: number): void {
     if (e.state === 'dead') return;
     const p = this.player;
     const age = this.time - e.stateAt;
@@ -1333,14 +1418,44 @@ export class World {
   private beginTell(e: Enemy): void {
     if (
       !this.threats.reservations.some((r) => r.enemy === e.id) &&
-      !this.threats.reserve(e.id, this.time, e.strike, this.floor.depth)
+      !this.threats.reserve(e.id, this.time, e.strike, this.floor.depth, 0, this.network?.id)
     )
       return;
     e.state = 'tell';
     e.stateAt = this.time;
     if (this.room.modifier !== 'Silence') this.audio.play('tell', e.def.id);
   }
-  private enemyHit(e: Enemy): void {
+  enemyHit(e: Enemy, intercepted = false): void {
+    if (this.network && !intercepted) {
+      const candidates = this.network
+        .active()
+        .filter(
+          (w) =>
+            w.player.hp > 0 &&
+            w.player.state !== 'dead' &&
+            distance(e, w.player) <= e.strike.reach + 24 &&
+            Math.abs(angleDifference(Math.atan2(w.player.y - e.y, w.player.x - e.x), e.facing)) <=
+              (e.strike.kind === 'sweep' ? 2.6 : 1.2),
+        );
+      const defender = candidates.find((w) => {
+        const defense = resolveDefense({
+          strike: e.strike,
+          distance: distance(e, w.player),
+          parryAge: w.time - w.player.parryAt,
+          dodgeAge: w.time - w.player.dodgeAt,
+          weapon: w.weapon,
+          assist: false,
+          bonusWindow: w.bonusWindow,
+        });
+        return defense === 'perfect' || defense === 'parry';
+      });
+      if (defender) {
+        defender.enemyHit(e, true);
+        return;
+      }
+      for (const w of candidates) w.enemyHit(e, true);
+      return;
+    }
     const p = this.player;
     if (this.time < p.immunity || p.state === 'finisher') return;
     const facing = Math.atan2(p.y - e.y, p.x - e.x);
@@ -1387,6 +1502,7 @@ export class World {
       p.counterUntil = this.time + 0.8;
       p.state = 'idle';
       if (perfect) {
+        this.network?.perfect?.(e);
         if (this.weapon.id === 'sword') this.rechargeRanged(1);
         this.stats.perfects++;
         this.stats.streak++;
@@ -1422,6 +1538,7 @@ export class World {
       this.emit('parry', e);
       if (perfect) this.emit('perfect', e);
     } else {
+      const before = { ...p };
       this.hurt(
         e.strike.damage,
         e.strike.kind === 'sweep'
@@ -1433,11 +1550,13 @@ export class World {
               : 'A LATE GUARD',
         e,
       );
+      this.network?.contact?.(e, before.hp - p.hp, before);
     }
   }
 
-  private hurt(amount: number, reason: string, enemy?: Enemy): void {
+  hurt(amount: number, reason: string, enemy?: Enemy): void {
     const p = this.player;
+    if (p.hp <= 0) return;
     if (this.invincible || this.time < p.immunity) return;
     if (this.buffs.consume('ward')) {
       this.effect(p.x, p.y, 'ring', '#d5efcd', 0.4, 1.4);
@@ -1474,6 +1593,7 @@ export class World {
   }
 
   pressure(e: Enemy, amount: number): void {
+    if (this.network?.pressure?.(e, amount)) return;
     if (e.state === 'dead' || e.state === 'broken') return;
     e.posture += amount;
     e.lastPressure = this.time;
@@ -1498,6 +1618,7 @@ export class World {
     if (this.weapon.id === 'great') this.rechargeRanged(2);
   }
   private finish(e: Enemy): void {
+    if (e.state !== 'broken') return;
     const p = this.player;
     p.state = 'finisher';
     p.finisherTarget = e.def.id;
@@ -1562,6 +1683,7 @@ export class World {
     }
     this.threats.release(e.id);
     this.echoes = this.echoes.filter((echo) => echo.enemy !== e.id);
+    this.network?.finish?.(e);
   }
   private phaseBoss(e: Enemy): void {
     e.phase = 2;
@@ -1665,7 +1787,11 @@ export class World {
       return;
     }
     const pickup = this.pickups.find(
-      (i) => i.room === this.roomId && i.depth === this.floor.depth && distance(i, p) < 75,
+      (i) =>
+        (!i.owner || i.owner === this.pickupOwner) &&
+        i.room === this.roomId &&
+        i.depth === this.floor.depth &&
+        distance(i, p) < 75,
     );
     if (pickup) {
       if (this.inventory.add(pickup.item)) {
@@ -1686,6 +1812,10 @@ export class World {
       return;
     }
     if (this.combat) return;
+    if (this.network) {
+      this.network.transition(this);
+      return;
+    }
     if (!this.room.claimed && distance(p, { x: 560, y: 365 }) < 110) {
       if (this.room.kind === 'exit') {
         const hp = p.hp,
@@ -1798,6 +1928,7 @@ export class World {
     this.events.push({ type: 'death' });
   }
   settleRun(): void {
+    if (this.network) return;
     if (this.settled || this.training || this.laboratory) return;
     this.settled = true;
     recordRun(this.seed, this.character.id, this.floor.depth, this.stats);
@@ -1810,26 +1941,7 @@ export class World {
   }
 
   private move(body: { x: number; y: number }, dx: number, dy: number): void {
-    const nextX = Math.min(1048, Math.max(72, body.x + dx));
-    if (canStand(this.room, nextX, body.y)) body.x = nextX;
-    for (const o of this.obstacles) {
-      const d = distance(body, o),
-        min = o.radius + 16;
-      if (d < min) {
-        const angle = Math.atan2(body.y - o.y, body.x - o.x);
-        body.x = o.x + Math.cos(angle) * min;
-      }
-    }
-    const nextY = Math.min(680, Math.max(90, body.y + dy));
-    if (canStand(this.room, body.x, nextY)) body.y = nextY;
-    for (const o of this.obstacles) {
-      const d = distance(body, o),
-        min = o.radius + 16;
-      if (d < min) {
-        const angle = Math.atan2(body.y - o.y, body.x - o.x);
-        body.y = o.y + Math.sin(angle) * min;
-      }
-    }
+    moveBody(body, dx, dy, this.room, this.obstacles);
   }
   private separateEnemies(): void {
     const living = this.alive;
@@ -1863,6 +1975,7 @@ export class World {
     return Math.hypot(body.x - 560, body.y - 250) < (kind === 'fungal' ? 100 : 65);
   }
   private updateHazards(): void {
+    if (this.network?.strike) return;
     if (
       this.time < this.player.immunity ||
       this.player.state === 'dodge' ||

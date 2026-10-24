@@ -40,8 +40,14 @@ export class DungeonScene extends Phaser.Scene {
         l: 'heavy',
       };
       if (actions[key]) this.world.input(actions[key]);
-      if (key === '1') this.world.inventory.cycle(-1);
-      if (key === '2') this.world.inventory.cycle(1);
+      if (key === '1') {
+        if (this.world.onlineCycle) this.world.onlineCycle(-1);
+        else this.world.inventory.cycle(-1);
+      }
+      if (key === '2') {
+        if (this.world.onlineCycle) this.world.onlineCycle(1);
+        else this.world.inventory.cycle(1);
+      }
     };
     const up = (event: KeyboardEvent) => this.keys.delete(event.key.toLowerCase());
     const blur = () => {
@@ -140,6 +146,10 @@ export class DungeonScene extends Phaser.Scene {
         : this.painter.director.entryRemaining > 0
           ? 0.55
           : 1);
+    if (this.world.onlineFrame) {
+      this.world.onlineFrame(Math.min(delta / 1000, 0.1));
+      remaining = 0;
+    }
     while (remaining > 0 && !this.painter.loading) {
       const step = Math.min(remaining, 1 / 120);
       this.world.update(step);

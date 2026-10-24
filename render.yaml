@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: hollow-canticle-online
+    runtime: node
+    plan: free
+    branch: codex/v0.6.0-online-multiplayer
+    buildCommand: npm ci --include=dev && npm run build:server
+    startCommand: npm run start:server
+    healthCheckPath: /healthz
+    autoDeployTrigger: 'off'
+    envVars:
+      - key: NODE_VERSION
+        value: '24'
+      - key: NODE_ENV
+        value: production
+      - key: ALLOWED_ORIGINS
+        value: https://guardianec.github.io,http://localhost:5173,http://127.0.0.1:5173
