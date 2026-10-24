@@ -1,8 +1,9 @@
 # Hollow Canticle v0.6 — Online Co-op & Duels
 
-This branch adds private, account-free friend rooms. The server is ready for a
-Render **Free Web Service**. Public deployment is pending Render account access;
-the existing v0.5 Pages deployment remains unchanged.
+This branch adds private, account-free friend rooms. The public candidate uses a
+Render **Free Web Service**, with the static client on the existing GitHub Pages
+host: [play](https://guardianec.github.io/hollow-canticle-v05/),
+[health](https://hollow-canticle-online.onrender.com/healthz).
 
 ## Authority and shared rules
 
@@ -210,16 +211,17 @@ production environment otherwise omits TypeScript/esbuild dev dependencies.
 The server bundle contains gameplay code and imports installed packages; it
 does not serve GLBs, textures or the static game.
 
-After Render provides the actual URL, build the static client with:
+The deployed static client uses:
 
 ```text
-VITE_MULTIPLAYER_URL=wss://<actual-free-service>.onrender.com
+VITE_MULTIPLAYER_URL=wss://hollow-canticle-online.onrender.com
 ```
 
 The GitHub Pages workflow accepts `multiplayer_url` on manual dispatch, or the
 repository Actions variable `VITE_MULTIPLAYER_URL`. Select the multiplayer branch
 when manually publishing after server health is verified. No merge is needed.
-The existing v0.5 site stays on its baseline until that publication is performed.
+The user approved allowing this exact branch in the `github-pages` environment;
+its existing `main` rule remains. Publishing the artifact does not merge branches.
 Never put a private key or token in a Vite variable; the service URL is public.
 
 Render's [Free service rules](https://render.com/docs/free) include sleeping after
@@ -230,7 +232,15 @@ menu closes or the service wakes. There are no idle keepalive jobs. Active
 players' ordinary traffic is sufficient. Neither single-player nor startup
 depends on Render.
 
-Render sign-in currently rejects the available GitHub login with “configured
-for deployments but not for login.” No service was provisioned, no plan was
-upgraded, and no payment information was requested. Authenticate the intended
-Render account to finish the deployment above.
+The service `hollow-canticle-online` was created after the user signed in, in
+Frankfurt, on **Free ($0/month, 0.1 CPU, 512 MB)**. Service ID:
+`srv-dbeeg2avcj2c73cmu7fg`. It runs authority commit `22041af845b026120f279553928ec1eb81acf470`;
+the later departure fix changes only the browser client. Auto deploy is off.
+No database, Redis, disk, payment information or paid resource was added.
+
+Hosted verification exposed a delayed socket close acknowledgement: the server
+had already removed the leaving seat, but the SDK's leave promise stayed pending.
+The client now disables reconnection for intentional departure, sends normal
+leave, and closes locally with the consented code after at most one second.
+Callbacks from departed rooms cannot mark a new connection as lost. Unexpected
+drops still retain the normal 30-second reconnection reservation.

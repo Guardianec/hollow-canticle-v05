@@ -3,7 +3,8 @@
 Status: **review candidate, not full release acceptance**. The original deployed
 commit is `66c42198b57b2ccb9f1ba00c867c3da2eb98d459`, verified against `v05/main`
 and GitHub's successful Pages workflow. All changes stay on
-`codex/v0.6.0-online-multiplayer`; neither deployed branch was overwritten.
+`codex/v0.6.0-online-multiplayer`; neither main branch was overwritten. The public
+Pages artifact is now built from that branch, connected to the Render Free service.
 
 ## Automated checks performed
 
@@ -11,7 +12,7 @@ and GitHub's successful Pages workflow. All changes stay on
 | ------------------------------- | ------------------------------------------------------ |
 | Baseline tests before edits     | 105 passed                                             |
 | Baseline production build       | Passed                                                 |
-| Final combined tests            | **146 passed in 11 files**                             |
+| Final combined tests            | **147 passed in 11 files**                             |
 | Final test command on this host | `npm.cmd test -- --maxWorkers=1`                       |
 | ESLint and TypeScript           | Passed                                                 |
 | Production static client build  | Passed                                                 |
@@ -24,7 +25,7 @@ weakened. After closing the competing work, the complete one-worker run passed
 in 43.57 seconds total. The initial sandbox test attempt also encountered a
 Windows temporary-file rename restriction; running outside that sandbox passed.
 
-The 41 multiplayer cases cover:
+The 42 multiplayer cases cover:
 
 - Names, monotonic sequences, axis sanitization and ignored client outcomes.
 - Deterministic 2/3/4-player encounter budgets, ranged support, count caps,
@@ -134,16 +135,50 @@ Evidence:
 
 ## Deployment and remaining limits
 
-Render sign-in rejected the available GitHub login because it is configured for
-deployments but not as a login method. **No Render service or public multiplayer
-URL was created.** The Free Blueprint and exact deployment steps are in
-[MULTIPLAYER.md](MULTIPLAYER.md). The existing static v0.5 deployment is unchanged.
-No paid service, database, disk, account backend or idle-traffic job was created.
+After user sign-in, the authority was deployed on Render **Free**, Frankfurt,
+0.1 CPU / 512 MB, auto deploy off. Public health returns `{ "ok": true }` at
+[healthz](https://hollow-canticle-online.onrender.com/healthz). The static candidate
+is [public on Pages](https://guardianec.github.io/hollow-canticle-v05/), published
+from the feature branch after the user approved its exact deployment branch rule.
+Both main branch commits remain unchanged. No paid service, database, disk,
+account backend or idle-traffic job was created.
+
+Actual HTTPS matchmaking and WSS smoke results are in
+[v06-hosted.json](metrics/v06-hosted.json): four clients selected different classes,
+readied, started co-op at budget 2.55, received movement acknowledgement, restored
+a dropped session, left deliberately and transferred the host. Two fresh clients
+then completed duel countdown and spent a ranged charge. Measured co-op ping in
+this brief sample was 35 ms; this is not a capacity or fairness benchmark.
+
+The first harness assertion incorrectly compared a Float32 budget with exact
+decimal equality; it now uses a tolerance. A separate genuine hosted issue was
+fixed: Render delayed the close acknowledgement after the seat was removed.
+Intentional departure now disables reconnection and bounds the close wait to one
+second. A real-socket regression simulates a stalled leave promise and verifies
+that no reserved seat remains and the menu stays usable. The complete suite then
+passed **147 tests**, and the production client build passed.
+
+Two production Pages browser clients created/joined a shared lobby, selected
+Oathkeeper/Moth, readied and rendered the same co-op room through the deployed
+authority. See [hosted co-op](screenshots/v06/hosted-coop.png). These checks also
+verify the permitted Pages origin. No console errors appeared in either hosted
+client. One GPU shader precision warning appeared in the first client; the
+second client had no warnings. After publishing client fix `05eedc3`, a browser
+reload restored the reserved co-op seat with authoritative HP intact. Intentional
+leave then returned to the main menu while the other player stayed in the room;
+opening Online again showed no stale reconnect action. Pages workflow
+[`40116750548`](https://github.com/Guardianec/hollow-canticle-v05/actions/runs/40116750548)
+passed its 147 tests, build and deployment. The exact free deployment setup is in
+[MULTIPLAYER.md](MULTIPLAYER.md).
+
+Two freshly loaded public clients also joined a duel as Lancer/Bellbearer,
+readied, showed the three-second countdown and matching 0–0 scores in the frozen
+arena, and accepted a ranged input. Both clients reported no console errors.
+See [hosted duel](screenshots/v06/hosted-duel.png). This is a smoke check, not a
+completed human match or a latency fairness assessment.
 
 Remaining acceptance work:
 
-- Authenticate Render, create the Free service, verify HTTPS/WSS and publish the
-  static client with its actual service URL.
 - Measure actual Render cold start, CPU scheduling, sustained memory and free
   allocation limits. Local memory use alone does not prove hosted capacity.
 - Perform natural multi-room two-/three-/four-player runs and experienced-player

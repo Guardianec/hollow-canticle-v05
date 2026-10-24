@@ -10,10 +10,14 @@ The free multiplayer service may take a short moment to wake after inactivity.
 Rooms live in memory and can disappear when the server restarts. There are no
 accounts, paid services or multiplayer databases.
 
-This is a release candidate: local simulation/network tests and browser smoke
-checks are documented in [v0.6 QA](docs/QA-v0.6.md). Public multiplayer deployment
-is pending Render account sign-in. The existing v0.5 site below remains on its
-preserved baseline, rather than claiming an online service that is not deployed.
+**[Play Hollow Canticle](https://guardianec.github.io/hollow-canticle-v05/)**
+
+This is a public release candidate. The client runs on GitHub Pages and the
+authority on [Render Free](https://hollow-canticle-online.onrender.com/healthz).
+Hosted four-player connection/reconnection and two-player duel checks passed.
+The [v0.6 QA record](docs/QA-v0.6.md) distinguishes those checks from the human
+balance and sustained hosting measurements still needed. Both main branches
+retain their preserved commits; Pages was published from the multiplayer branch.
 
 Run `npm run dev:server` and `npm run dev` in two terminals. See
 [multiplayer architecture and exact free deployment](docs/MULTIPLAYER.md),
@@ -28,7 +32,7 @@ The v0.5 visual rebuild starts from accepted v0.4 commit
 and the complete cast. This preview has its own repository and deployment;
 the original alpha repository and game remain preserved.
 
-[Play v0.5](https://guardianec.github.io/hollow-canticle-v05/) ·
+[Play the current candidate](https://guardianec.github.io/hollow-canticle-v05/) ·
 [Play the preserved alpha](https://guardianec.github.io/hollow-canticle/) ·
 [Deployment notes](docs/DEPLOYMENT-v0.5.md)
 

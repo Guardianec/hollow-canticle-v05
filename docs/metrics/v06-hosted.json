@@ -1,0 +1,18 @@
+{
+  "checkedAt": "2026-10-24T17:32:26.452Z",
+  "endpoint": "wss://hollow-canticle-online.onrender.com",
+  "coop": {
+    "clients": 4,
+    "budget": 2.549999952316284,
+    "ack": 1,
+    "reconnect": true,
+    "pingMs": 35,
+    "intentionalLeave": true,
+    "hostTransfer": true
+  },
+  "duel": {
+    "phase": "round",
+    "rangedCharges": 2
+  },
+  "transport": "HTTPS matchmaking + secure WebSocket"
+}
