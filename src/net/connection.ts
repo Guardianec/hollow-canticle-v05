@@ -1,4 +1,4 @@
-import { Client, type Room as ClientRoom, type InputHandle } from '@colyseus/sdk';
+import { Client, CloseCode, type Room as ClientRoom, type InputHandle } from '@colyseus/sdk';
 import {
   ACTIONS,
   Input,
@@ -138,12 +138,14 @@ export class OnlineConnection {
       else if (event.type === 'roomClear') this.world.audio.play('clear');
     });
     room.onDrop(() => {
+      if (this.room !== room) return;
       this.connected = false;
       this.actions.clear();
       this.pending = [];
       this.changed?.();
     });
     room.onReconnect(() => {
+      if (this.room !== room) return;
       this.connected = true;
       this.lost = false;
       this.pending = [];
@@ -151,11 +153,13 @@ export class OnlineConnection {
       this.changed?.();
     });
     room.onLeave(() => {
+      if (this.room !== room) return;
       this.connected = false;
       this.lost = true;
       this.changed?.();
     });
     room.onError(() => {
+      if (this.room !== room) return;
       this.connected = false;
       this.lost = true;
       this.changed?.();
@@ -453,6 +457,21 @@ export class OnlineConnection {
     this.snapshots = [];
     this.actions.clear();
     sessionStorage.removeItem('hollow-canticle:reconnect');
-    await room?.leave().catch(() => undefined);
+    if (!room) return;
+    room.reconnection.enabled = false;
+    // A hosting proxy can delay the server's close frame after it removes the seat.
+    // Send the normal leave first, then close locally without reserving/rejoining it.
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      await Promise.race([
+        room.leave().catch(() => undefined),
+        new Promise<void>((resolve) => {
+          timer = setTimeout(resolve, 1000);
+        }),
+      ]);
+    } finally {
+      clearTimeout(timer);
+      if (room.connection.isOpen) room.connection.close(CloseCode.CONSENTED);
+    }
   }
 }

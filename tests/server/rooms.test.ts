@@ -5,6 +5,9 @@ import { CoopRoom } from '../../server/rooms/CoopRoom';
 import { DuelRoom } from '../../server/rooms/DuelRoom';
 import type { Room as SDKRoom } from '@colyseus/sdk';
 import type { SessionState } from '../../shared/protocol';
+import { OnlineConnection } from '../../src/net/connection';
+import { World } from '../../src/game/world';
+import { defaultSave } from '../../src/game/save';
 
 let server: ColyseusTestServer;
 const waitFor = async (predicate: () => boolean, ms = 3000) => {
@@ -19,11 +22,34 @@ beforeAll(async () => {
 }, 15000);
 afterEach(async () => {
   await server.cleanup();
+  vi.unstubAllGlobals();
 });
 afterAll(async () => {
   await server.shutdown();
 });
 describe('Colyseus friend rooms over WebSocket', () => {
+  it('finishes intentional departure when the leave acknowledgement stalls, without reserving a seat', async () => {
+    const storage = new Map<string, string>();
+    vi.stubGlobal('sessionStorage', {
+      getItem: (key: string) => storage.get(key) ?? null,
+      setItem: (key: string, value: string) => storage.set(key, value),
+      removeItem: (key: string) => storage.delete(key),
+    });
+    const online = new OnlineConnection(new World(defaultSave()), 'ws://127.0.0.1:2568');
+    await online.create('coop', 'Departing');
+    const departing = online.room!;
+    const observer = await online.client.joinById(departing.roomId, { name: 'Remaining' });
+    observer.onMessage('ping', (token) => observer.send('pong', token));
+    await waitFor(() => observer.state.players?.size === 2);
+    vi.spyOn(departing, 'leave').mockImplementation(() => new Promise(() => undefined));
+    await online.leave();
+    await waitFor(() => observer.state.players.size === 1);
+    expect(departing.reconnection.enabled).toBe(false);
+    expect(online.room).toBeUndefined();
+    expect(online.lost).toBe(false);
+    expect(online.world.mode).toBe('menu');
+    expect(storage.has('hollow-canticle:reconnect')).toBe(false);
+  });
   it('serves health, rejects foreign HTTP origins, and disposes abandoned rooms', async () => {
     const response = await fetch('http://127.0.0.1:2568/healthz');
     expect(await response.json()).toEqual({ ok: true });
