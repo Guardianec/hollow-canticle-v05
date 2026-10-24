@@ -12,7 +12,7 @@ FAMILIES = {
     'worn_leather': ((.035,.02,.012),(.19,.105,.05),.82,0,35,.04),
     'crimson_cloth': ((.035,.008,.009),(.19,.035,.028),.95,0,70,.025),
     'pilgrim_linen': ((.18,.17,.13),(.48,.44,.32),.96,0,65,.025),
-    'wet_stone': ((.025,.065,.07),(.15,.26,.25),.28,0,7,.075),
+    'wet_stone': ((.025,.065,.07),(.15,.26,.25),.56,0,7,.075),
     'fungal_skin': ((.035,.015,.055),(.23,.08,.31),.66,0,3,.12),
     'frozen_stone': ((.16,.23,.29),(.42,.57,.65),.49,.08,12,.065),
     'snow_crust': ((.5,.62,.69),(.85,.91,.93),.96,0,35,.11),
@@ -73,7 +73,8 @@ def bake(materials, output, force=False):
         plane.data.materials.clear(); plane.data.materials.append(mat)
         for kind,bake_type in [('baseColor','DIFFUSE'),('normal','NORMAL'),('roughness','ROUGHNESS'),('ao','AO')]:
             path=output/f'{mat.name}_{kind}.png'
-            if path.exists() and not force and (kind!='baseColor' or color_current): continue
+            wet_current=mat.name!='wet_stone' or kind!='roughness' or (output/'wet-stone-roughness-v2').exists()
+            if path.exists() and not force and (kind!='baseColor' or color_current) and wet_current: continue
             image=bpy.data.images.new(f'{mat.name}_{kind}',width=1024,height=1024,alpha=False)
             image.colorspace_settings.name='sRGB' if kind=='baseColor' else 'Non-Color'
             tex=mat.node_tree.nodes.new('ShaderNodeTexImage'); tex.image=image
@@ -95,6 +96,7 @@ def bake(materials, output, force=False):
             mat.node_tree.nodes.remove(tex); bpy.data.images.remove(image)
     bpy.data.objects.remove(plane,do_unlink=True)
     (output/'base-color-v2').write_text('Unlit base-color bake, including metallic albedo.\n')
+    (output/'wet-stone-roughness-v2').write_text('Worn wet stone, roughness .56.\n')
 
 def runtime_materials(materials):
     # Textures are external/shared in the manifest; avoid embedding them in every pack.

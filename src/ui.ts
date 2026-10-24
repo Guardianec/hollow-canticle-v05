@@ -195,6 +195,9 @@ export class Interface {
         this.close();
         if (w.mode === 'paused') w.pause();
         break;
+      case 'interact':
+        w.input('interact');
+        break;
       case 'back':
         this.closeOrBack();
         break;
@@ -561,6 +564,7 @@ export class Interface {
       <label>Pattern <select id="lab-pattern"><option value="-1">Adaptive</option><option value="0">Sequence 1</option><option value="1">Sequence 2</option><option value="2">Sequence 3</option><option value="3">Sequence 4</option></select></label>
       <label>Camera <select id="lab-camera"><option value="auto">Automatic</option><option value="exploration">Exploration</option><option value="combat-wide">Combat wide</option><option value="duel">Duel</option><option value="boss">Boss</option></select></label>
       <label>Clip <select id="lab-clip">${['live', 'slash', 'thrust', 'sweep', 'smash', 'grab', 'feint', 'finisher'].map((c) => `<option>${c}</option>`).join('')}</select></label>
+      <label>Execution <select id="lab-execution"><option value="0">I</option><option value="1">II</option><option value="2">III</option></select></label>
       <label>Freeze / scrub <input id="lab-freeze" type="checkbox"/></label><label>Clip time <input id="lab-scrub" type="range" min="0" max="1" step="0.01" value="0"/></label>
       <label>Step amount <select id="lab-step-size"><option value="0.008333333333333333">One frame</option><option value="0.05">50 ms</option><option value="0.1">100 ms</option><option value="0.5">500 ms</option></select></label>
       <button id="lab-step">Advance simulation</button><button id="lab-phase">Reveal boss phase II</button>`,
@@ -643,6 +647,9 @@ export class Interface {
     panel
       .querySelector('#lab-clip')!
       .addEventListener('change', () => (w.lab.clip = value('lab-clip')));
+    panel
+      .querySelector('#lab-execution')!
+      .addEventListener('change', () => (w.lab.executionVariant = Number(value('lab-execution'))));
     panel
       .querySelector('#lab-scrub')!
       .addEventListener('input', () => (w.lab.clipTime = Number(value('lab-scrub'))));

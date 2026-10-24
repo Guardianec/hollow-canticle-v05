@@ -8,9 +8,6 @@ export class ArsenalArt {
   readonly root = new T.Group();
   private arrows: T.Group[] = [];
   private pickups: T.Group[] = [];
-  private parries: T.Group[] = [];
-  private parryMaterials: T.MeshBasicMaterial[] = [];
-  private fan = new T.BufferGeometry();
   private geometry = [
     new T.CylinderGeometry(0.025, 0.025, 0.65, 5),
     new T.ConeGeometry(0.075, 0.19, 5),
@@ -32,44 +29,6 @@ export class ArsenalArt {
     this.paths.geometry.setAttribute('position', new T.BufferAttribute(this.pathPositions, 3));
     this.paths.frustumCulled = false;
     this.root.add(this.paths);
-    const rays: number[] = [];
-    for (let i = 0; i < 18; i++) {
-      const a = (i / 18) * Math.PI * 2,
-        length = i % 3 ? 0.65 : 1.1;
-      rays.push(
-        0,
-        0,
-        0,
-        Math.cos(a) * length,
-        Math.sin(a) * length,
-        0,
-        Math.cos(a + 0.025) * length * 0.35,
-        Math.sin(a + 0.025) * length * 0.35,
-        0,
-      );
-    }
-    this.fan.setAttribute('position', new T.Float32BufferAttribute(rays, 3));
-    for (let i = 0; i < 8; i++) {
-      const group = new T.Group(),
-        material = new T.MeshBasicMaterial({
-          color: '#fff0bd',
-          transparent: true,
-          depthWrite: false,
-          side: T.DoubleSide,
-          blending: T.AdditiveBlending,
-          toneMapped: false,
-        });
-      this.parryMaterials.push(material);
-      group.add(
-        new T.Mesh(this.fan, material),
-        new T.Mesh(this.geometry[3], material),
-        new T.Mesh(this.geometry[3], material),
-        new T.Mesh(this.geometry[2], material),
-      );
-      group.children[2].rotation.y = Math.PI / 2;
-      this.parries.push(group);
-      this.root.add(group);
-    }
     this.warnings.className = 'projectile-warnings';
     parent.append(this.warnings);
     for (let i = 0; i < 48; i++) {
@@ -171,29 +130,6 @@ export class ArsenalArt {
     this.paths.geometry.setDrawRange(0, w.projectiles.active.length * 2);
     this.paths.geometry.attributes.position.needsUpdate = true;
     this.warnings.innerHTML = w.mode === 'playing' ? warnings.join('') : '';
-    const parries = w.effects.filter((e) => e.projectileKind).slice(-8);
-    this.parries.forEach((group, i) => {
-      const effect = parries[i];
-      group.visible = !!effect;
-      if (!effect) return;
-      const magic = effect.projectileKind === 'orb',
-        t = 1 - effect.life / effect.maxLife;
-      group.position.copy(globalPosition(w.room, effect.x, effect.y));
-      group.position.y += 0.95;
-      group.quaternion.copy(camera.quaternion);
-      group.scale.setScalar((effect.kind === 'perfect' ? 1 : 0.6) * (magic ? 1.5 : 0.85));
-      group.children[0].visible = !magic;
-      group.children[0].scale.set(0.8 + t, (0.8 + t) * 0.35, 1);
-      group.children[1].visible = group.children[2].visible = magic;
-      group.children[1].scale.setScalar(1 + t * 5);
-      group.children[2].scale.setScalar(3 * (1 - t) + 0.3);
-      group.children[2].rotation.z = t * 2;
-      group.children[3].scale.setScalar(
-        magic ? Math.max(0.1, 1.5 - t * 3) : Math.max(0.05, 0.5 - t),
-      );
-      this.parryMaterials[i].color.set(magic ? '#afffe5' : '#fff0ba');
-      this.parryMaterials[i].opacity = Math.max(0, 1 - t * 1.3);
-    });
     const pickups = w.pickups.filter((p) => p.room === w.roomId && p.depth === w.floor.depth);
     this.pickups.forEach((group, i) => {
       const pickup = pickups[i];
@@ -213,8 +149,6 @@ export class ArsenalArt {
     this.paths.geometry.dispose();
     (this.paths.material as T.Material).dispose();
     this.geometry.forEach((g) => g.dispose());
-    this.fan.dispose();
-    this.parryMaterials.forEach((m) => m.dispose());
     this.materials.forEach((m) => m.dispose());
     this.warnings.remove();
   }

@@ -78,10 +78,19 @@ def statue(m):
 def build(m):
     assets={}
     def add(name,objects): assets[name]=join(objects,name+'_LOD0')
-    for variant in ['a','b','c']:
+    layouts={
+        'a':[(0,0,1.015,1.015)],
+        'b':[(-.19,0,.63,1.015),(.325,0,.36,1.015)],
+        'c':[(0,-.285,1.015,.44),(-.17,.225,.67,.55),(.345,.225,.32,.55)],
+        'd':[(-.315,-.08,.38,.85),(.195,-.28,.62,.45),(.195,.235,.62,.55),(-.315,.435,.38,.14)],
+        'e':[(-.245,-.245,.52,.52),(.275,-.245,.46,.52),(-.31,.275,.39,.46),(.21,.275,.63,.46)],
+        'f':[(0,-.34,1.015,.33),(-.28,.17,.45,.68),(.235,.17,.55,.68)],
+    }
+    for variant,layout in layouts.items():
         pieces=[stone('foundation',(0,0,-.39),(1.018,1.018,.72),m['ancient_stone'],.013)]
         # Polygonal flagstones overlap below the walk surface, avoiding grid cracks.
-        pieces.append(stone('walking slab',(0,0,-.075),(1.015,1.015,.15),m['ancient_stone'],.009))
+        for x,y,sx,sy in layout:
+            pieces.append(stone('walking slab',(x,y,-.075),(sx-.012,sy-.012,.15),m['ancient_stone'],.012))
         add('ruins_floor_'+variant,pieces)
     add('ruins_floor_broken',[stone('fracture',(x,y,-.1),(sx,sy,.2),m['ancient_stone'],.035) for x,y,sx,sy in [(-.25,0,.48,1),(.25,-.2,.48,.55),(.2,.32,.5,.4)]])
     add('ruins_column_a',column(m)); add('ruins_column_b',column(m)); add('ruins_column_broken',column(m,True))

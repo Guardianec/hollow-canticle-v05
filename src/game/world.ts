@@ -29,6 +29,7 @@ import { Projectiles } from './projectiles';
 import { Buffs } from './buffs';
 import { Inventory, ITEMS, type ItemDef } from './items';
 import { LootDirector, type LootKind } from './loot';
+import { EXECUTIONS, EXECUTION_CONTACT, EXECUTION_DURATION, executionVariant } from './executions';
 
 export type Mode = 'menu' | 'playing' | 'paused' | 'reward' | 'dead' | 'trained';
 export type PlayerState =
@@ -66,6 +67,7 @@ export interface Player {
   emptyParries: number;
   parryLanded: boolean;
   finisherTarget: string;
+  finisherVariant: number;
   move: MeleeMove;
   attackType: string;
   comboUntil: number;
@@ -102,6 +104,7 @@ export interface Enemy {
 }
 export interface Particle {
   ground?: boolean;
+  contact?: boolean;
   x: number;
   y: number;
   vx: number;
@@ -123,6 +126,7 @@ export interface Effect {
   weapon?: string;
   attackKind?: Strike['kind'];
   projectileKind?: 'arrow' | 'orb';
+  contact?: boolean;
 }
 export interface Toast {
   text: string;
@@ -229,6 +233,7 @@ export class World {
     camera: 'auto',
     clip: 'live',
     clipTime: 0,
+    executionVariant: 0,
     freeze: false,
     animationName: '',
     normalized: 0,
@@ -279,7 +284,7 @@ export class World {
   get combat(): boolean {
     return this.alive.length > 0;
   }
-  get prompt(): { text: string; sub: string; x: number; y: number } | undefined {
+  get prompt(): { text: string; sub: string; x: number; y: number; passage?: boolean } | undefined {
     if (this.mode !== 'playing') return;
     const p = this.player;
     const broken = this.alive.find(
@@ -304,7 +309,7 @@ export class World {
     ) {
       const text =
         this.room.kind === 'exit'
-          ? 'Descend into the dark'
+          ? 'Descend · next depth'
           : this.room.kind === 'healing'
             ? 'Drink from the quiet well'
             : this.room.kind === 'shrine'
@@ -334,7 +339,8 @@ export class World {
                     secret: 'A faint whisper',
                     start: 'The threshold',
                   }[next.kind],
-          sub: 'E  ENTER',
+          sub: 'Walk through · E or click to enter',
+          passage: true,
           ...pos,
         };
     }
@@ -365,6 +371,7 @@ export class World {
       emptyParries: 0,
       parryLanded: true,
       finisherTarget: '',
+      finisherVariant: 0,
       move: this.character.chain[0],
       attackType: 'chain',
       comboUntil: -1,
@@ -624,7 +631,7 @@ export class World {
     if (this.execution && this.time >= this.execution.at) {
       const hit = this.execution;
       this.execution = undefined;
-      this.impact(hit.x, hit.y, '#f9da9f', 65, 'perfect', hit.force);
+      this.impact(hit.x, hit.y, '#f9da9f', 65, 'perfect', hit.force, true, this.player.facing);
       this.environmentImpact(hit.x, hit.y, hit.force);
       this.audio.play('finisher', this.weapon.id);
       this.hitStop = this.save.settings.reducedMotion ? 0.025 : 0.09;
@@ -657,6 +664,7 @@ export class World {
     }
     this.player.focus = Math.max(0, Math.min(100, this.player.focus));
     this.player.hp = Math.max(0, Math.min(BALANCE.playerHp, this.player.hp));
+    this.autoPassage();
     if (this.training) {
       this.player.hp = Math.max(40, this.player.hp);
       if (
@@ -740,7 +748,7 @@ export class World {
       dodge: BALANCE.dodgeTime,
       hurt: 0.22,
       stagger: 0.7,
-      finisher: 0.7,
+      finisher: EXECUTION_DURATION,
       dead: Infinity,
     };
     if (age >= durations[p.state]) {
@@ -963,7 +971,16 @@ export class World {
           (counter ? this.buffs.modifier('counter') : 1) *
           (this.room.kind === 'elite' && this.room.elite === 'Armored' && !counter ? 0.65 : 1),
       );
-      this.impact(enemy.x, enemy.y - 16, block ? '#e8bc79' : '#c5d6d7', 11, 'ring', 0.45);
+      this.impact(
+        enemy.x,
+        enemy.y - 16,
+        block ? '#e8bc79' : '#c5d6d7',
+        11,
+        'ring',
+        0.45,
+        true,
+        p.facing,
+      );
       this.hitStop = Math.max(
         this.hitStop,
         this.save.settings.reducedMotion
@@ -1385,6 +1402,8 @@ export class World {
         perfect ? 44 : 20,
         perfect ? 'perfect' : 'ring',
         perfect ? 1.3 : 0.7,
+        true,
+        p.facing + Math.PI / 2,
       );
       this.environmentImpact((p.x + e.x) / 2, (p.y + e.y) / 2, perfect ? 0.75 : 0.3);
       this.hitStop = this.save.settings.reducedMotion ? 0.025 : perfect ? 0.065 : 0.032;
@@ -1466,7 +1485,7 @@ export class World {
     e.state = 'broken';
     e.stateAt = this.time;
     this.threats.release(e.id);
-    this.impact(e.x, e.y - 20, '#f5cd86', 35, 'perfect', 1.6);
+    this.impact(e.x, e.y - 20, '#f5cd86', 35, 'perfect', 1.6, true, this.player.facing);
     this.audio.play('break');
     this.hitStop = 0.08;
     this.announce(
@@ -1482,6 +1501,8 @@ export class World {
     const p = this.player;
     p.state = 'finisher';
     p.finisherTarget = e.def.id;
+    p.finisherVariant = executionVariant(this.seed, this.weapon.id, this.stats.finishers);
+    const execution = EXECUTIONS[this.weapon.id][p.finisherVariant];
     p.stateAt = this.time;
     p.immunity = this.time + 1.1;
     p.facing = Math.atan2(e.y - p.y, e.x - p.x);
@@ -1489,7 +1510,9 @@ export class World {
     p.x = e.x - Math.cos(p.facing) * offset;
     p.y = e.y - Math.sin(p.facing) * offset;
     this.move(p, 0, 0);
-    const style = finisherStyle(this.weapon.id, e.def.id, this.lastPerfect);
+    const style = ['boss', 'shield'].includes(e.def.id)
+      ? finisherStyle(this.weapon.id, e.def.id, this.lastPerfect)
+      : execution.name.toUpperCase();
     this.effect(
       e.x,
       e.y - 16,
@@ -1501,11 +1524,10 @@ export class World {
     );
     Object.assign(this.effects[this.effects.length - 1], {
       weapon: this.weapon.id,
-      attackKind:
-        this.weapon.id === 'spear' ? 'thrust' : this.weapon.id === 'great' ? 'smash' : 'slash',
+      attackKind: execution.kind,
     });
     this.execution = {
-      at: this.time + 0.7 * 0.58,
+      at: this.time + EXECUTION_DURATION * EXECUTION_CONTACT,
       x: e.x,
       y: e.y - 16,
       force: this.weapon.id === 'great' ? 2.3 : 1.7,
@@ -1612,6 +1634,27 @@ export class World {
     for (const e of this.alive) if (distance(e, this.player) < 260) this.pressure(e, amount);
   }
 
+  private autoPassage(): void {
+    if (
+      this.mode !== 'playing' ||
+      this.combat ||
+      this.clearAt ||
+      this.training ||
+      this.player.state !== 'idle'
+    )
+      return;
+    for (const id of this.room.links) {
+      const next = this.floor.rooms[id];
+      const direction = { x: Math.sign(next.x - this.room.x), y: Math.sign(next.y - this.room.y) };
+      if (
+        distance(this.player, doorPosition(this.room, next)) < 52 &&
+        this.movement.x * direction.x + this.movement.y * direction.y > 0.3
+      ) {
+        this.enterRoom(id, this.room);
+        return;
+      }
+    }
+  }
   private interact(): void {
     const p = this.player;
     const broken = this.alive.find(
@@ -1862,8 +1905,11 @@ export class World {
     count: number,
     kind: Effect['kind'],
     scale: number,
+    contact = false,
+    angle = 0,
   ): void {
-    this.effect(x, y, kind, color, 0.45, scale);
+    this.effect(x, y, kind, color, 0.45, scale, angle);
+    this.effects[this.effects.length - 1].contact = contact;
     for (let i = 0; i < count; i++) {
       const angle = this.rng.next() * Math.PI * 2,
         speed = this.rng.int(70, 360) * scale;
@@ -1871,6 +1917,7 @@ export class World {
       this.particles.push({
         x,
         y,
+        contact,
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed * 0.65,
         life,

@@ -27,7 +27,10 @@ export class ImportedActor {
   private shells: T.SkinnedMesh[] = [];
   private revelation = { value: 0 };
   private bossMaterials = new Map<T.Material, T.Material>();
-  private bones = new Map<string, { bone: T.Bone; rest: T.Quaternion; frame: T.Quaternion }>();
+  private bones = new Map<
+    string,
+    { bone: T.Bone; rest: T.Quaternion; frame: T.Quaternion; position: T.Vector3 }
+  >();
   constructor(assets: AssetManager, id: string, level: number) {
     this.root = assets.instantiate(id, level)!;
     if (id === 'saint') {
@@ -63,6 +66,7 @@ export class ImportedActor {
           bone: obj,
           rest: obj.quaternion.clone(),
           frame: obj.getWorldQuaternion(new T.Quaternion()),
+          position: obj.position.clone(),
         });
     });
   }
@@ -126,9 +130,19 @@ export class ImportedActor {
         .copy(offhand.rest)
         .multiply(new T.Quaternion().setFromAxisAngle(new T.Vector3(1, 0, 0), Math.PI / 2));
     const torso = this.bones.get('torso');
-    if (torso) {
-      torso.bone.position.y = 0.94 + pose.lift;
-      torso.bone.position.z = pose.advance;
+    const pelvis = this.bones.get('root');
+    if (pelvis) {
+      // Torso and thighs are siblings: locomotion belongs to their common ancestor.
+      pelvis.bone.position.copy(pelvis.position).add(new T.Vector3(0, pose.lift, pose.advance));
+    }
+    this.root.updateWorldMatrix(true, true);
+    const soleFrame = this.root.getWorldQuaternion(new T.Quaternion());
+    for (const name of ['rightFoot', 'leftFoot']) {
+      const foot = this.bones.get(name)?.bone;
+      if (foot?.parent)
+        foot.quaternion
+          .copy(foot.parent.getWorldQuaternion(new T.Quaternion()).invert())
+          .multiply(soleFrame);
     }
     const blade = this.bones.get('blade')?.bone;
     if ((aimForward || this.root.userData.weapon === 'bell') && blade?.parent) {

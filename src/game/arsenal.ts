@@ -172,6 +172,8 @@ export class Arsenal {
             14,
             shot.reflected ? 'perfect' : 'ring',
             0.7,
+            true,
+            Math.atan2(shot.vy, shot.vx),
           );
           w.audio.play('hit', shot.kind);
           if (shot.pierce-- <= 0) shot.lifetime = 0;
@@ -227,6 +229,8 @@ export class Arsenal {
       magic ? 35 : 16,
       perfect ? 'perfect' : 'ring',
       magic ? 1.4 : 0.7,
+      true,
+      Math.atan2(-shot.vy, -shot.vx),
     );
     w.effects[w.effects.length - 1].projectileKind = magic ? 'orb' : 'arrow';
     w.audio.play(perfect ? 'reflect' : 'deflect', magic ? 'orb' : 'arrow');

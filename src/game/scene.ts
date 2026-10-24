@@ -140,7 +140,7 @@ export class DungeonScene extends Phaser.Scene {
         : this.painter.director.entryRemaining > 0
           ? 0.55
           : 1);
-    while (remaining > 0) {
+    while (remaining > 0 && !this.painter.loading) {
       const step = Math.min(remaining, 1 / 120);
       this.world.update(step);
       remaining -= step;

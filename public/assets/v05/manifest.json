@@ -242,15 +242,15 @@
       "lods": [
         {
           "node": "ruins_floor_b_LOD0",
-          "triangles": 440
+          "triangles": 580
         },
         {
           "node": "ruins_floor_b_LOD1",
-          "triangles": 242
+          "triangles": 318
         },
         {
           "node": "ruins_floor_b_LOD2",
-          "triangles": 110
+          "triangles": 144
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -262,15 +262,75 @@
       "lods": [
         {
           "node": "ruins_floor_c_LOD0",
-          "triangles": 440
+          "triangles": 784
         },
         {
           "node": "ruins_floor_c_LOD1",
-          "triangles": 242
+          "triangles": 430
         },
         {
           "node": "ruins_floor_c_LOD2",
-          "triangles": 110
+          "triangles": 196
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "ruins_floor_d": {
+      "pack": "ruins",
+      "kind": "environment",
+      "biome": 0,
+      "lods": [
+        {
+          "node": "ruins_floor_d_LOD0",
+          "triangles": 988
+        },
+        {
+          "node": "ruins_floor_d_LOD1",
+          "triangles": 542
+        },
+        {
+          "node": "ruins_floor_d_LOD2",
+          "triangles": 246
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "ruins_floor_e": {
+      "pack": "ruins",
+      "kind": "environment",
+      "biome": 0,
+      "lods": [
+        {
+          "node": "ruins_floor_e_LOD0",
+          "triangles": 1100
+        },
+        {
+          "node": "ruins_floor_e_LOD1",
+          "triangles": 604
+        },
+        {
+          "node": "ruins_floor_e_LOD2",
+          "triangles": 274
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "ruins_floor_f": {
+      "pack": "ruins",
+      "kind": "environment",
+      "biome": 0,
+      "lods": [
+        {
+          "node": "ruins_floor_f_LOD0",
+          "triangles": 784
+        },
+        {
+          "node": "ruins_floor_f_LOD1",
+          "triangles": 430
+        },
+        {
+          "node": "ruins_floor_f_LOD2",
+          "triangles": 196
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -282,15 +342,15 @@
       "lods": [
         {
           "node": "ruins_floor_broken_LOD0",
-          "triangles": 564
+          "triangles": 612
         },
         {
           "node": "ruins_floor_broken_LOD1",
-          "triangles": 310
+          "triangles": 336
         },
         {
           "node": "ruins_floor_broken_LOD2",
-          "triangles": 140
+          "triangles": 152
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -350,7 +410,7 @@
         },
         {
           "node": "ruins_column_broken_LOD2",
-          "triangles": 234
+          "triangles": 236
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -422,15 +482,15 @@
       "lods": [
         {
           "node": "ruins_wall_a_LOD0",
-          "triangles": 7956
+          "triangles": 7986
         },
         {
           "node": "ruins_wall_a_LOD1",
-          "triangles": 4374
+          "triangles": 4392
         },
         {
           "node": "ruins_wall_a_LOD2",
-          "triangles": 1988
+          "triangles": 1996
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -442,15 +502,15 @@
       "lods": [
         {
           "node": "ruins_wall_broken_LOD0",
-          "triangles": 4184
+          "triangles": 4328
         },
         {
           "node": "ruins_wall_broken_LOD1",
-          "triangles": 2300
+          "triangles": 2380
         },
         {
           "node": "ruins_wall_broken_LOD2",
-          "triangles": 1046
+          "triangles": 1082
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -542,15 +602,15 @@
       "lods": [
         {
           "node": "ruins_rubble_LOD0",
-          "triangles": 2272
+          "triangles": 2288
         },
         {
           "node": "ruins_rubble_LOD1",
-          "triangles": 1248
+          "triangles": 1258
         },
         {
           "node": "ruins_rubble_LOD2",
-          "triangles": 568
+          "triangles": 572
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -582,15 +642,15 @@
       "lods": [
         {
           "node": "ruins_altar_LOD0",
-          "triangles": 516
+          "triangles": 532
         },
         {
           "node": "ruins_altar_LOD1",
-          "triangles": 282
+          "triangles": 292
         },
         {
           "node": "ruins_altar_LOD2",
-          "triangles": 128
+          "triangles": 132
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -602,15 +662,15 @@
       "lods": [
         {
           "node": "ruins_tomb_LOD0",
-          "triangles": 376
+          "triangles": 392
         },
         {
           "node": "ruins_tomb_LOD1",
-          "triangles": 206
+          "triangles": 214
         },
         {
           "node": "ruins_tomb_LOD2",
-          "triangles": 94
+          "triangles": 98
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -962,15 +1022,15 @@
       "lods": [
         {
           "node": "shrine_floor_b_LOD0",
-          "triangles": 440
+          "triangles": 580
         },
         {
           "node": "shrine_floor_b_LOD1",
-          "triangles": 242
+          "triangles": 318
         },
         {
           "node": "shrine_floor_b_LOD2",
-          "triangles": 110
+          "triangles": 144
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -982,15 +1042,75 @@
       "lods": [
         {
           "node": "shrine_floor_c_LOD0",
-          "triangles": 440
+          "triangles": 800
         },
         {
           "node": "shrine_floor_c_LOD1",
-          "triangles": 242
+          "triangles": 440
         },
         {
           "node": "shrine_floor_c_LOD2",
-          "triangles": 110
+          "triangles": 200
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "shrine_floor_d": {
+      "pack": "shrine",
+      "kind": "environment",
+      "biome": 1,
+      "lods": [
+        {
+          "node": "shrine_floor_d_LOD0",
+          "triangles": 972
+        },
+        {
+          "node": "shrine_floor_d_LOD1",
+          "triangles": 534
+        },
+        {
+          "node": "shrine_floor_d_LOD2",
+          "triangles": 242
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "shrine_floor_e": {
+      "pack": "shrine",
+      "kind": "environment",
+      "biome": 1,
+      "lods": [
+        {
+          "node": "shrine_floor_e_LOD0",
+          "triangles": 1100
+        },
+        {
+          "node": "shrine_floor_e_LOD1",
+          "triangles": 604
+        },
+        {
+          "node": "shrine_floor_e_LOD2",
+          "triangles": 274
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "shrine_floor_f": {
+      "pack": "shrine",
+      "kind": "environment",
+      "biome": 1,
+      "lods": [
+        {
+          "node": "shrine_floor_f_LOD0",
+          "triangles": 768
+        },
+        {
+          "node": "shrine_floor_f_LOD1",
+          "triangles": 422
+        },
+        {
+          "node": "shrine_floor_f_LOD2",
+          "triangles": 192
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -1002,15 +1122,15 @@
       "lods": [
         {
           "node": "shrine_floor_broken_LOD0",
-          "triangles": 516
+          "triangles": 564
         },
         {
           "node": "shrine_floor_broken_LOD1",
-          "triangles": 282
+          "triangles": 310
         },
         {
           "node": "shrine_floor_broken_LOD2",
-          "triangles": 128
+          "triangles": 140
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -1070,7 +1190,7 @@
         },
         {
           "node": "shrine_column_broken_LOD2",
-          "triangles": 236
+          "triangles": 234
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -1142,15 +1262,15 @@
       "lods": [
         {
           "node": "shrine_wall_a_LOD0",
-          "triangles": 7778
+          "triangles": 7950
         },
         {
           "node": "shrine_wall_a_LOD1",
-          "triangles": 4276
+          "triangles": 4372
         },
         {
           "node": "shrine_wall_a_LOD2",
-          "triangles": 1944
+          "triangles": 1986
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -1162,15 +1282,15 @@
       "lods": [
         {
           "node": "shrine_wall_broken_LOD0",
-          "triangles": 4182
+          "triangles": 4104
         },
         {
           "node": "shrine_wall_broken_LOD1",
-          "triangles": 2300
+          "triangles": 2256
         },
         {
           "node": "shrine_wall_broken_LOD2",
-          "triangles": 1044
+          "triangles": 1026
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -1262,15 +1382,15 @@
       "lods": [
         {
           "node": "shrine_rubble_LOD0",
-          "triangles": 2352
+          "triangles": 2192
         },
         {
           "node": "shrine_rubble_LOD1",
-          "triangles": 1292
+          "triangles": 1204
         },
         {
           "node": "shrine_rubble_LOD2",
-          "triangles": 588
+          "triangles": 548
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -1302,15 +1422,15 @@
       "lods": [
         {
           "node": "shrine_altar_LOD0",
-          "triangles": 516
+          "triangles": 500
         },
         {
           "node": "shrine_altar_LOD1",
-          "triangles": 282
+          "triangles": 274
         },
         {
           "node": "shrine_altar_LOD2",
-          "triangles": 128
+          "triangles": 124
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -1322,15 +1442,15 @@
       "lods": [
         {
           "node": "shrine_tomb_LOD0",
-          "triangles": 344
+          "triangles": 408
         },
         {
           "node": "shrine_tomb_LOD1",
-          "triangles": 188
+          "triangles": 224
         },
         {
           "node": "shrine_tomb_LOD2",
-          "triangles": 86
+          "triangles": 102
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -1462,15 +1582,15 @@
       "lods": [
         {
           "node": "fungal_floor_b_LOD0",
-          "triangles": 440
+          "triangles": 564
         },
         {
           "node": "fungal_floor_b_LOD1",
-          "triangles": 242
+          "triangles": 310
         },
         {
           "node": "fungal_floor_b_LOD2",
-          "triangles": 110
+          "triangles": 140
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -1482,15 +1602,75 @@
       "lods": [
         {
           "node": "fungal_floor_c_LOD0",
-          "triangles": 440
+          "triangles": 784
         },
         {
           "node": "fungal_floor_c_LOD1",
-          "triangles": 242
+          "triangles": 430
         },
         {
           "node": "fungal_floor_c_LOD2",
-          "triangles": 110
+          "triangles": 196
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "fungal_floor_d": {
+      "pack": "fungal",
+      "kind": "environment",
+      "biome": 2,
+      "lods": [
+        {
+          "node": "fungal_floor_d_LOD0",
+          "triangles": 988
+        },
+        {
+          "node": "fungal_floor_d_LOD1",
+          "triangles": 542
+        },
+        {
+          "node": "fungal_floor_d_LOD2",
+          "triangles": 246
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "fungal_floor_e": {
+      "pack": "fungal",
+      "kind": "environment",
+      "biome": 2,
+      "lods": [
+        {
+          "node": "fungal_floor_e_LOD0",
+          "triangles": 1052
+        },
+        {
+          "node": "fungal_floor_e_LOD1",
+          "triangles": 578
+        },
+        {
+          "node": "fungal_floor_e_LOD2",
+          "triangles": 262
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "fungal_floor_f": {
+      "pack": "fungal",
+      "kind": "environment",
+      "biome": 2,
+      "lods": [
+        {
+          "node": "fungal_floor_f_LOD0",
+          "triangles": 784
+        },
+        {
+          "node": "fungal_floor_f_LOD1",
+          "triangles": 430
+        },
+        {
+          "node": "fungal_floor_f_LOD2",
+          "triangles": 196
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -1502,15 +1682,15 @@
       "lods": [
         {
           "node": "fungal_floor_broken_LOD0",
-          "triangles": 548
+          "triangles": 564
         },
         {
           "node": "fungal_floor_broken_LOD1",
-          "triangles": 300
+          "triangles": 310
         },
         {
           "node": "fungal_floor_broken_LOD2",
-          "triangles": 136
+          "triangles": 140
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -1570,7 +1750,7 @@
         },
         {
           "node": "fungal_column_broken_LOD2",
-          "triangles": 402
+          "triangles": 400
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -1642,15 +1822,15 @@
       "lods": [
         {
           "node": "fungal_wall_a_LOD0",
-          "triangles": 9584
+          "triangles": 9810
         },
         {
           "node": "fungal_wall_a_LOD1",
-          "triangles": 5270
+          "triangles": 5394
         },
         {
           "node": "fungal_wall_a_LOD2",
-          "triangles": 2396
+          "triangles": 2452
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -1662,15 +1842,15 @@
       "lods": [
         {
           "node": "fungal_wall_broken_LOD0",
-          "triangles": 5992
+          "triangles": 6024
         },
         {
           "node": "fungal_wall_broken_LOD1",
-          "triangles": 3294
+          "triangles": 3312
         },
         {
           "node": "fungal_wall_broken_LOD2",
-          "triangles": 1498
+          "triangles": 1505
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -1762,15 +1942,15 @@
       "lods": [
         {
           "node": "fungal_rubble_LOD0",
-          "triangles": 4078
+          "triangles": 3952
         },
         {
           "node": "fungal_rubble_LOD1",
-          "triangles": 2240
+          "triangles": 2172
         },
         {
           "node": "fungal_rubble_LOD2",
-          "triangles": 1019
+          "triangles": 987
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -1802,15 +1982,15 @@
       "lods": [
         {
           "node": "fungal_altar_LOD0",
-          "triangles": 532
+          "triangles": 516
         },
         {
           "node": "fungal_altar_LOD1",
-          "triangles": 292
+          "triangles": 282
         },
         {
           "node": "fungal_altar_LOD2",
-          "triangles": 132
+          "triangles": 128
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -1962,15 +2142,15 @@
       "lods": [
         {
           "node": "frozen_floor_b_LOD0",
-          "triangles": 440
+          "triangles": 580
         },
         {
           "node": "frozen_floor_b_LOD1",
-          "triangles": 242
+          "triangles": 318
         },
         {
           "node": "frozen_floor_b_LOD2",
-          "triangles": 110
+          "triangles": 144
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -1982,15 +2162,75 @@
       "lods": [
         {
           "node": "frozen_floor_c_LOD0",
-          "triangles": 440
+          "triangles": 784
         },
         {
           "node": "frozen_floor_c_LOD1",
-          "triangles": 242
+          "triangles": 430
         },
         {
           "node": "frozen_floor_c_LOD2",
-          "triangles": 110
+          "triangles": 196
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "frozen_floor_d": {
+      "pack": "frozen",
+      "kind": "environment",
+      "biome": 3,
+      "lods": [
+        {
+          "node": "frozen_floor_d_LOD0",
+          "triangles": 1004
+        },
+        {
+          "node": "frozen_floor_d_LOD1",
+          "triangles": 552
+        },
+        {
+          "node": "frozen_floor_d_LOD2",
+          "triangles": 250
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "frozen_floor_e": {
+      "pack": "frozen",
+      "kind": "environment",
+      "biome": 3,
+      "lods": [
+        {
+          "node": "frozen_floor_e_LOD0",
+          "triangles": 1084
+        },
+        {
+          "node": "frozen_floor_e_LOD1",
+          "triangles": 596
+        },
+        {
+          "node": "frozen_floor_e_LOD2",
+          "triangles": 270
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "frozen_floor_f": {
+      "pack": "frozen",
+      "kind": "environment",
+      "biome": 3,
+      "lods": [
+        {
+          "node": "frozen_floor_f_LOD0",
+          "triangles": 784
+        },
+        {
+          "node": "frozen_floor_f_LOD1",
+          "triangles": 430
+        },
+        {
+          "node": "frozen_floor_f_LOD2",
+          "triangles": 196
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -2002,15 +2242,15 @@
       "lods": [
         {
           "node": "frozen_floor_broken_LOD0",
-          "triangles": 596
+          "triangles": 548
         },
         {
           "node": "frozen_floor_broken_LOD1",
-          "triangles": 326
+          "triangles": 300
         },
         {
           "node": "frozen_floor_broken_LOD2",
-          "triangles": 148
+          "triangles": 136
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -2142,15 +2382,15 @@
       "lods": [
         {
           "node": "frozen_wall_a_LOD0",
-          "triangles": 8320
+          "triangles": 8268
         },
         {
           "node": "frozen_wall_a_LOD1",
-          "triangles": 4576
+          "triangles": 4546
         },
         {
           "node": "frozen_wall_a_LOD2",
-          "triangles": 2080
+          "triangles": 2066
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -2162,15 +2402,15 @@
       "lods": [
         {
           "node": "frozen_wall_broken_LOD0",
-          "triangles": 4626
+          "triangles": 4660
         },
         {
           "node": "frozen_wall_broken_LOD1",
-          "triangles": 2544
+          "triangles": 2562
         },
         {
           "node": "frozen_wall_broken_LOD2",
-          "triangles": 1156
+          "triangles": 1164
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -2262,15 +2502,15 @@
       "lods": [
         {
           "node": "frozen_rubble_LOD0",
-          "triangles": 2240
+          "triangles": 2256
         },
         {
           "node": "frozen_rubble_LOD1",
-          "triangles": 1232
+          "triangles": 1240
         },
         {
           "node": "frozen_rubble_LOD2",
-          "triangles": 560
+          "triangles": 564
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -2282,15 +2522,15 @@
       "lods": [
         {
           "node": "frozen_statue_LOD0",
-          "triangles": 1028
+          "triangles": 1044
         },
         {
           "node": "frozen_statue_LOD1",
-          "triangles": 564
+          "triangles": 574
         },
         {
           "node": "frozen_statue_LOD2",
-          "triangles": 256
+          "triangles": 260
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -2302,15 +2542,15 @@
       "lods": [
         {
           "node": "frozen_altar_LOD0",
-          "triangles": 548
+          "triangles": 516
         },
         {
           "node": "frozen_altar_LOD1",
-          "triangles": 300
+          "triangles": 282
         },
         {
           "node": "frozen_altar_LOD2",
-          "triangles": 136
+          "triangles": 128
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -2322,15 +2562,15 @@
       "lods": [
         {
           "node": "frozen_tomb_LOD0",
-          "triangles": 344
+          "triangles": 360
         },
         {
           "node": "frozen_tomb_LOD1",
-          "triangles": 188
+          "triangles": 198
         },
         {
           "node": "frozen_tomb_LOD2",
-          "triangles": 86
+          "triangles": 90
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -2462,15 +2702,15 @@
       "lods": [
         {
           "node": "foundry_floor_b_LOD0",
-          "triangles": 440
+          "triangles": 596
         },
         {
           "node": "foundry_floor_b_LOD1",
-          "triangles": 242
+          "triangles": 326
         },
         {
           "node": "foundry_floor_b_LOD2",
-          "triangles": 110
+          "triangles": 148
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -2482,15 +2722,75 @@
       "lods": [
         {
           "node": "foundry_floor_c_LOD0",
-          "triangles": 440
+          "triangles": 784
         },
         {
           "node": "foundry_floor_c_LOD1",
-          "triangles": 242
+          "triangles": 430
         },
         {
           "node": "foundry_floor_c_LOD2",
-          "triangles": 110
+          "triangles": 196
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "foundry_floor_d": {
+      "pack": "foundry",
+      "kind": "environment",
+      "biome": 4,
+      "lods": [
+        {
+          "node": "foundry_floor_d_LOD0",
+          "triangles": 972
+        },
+        {
+          "node": "foundry_floor_d_LOD1",
+          "triangles": 534
+        },
+        {
+          "node": "foundry_floor_d_LOD2",
+          "triangles": 242
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "foundry_floor_e": {
+      "pack": "foundry",
+      "kind": "environment",
+      "biome": 4,
+      "lods": [
+        {
+          "node": "foundry_floor_e_LOD0",
+          "triangles": 1100
+        },
+        {
+          "node": "foundry_floor_e_LOD1",
+          "triangles": 604
+        },
+        {
+          "node": "foundry_floor_e_LOD2",
+          "triangles": 274
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "foundry_floor_f": {
+      "pack": "foundry",
+      "kind": "environment",
+      "biome": 4,
+      "lods": [
+        {
+          "node": "foundry_floor_f_LOD0",
+          "triangles": 768
+        },
+        {
+          "node": "foundry_floor_f_LOD1",
+          "triangles": 422
+        },
+        {
+          "node": "foundry_floor_f_LOD2",
+          "triangles": 192
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -2502,15 +2802,15 @@
       "lods": [
         {
           "node": "foundry_floor_broken_LOD0",
-          "triangles": 564
+          "triangles": 554
         },
         {
           "node": "foundry_floor_broken_LOD1",
-          "triangles": 310
+          "triangles": 304
         },
         {
           "node": "foundry_floor_broken_LOD2",
-          "triangles": 140
+          "triangles": 138
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -2642,15 +2942,15 @@
       "lods": [
         {
           "node": "foundry_wall_a_LOD0",
-          "triangles": 7940
+          "triangles": 8064
         },
         {
           "node": "foundry_wall_a_LOD1",
-          "triangles": 4366
+          "triangles": 4434
         },
         {
           "node": "foundry_wall_a_LOD2",
-          "triangles": 1984
+          "triangles": 2016
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -2762,15 +3062,15 @@
       "lods": [
         {
           "node": "foundry_rubble_LOD0",
-          "triangles": 2176
+          "triangles": 2272
         },
         {
           "node": "foundry_rubble_LOD1",
-          "triangles": 1194
+          "triangles": 1248
         },
         {
           "node": "foundry_rubble_LOD2",
-          "triangles": 542
+          "triangles": 568
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -2802,15 +3102,15 @@
       "lods": [
         {
           "node": "foundry_altar_LOD0",
-          "triangles": 484
+          "triangles": 532
         },
         {
           "node": "foundry_altar_LOD1",
-          "triangles": 266
+          "triangles": 292
         },
         {
           "node": "foundry_altar_LOD2",
-          "triangles": 120
+          "triangles": 132
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -2959,7 +3259,7 @@
   "packs": {
     "ruins": {
       "file": "ruins.glb",
-      "bytes": 2842440,
+      "bytes": 3066760,
       "materials": [
         "aged_bronze",
         "ancient_stone",
@@ -2970,7 +3270,7 @@
     },
     "pilgrims": {
       "file": "pilgrims.glb",
-      "bytes": 4380460,
+      "bytes": 4387984,
       "materials": [
         "aged_bronze",
         "crimson_cloth",
@@ -2983,7 +3283,7 @@
     },
     "shrine": {
       "file": "shrine.glb",
-      "bytes": 2878116,
+      "bytes": 3075280,
       "materials": [
         "aged_bronze",
         "moss_stone",
@@ -2993,7 +3293,7 @@
     },
     "fungal": {
       "file": "fungal.glb",
-      "bytes": 3120448,
+      "bytes": 3325352,
       "materials": [
         "aged_bronze",
         "fungal_skin",
@@ -3003,7 +3303,7 @@
     },
     "frozen": {
       "file": "frozen.glb",
-      "bytes": 2984416,
+      "bytes": 3205380,
       "materials": [
         "aged_bronze",
         "frozen_stone",
@@ -3014,7 +3314,7 @@
     },
     "foundry": {
       "file": "foundry.glb",
-      "bytes": 3099772,
+      "bytes": 3313716,
       "materials": [
         "aged_bronze",
         "burnt_stone",
@@ -3024,5 +3324,5 @@
       ]
     }
   },
-  "downloadBytes": 30394252
+  "downloadBytes": 31470176
 }

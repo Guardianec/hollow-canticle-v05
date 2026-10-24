@@ -1,4 +1,4 @@
-# v0.5.0 validation — 2026-10-23
+# v0.5.0 validation — 2026-10-24
 
 Local review branch: `codex/v0.5.0-blender-visual-overhaul`. Accepted v0.4 remains at
 `8c83c8c4baa3476aaa9caa7b37bb9debfe13efd4`; main is unchanged. The user requested
@@ -8,11 +8,11 @@ local work. No push, merge or deployment is part of this checkpoint.
 
 - `npm run assets:build`: Blender 4.5.15 LTS, cached lossless material bakes,
   geometry AO, three LODs, six GLB packs, meshoptimizer compression and WebP maps.
-- `npm run assets:validate`: 137 assets, 15 PBR families, 488,476 unique LOD0 triangles.
+- `npm run assets:validate`: 152 assets, 15 PBR families, 505,800 unique LOD0 triangles.
 - `npm run lint`, `npm run test`, `npm run build`.
-- 97 tests in seven files retain simulation regression coverage. Asset checks load
+- 102 tests in eight files retain simulation regression coverage. Asset checks load
   every GLB through GLTFLoader/MeshoptDecoder, verify UVs, vertex colors, materials,
-  three LODs, finite dimensions and 16-bone cloned rigs. Extreme joint poses,
+  three LODs, finite dimensions and 18-bone cloned rigs. Extreme joint poses,
   support-hand reach, outlines, missing-pack fallback, deterministic selection and
   quality migration are covered. Unit tests do not judge visual quality.
 
@@ -61,18 +61,18 @@ browser composition costs. Asset-library triangle counts are not per-frame budge
 
 ## Download and memory
 
-All full-resolution GLBs/maps total about 29.0 MiB; initial Ruins/cast art about
-13.7 MiB. Other packs load on demand. Static deployment includes both map resolutions
+All full-resolution GLBs/maps total about 30.01 MiB; initial Ruins/cast art about
+13.93 MiB. Other packs load on demand. Static deployment includes both map resolutions
 and all GLBs, so its on-disk size exceeds the initial network load. Blender, source
 bakes, reference sheets and screenshots are not shipped by Vite. Exact byte counts
 follow after the final build.
 
 | Measurement                             |      Bytes |   MiB |
 | --------------------------------------- | ---------: | ----: |
-| All GLBs and full-resolution maps       | 30,394,252 | 28.99 |
-| Initial Ruins/cast art, High            | 14,378,006 | 13.71 |
-| Initial Ruins/cast art, Medium/Low      |  9,146,768 |  8.72 |
-| Complete uncompressed static deployment | 40,335,087 | 38.47 |
+| All GLBs and full-resolution maps       | 31,470,176 | 30.01 |
+| Initial Ruins/cast art, High            | 14,609,850 | 13.93 |
+| Initial Ruins/cast art, Medium/Low      |  9,378,612 |  8.94 |
+| Complete uncompressed static deployment | 41,433,482 | 39.51 |
 
 The initial art totals exclude application code/fonts and include all three GLB LODs.
 Network transfer can be smaller with server compression. Compressed file size does
@@ -83,6 +83,11 @@ approximately 213 MiB decoded texture storage before geometry, framebuffers, dri
 overhead and transient decode copies. Medium/Low reduce that estimate to 53 MiB.
 Visiting all regions can retain fifteen families, approximately 320/80 MiB respectively.
 These are estimates, not measured GPU-memory readings.
+
+## Polish checkpoint
+
+The full requested polish list, including the enemy-leg fix, is documented in
+[POLISH-v0.5.md](POLISH-v0.5.md), along with final browser-review limitations.
 
 ## Limits
 

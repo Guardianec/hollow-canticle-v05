@@ -66,6 +66,7 @@ export class AssetManager {
   revision = 0;
   private loader = new GLTFLoader().setMeshoptDecoder(MeshoptDecoder);
   private pending = new Map<string, Promise<void>>();
+  private settled = new Set<string>();
   private requestedMaterials = new Set<string>();
   private materialLoading = Promise.resolve();
   private manifestLoading?: Promise<AssetManifest>;
@@ -88,19 +89,24 @@ export class AssetManager {
     this.mode = mode;
     this.textureHigh = high;
   }
+  isBiomeSettled(biome: number): boolean {
+    return this.mode === 'fallback' || this.settled.has(packForBiome(biome));
+  }
   async preloadBiome(biome: number): Promise<void> {
     const pack = packForBiome(biome);
     if (this.mode === 'fallback' || !pack || this.disposed) return;
     if (!this.pending.has(pack))
       this.pending.set(
         pack,
-        this.preloadCharacters().then(() => {
-          if (!this.manifest) {
-            this.missing.add(pack);
-            return;
-          }
-          return this.load(pack);
-        }),
+        this.preloadCharacters()
+          .then(() => {
+            if (!this.manifest) {
+              this.missing.add(pack);
+              return;
+            }
+            return this.load(pack);
+          })
+          .finally(() => this.settled.add(pack)),
       );
     return this.pending.get(pack);
   }
@@ -279,7 +285,20 @@ export class AssetManager {
       if (!(obj instanceof T.Mesh)) return;
       const local = root.matrix.clone().multiply(inverse).multiply(obj.matrixWorld);
       const batch = new T.InstancedMesh(obj.geometry, obj.material, matrices.length);
-      matrices.forEach((matrix, i) => batch.setMatrixAt(i, matrix.clone().multiply(local)));
+      matrices.forEach((matrix, i) => {
+        batch.setMatrixAt(i, matrix.clone().multiply(local));
+        if (id.includes('_floor_')) {
+          const rng = new Random(`stone:${matrix.elements[12]}:${matrix.elements[14]}`);
+          batch.setColorAt(
+            i,
+            new T.Color().setHSL(
+              0.08 + rng.next() * 0.06,
+              0.04 + rng.next() * 0.08,
+              0.76 + rng.next() * 0.2,
+            ),
+          );
+        }
+      });
       batch.castShadow = !id.endsWith('_deep_support');
       batch.receiveShadow = true;
       batch.userData.imported = true;

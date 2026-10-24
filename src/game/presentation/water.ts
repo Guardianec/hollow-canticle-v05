@@ -42,10 +42,11 @@ export function waterSurface(geometry: T.BufferGeometry, materials: Materials) {
   const ripples = { value: Array.from({ length: 8 }, () => new T.Vector4(0, 0, 100, 0)) };
   const material = new T.MeshStandardMaterial({
     color: '#255c64',
-    metalness: 0.3,
-    roughness: 0.16,
+    metalness: 0,
+    roughness: 0.42,
+    envMapIntensity: 0.45,
     transparent: true,
-    opacity: 0.64,
+    opacity: 0.48,
     depthWrite: false,
   });
   material.onBeforeCompile = (shader) => {

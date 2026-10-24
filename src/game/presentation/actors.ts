@@ -10,6 +10,7 @@ import { ImportedActor } from './imported-actor';
 
 export class Actor {
   readonly root = new T.Group();
+  private body = new T.Group();
   readonly torso = new T.Group();
   readonly head = new T.Group();
   readonly rightArm = new T.Group();
@@ -126,7 +127,8 @@ export class Actor {
       parent.add(obj);
       return obj;
     };
-    this.root.add(this.torso, this.rightLeg, this.leftLeg);
+    this.root.add(this.body);
+    this.body.add(this.torso, this.rightLeg, this.leftLeg);
     this.torso.position.y = profile.hip;
     mesh(this.torso, m.sphere, dark, 0, 0.21, 0, 0.77, 0.93, 0.49);
     mesh(
@@ -679,7 +681,13 @@ export class Actor {
     walking: boolean,
     duel: number,
     weapon: string,
-    options?: { clip: string; clipTime: number; freeze: boolean; reducedMotion?: boolean },
+    options?: {
+      clip: string;
+      clipTime: number;
+      freeze: boolean;
+      reducedMotion?: boolean;
+      executionVariant?: number;
+    },
   ) {
     if (this.player) this.setWeapon(weapon);
     const dt = this.previousTime < 0 ? 1 : Math.max(0, Math.min(0.05, time - this.previousTime));
@@ -688,7 +696,9 @@ export class Actor {
       walking = walking && this.root.position.distanceToSquared(this.lastPosition) > 0.000002;
     this.lastPosition ??= new T.Vector3();
     this.lastPosition.copy(this.root.position);
-    const preview = options?.freeze ? { clip: options.clip, time: options.clipTime } : undefined;
+    const preview = options?.freeze
+      ? { clip: options.clip, time: options.clipTime, variant: options.executionVariant }
+      : undefined;
     const sample = animateCharacter(
       this.id,
       entity,
@@ -724,8 +734,7 @@ export class Actor {
     if (this.weaponId !== 'bow' && this.weaponId !== 'bell') this.blade.rotation.x += Math.PI / 2;
     this.root.rotation.z = pose.lean;
     this.contact.visible = entity.state !== 'dead';
-    this.torso.position.y = this.profile.hip + pose.lift;
-    this.torso.position.z = pose.advance;
+    this.body.position.set(0, pose.lift, pose.advance);
     const phase = 'phase' in entity ? entity.phase : 1;
     this.mantle.visible = phase === 1;
     this.revelation.visible = phase === 2;

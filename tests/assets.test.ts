@@ -175,11 +175,15 @@ describe('Blender runtime contract', () => {
     const fetch = vi.fn().mockResolvedValue({ ok: false, status: 404 });
     vi.stubGlobal('fetch', fetch);
     const fallback = new AssetManager('fallback');
+    expect(fallback.isBiomeSettled(0)).toBe(true);
     await fallback.preloadBiome(0);
     expect(fetch).not.toHaveBeenCalled();
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const manager = new AssetManager('imported');
+    expect(manager.isBiomeSettled(0)).toBe(false);
     await manager.preloadBiome(0);
+    expect(manager.isBiomeSettled(0)).toBe(true);
+    expect(manager.isBiomeSettled(1)).toBe(false);
     expect(manager.has('ruins_arch_a')).toBe(false);
     expect(manager.instantiate('ruins_arch_a')).toBeUndefined();
     expect(manager.missing.has('ruins')).toBe(true);

@@ -2,6 +2,7 @@ import type { AttackKind } from '../data';
 import type { Enemy, Player } from '../world';
 import { BODY_PROFILES, type Rotation } from './profiles';
 import { characterFor } from '../characters';
+import { EXECUTIONS, EXECUTION_DURATION, EXECUTION_CONTACT } from '../executions';
 
 export const JOINTS = [
   'torso',
@@ -270,35 +271,197 @@ export function attackClip(
   return clip;
 }
 
-const finishers: Record<string, AnimationClip> = Object.fromEntries(
-  ['sword', 'twins', 'spear', 'great'].map((weapon) => {
-    const family =
-      attackKeys[weapon === 'spear' ? 'thrust' : weapon === 'great' ? 'smash' : 'slash'];
-    const preparation: KeyPose = { ...family[0], leftArm: [-1.5, 0.6, 0.6], advance: -0.1 };
-    const contact: KeyPose = { ...family[1], advance: weapon === 'spear' ? 0.6 : 0.25 };
-    if (weapon === 'twins') {
-      preparation.leftArm = [-1.8, 0.9, 0.9];
-      contact.leftArm = [-0.8, -1.3, -0.5];
-      contact.torso = [0.2, 1.2, 0];
-    }
-    return [
-      weapon,
+// Each weapon has three different body mechanics, with one shared authoritative contact.
+const executionPoses: Record<string, [KeyPose, KeyPose][]> = {
+  sword: [
+    [
       {
-        name: `execution/${weapon}`,
-        hitWindow: [0.58, 0.72],
-        events: [{ at: 0.58, name: 'execution' }],
-        keys: [
-          { at: 0, pose: { rightArm: [-1.4, -0.4, -0.5], torso: [0, -0.2, 0] } },
-          { at: 0.35, pose: preparation },
-          { at: 0.5, pose: preparation },
-          { at: 0.58, pose: contact },
-          { at: 0.8, pose: { ...family[2], lift: -0.08 } },
-          { at: 1, pose: {} },
-        ],
-      } satisfies AnimationClip,
-    ];
-  }),
-);
+        rightArm: [-1.45, -0.8, -0.3],
+        rightForearm: [-1.4, 0, 0],
+        leftArm: [-1.2, 0.5, 0.4],
+        torso: [-0.1, -0.5, 0],
+      },
+      {
+        rightArm: [-1.5, 0.2, -0.12],
+        rightForearm: [-0.1, 0, 0],
+        torso: [0.22, 0.4, 0],
+        advance: 0.4,
+      },
+    ],
+    [
+      {
+        rightArm: [0.1, -0.6, -0.8],
+        rightForearm: [-0.4, 0, 0],
+        torso: [0.35, -0.6, -0.18],
+        lift: -0.2,
+      },
+      {
+        rightArm: [-2.2, 0.8, 0.5],
+        rightForearm: [-0.15, 0, 0],
+        torso: [-0.12, 0.7, 0.12],
+        advance: 0.24,
+        lift: 0.06,
+      },
+    ],
+    [
+      { rightArm: [-1.2, 1.1, 0.6], rightForearm: [-0.9, 0, 0], torso: [0, 0.8, 0.1] },
+      {
+        rightArm: [-0.9, -1.2, -0.7],
+        rightForearm: [-0.2, 0, 0],
+        torso: [0.16, -0.85, -0.12],
+        advance: 0.22,
+      },
+    ],
+  ],
+  twins: [
+    [
+      {
+        rightArm: [-1.7, -1.1, -0.8],
+        leftArm: [-1.7, 1.1, 0.8],
+        torso: [0.22, -0.2, 0],
+        lift: -0.12,
+      },
+      { rightArm: [-1, 1.1, 0.5], leftArm: [-1, -1.1, -0.5], torso: [0.05, 0.2, 0], advance: 0.35 },
+    ],
+    [
+      {
+        rightArm: [0.15, -0.3, -0.8],
+        leftArm: [0.15, 0.3, 0.8],
+        torso: [0.5, -0.25, 0],
+        lift: -0.3,
+      },
+      {
+        rightArm: [-2.25, 0.6, 0.3],
+        leftArm: [-2.15, -0.6, -0.3],
+        torso: [-0.15, 0.2, 0],
+        advance: 0.28,
+        lift: 0.1,
+      },
+    ],
+    [
+      {
+        rightArm: [-1.1, -1.2, -0.5],
+        leftArm: [-1.6, 0.6, 0.9],
+        torso: [0.18, -1.05, -0.2],
+        lift: -0.15,
+      },
+      {
+        rightArm: [-0.8, 1.3, 0.8],
+        leftArm: [-1.4, -1.2, -0.7],
+        torso: [0.15, 1.15, 0.18],
+        advance: 0.32,
+      },
+    ],
+  ],
+  spear: [
+    [
+      {
+        rightArm: [-1.3, -0.8, -0.3],
+        rightForearm: [-1.4, 0, 0],
+        torso: [-0.12, -0.65, 0],
+        advance: -0.15,
+      },
+      {
+        rightArm: [-1.5, 0.2, -0.15],
+        rightForearm: [-0.1, 0, 0],
+        torso: [0.3, 0.45, 0],
+        advance: 0.6,
+      },
+    ],
+    [
+      {
+        rightArm: [-1.85, 0.8, 0.4],
+        rightForearm: [-0.9, 0, 0],
+        torso: [0.1, 0.7, 0.1],
+        advance: 0.08,
+      },
+      {
+        rightArm: [-1.35, -0.3, -0.2],
+        rightForearm: [-0.15, 0, 0],
+        torso: [0.2, -0.45, -0.1],
+        advance: 0.48,
+      },
+    ],
+    [
+      {
+        rightArm: [-0.8, -0.8, -0.5],
+        rightForearm: [-1.25, 0, 0],
+        torso: [0.4, -0.65, 0],
+        lift: -0.3,
+      },
+      {
+        rightArm: [-1.8, 0.1, -0.1],
+        rightForearm: [-0.12, 0, 0],
+        torso: [0.1, 0.25, 0],
+        lift: -0.18,
+        advance: 0.55,
+      },
+    ],
+  ],
+  great: [
+    [
+      {
+        rightArm: [-2.75, 0, -0.25],
+        rightForearm: [-0.9, 0, 0],
+        torso: [-0.2, -0.1, 0],
+        lift: 0.08,
+      },
+      {
+        rightArm: [-0.4, 0.2, 0.12],
+        rightForearm: [-0.15, 0, 0],
+        torso: [0.65, 0.2, 0],
+        lift: -0.24,
+        advance: 0.3,
+      },
+    ],
+    [
+      { rightArm: [-2.1, -0.85, -0.8], rightForearm: [-1, 0, 0], torso: [-0.1, -0.8, -0.14] },
+      {
+        rightArm: [-0.5, 0.9, 0.65],
+        rightForearm: [-0.15, 0, 0],
+        torso: [0.38, 0.85, 0.2],
+        lift: -0.16,
+        advance: 0.3,
+      },
+    ],
+    [
+      {
+        rightArm: [-0.6, -1.1, -0.7],
+        rightForearm: [-0.85, 0, 0],
+        torso: [0.45, -0.9, -0.2],
+        lift: -0.3,
+      },
+      {
+        rightArm: [-1.05, 1.2, 0.65],
+        rightForearm: [-0.1, 0, 0],
+        torso: [0.25, 0.95, 0.14],
+        lift: -0.2,
+        advance: 0.38,
+      },
+    ],
+  ],
+};
+const finishers = new Map<string, AnimationClip>();
+export function executionClip(weapon: string, variant = 0): AnimationClip {
+  const key = `${weapon}/${variant % 3}`;
+  if (!finishers.has(key)) {
+    const [preparation, contact] = executionPoses[weapon][variant % 3];
+    finishers.set(key, {
+      name: `execution/${key}/${EXECUTIONS[weapon][variant % 3].kind}/${EXECUTIONS[weapon][variant % 3].name}`,
+      hitWindow: [EXECUTION_CONTACT, 0.72],
+      events: [{ at: EXECUTION_CONTACT, name: 'execution' }],
+      keys: [
+        { at: 0, pose: {} },
+        { at: 0.28, pose: preparation },
+        { at: 0.48, pose: preparation },
+        { at: EXECUTION_CONTACT, pose: contact },
+        { at: 0.76, pose: { ...contact, advance: (contact.advance ?? 0) * 0.65 } },
+        { at: 1, pose: {} },
+      ],
+    });
+  }
+  return finishers.get(key)!;
+}
 
 export interface AnimationSample {
   pose: Pose;
@@ -313,7 +476,7 @@ export function animateCharacter(
   walking: boolean,
   weapon: string,
   combat: boolean,
-  preview?: { clip: string; time: number },
+  preview?: { clip: string; time: number; variant?: number },
 ): AnimationSample {
   const profile = BODY_PROFILES[id] ?? BODY_PROFILES.warden;
   const enemy = 'def' in entity ? entity : undefined;
@@ -345,7 +508,7 @@ export function animateCharacter(
   if (preview?.clip && preview.clip !== 'live') {
     clip =
       preview.clip === 'finisher'
-        ? finishers[weapon]
+        ? executionClip(weapon, preview.variant ?? 0)
         : attackClip(id, preview.clip as AttackKind, variant, enemy?.phase);
     normalized = preview.time;
   } else if (enemy && ['tell', 'active', 'recover'].includes(state)) {
@@ -369,8 +532,8 @@ export function animateCharacter(
         ? (age / player.attackStartup) * 0.58
         : 0.58 + clamp((age - player.attackStartup) / player.attackRecovery) * 0.42;
   } else if (state === 'finisher') {
-    clip = finishers[weapon];
-    normalized = age / 0.7;
+    clip = executionClip(weapon, (entity as Player).finisherVariant);
+    normalized = age / EXECUTION_DURATION;
   }
   if (clip) {
     const motion = sampleClip(clip, normalized);
@@ -386,6 +549,11 @@ export function animateCharacter(
     }
     pose.lift += motion.lift;
     pose.advance = motion.advance;
+    // Plant the rear leg and load the front knee through the weight transfer.
+    pose.rightLeg[0] += motion.advance * 0.65;
+    pose.leftLeg[0] -= motion.advance * 0.4;
+    pose.rightShin[0] += Math.max(0, motion.torso[0]) * 0.35;
+    pose.leftShin[0] += Math.max(0, -motion.advance) * 0.4;
     if (state === 'finisher' && 'finisherTarget' in entity) {
       if (entity.finisherTarget === 'shield') {
         pose.leftArm = [-1.6, 0.3, 0.3];
@@ -459,6 +627,26 @@ export function animateCharacter(
   if (state === 'dead') {
     pose.lean = clamp(age / 0.45) * (id === 'beast' ? -1.4 : 1.5);
     pose.lift -= 0.55 * clamp(age / 0.45);
+  }
+  if (state !== 'dead' && pose.lift < 0) {
+    const bend = Math.acos(clamp(1 + pose.lift / 0.8));
+    for (const side of ['right', 'left'] as const) {
+      pose[`${side}Leg`][0] -= bend;
+      pose[`${side}Shin`][0] += bend * 2;
+    }
+  }
+  if (state !== 'dead' && (clip || !walking)) {
+    // Solve the planted shin against floor height after the pelvis shifts and knees load.
+    for (const side of ['right', 'left'] as const) {
+      const leg = pose[`${side}Leg`];
+      leg[0] = -Math.abs(leg[0]);
+      pose.lift = Math.min(pose.lift, 0.4 * Math.cos(leg[0]) + 0.34 - 0.74);
+    }
+    for (const side of ['right', 'left'] as const) {
+      const thigh = pose[`${side}Leg`][0];
+      const vertical = (0.74 + pose.lift - 0.4 * Math.cos(thigh)) / 0.34;
+      pose[`${side}Shin`][0] = Math.acos(Math.max(-1, Math.min(1, vertical))) - thigh;
+    }
   }
   return {
     pose,

@@ -24,8 +24,8 @@ art seeds choose variants, rotations, rubble and surface wear. Connection dimens
 stay fixed. Water follows actual Shrine walkable tiles and leaves void gaps exposed.
 Artistic meshes never become simulation colliders.
 
-The library has **124 environment assets and 13 characters**, each with three LODs.
-The unique LOD0 library totals **488,476 triangles**; this is not a per-frame budget.
+The library has **139 environment assets and 13 characters**, each with three LODs.
+The unique LOD0 library totals **505,800 triangles**; this is not a per-frame budget.
 All five biomes have compatible kits. Shrine adds swept eaves, channels and lanterns;
 Fungal adds curved growths and roots; Frozen adds top-facing snow, icicles, ice shards
 and drifts; Foundry adds pressure pipes, interlocked chains, gears and furnaces.
@@ -39,7 +39,7 @@ Spear enemies share Lancer's asset; Cinder Warden soldiers share Oathkeeper's sw
 silhouette, while Grave Aegis uses the shield-bearing Warden. Beast has a separate corded body, talons and thorned
 back. Faces and fingers remain abstract.
 
-Sixteen semantic bones preserve sampled poses. Armor stays rigid; cloth blends at
+Eighteen semantic bones preserve sampled poses. Armor stays rigid; cloth blends at
 elbows/knees and the cloak uses three bones. Open curved shoulder lames, smaller boots
 and helmets, layered faulds and a shaped breastplate refine the first checkpoint.
 Spear thrusts orient forward; two-handed weapons use support-arm IK. Saint phase II
@@ -89,9 +89,16 @@ uses 512px maps, 1 DPR, 1024px shadows, earlier LOD and fewer particles. Low use
 512px maps, 0.8 DPR, two dynamic lights and reduced mist, with shadows, bloom,
 particles and decals disabled. `?visual=fallback` retains the original presentation.
 
-All full-resolution art is approximately **29.0 MiB** before HTTP compression. Initial
-Ruins/cast art is approximately **13.7 MiB**. Other packs load on demand. Deployment
+All full-resolution art is approximately **30.01 MiB** before HTTP compression. Initial
+Ruins/cast art is approximately **13.93 MiB**. Other packs load on demand. Deployment
 also contains 512px alternatives, code, fonts and licenses. [QA details](QA-v0.5.md).
+
+## Polish checkpoint
+
+The [polish review](POLISH-v0.5.md) covers mixed flagstones, lighting/reflection
+corrections, clear descent seals, automatic doorway travel, loading concealment,
+readable HUD controls, twelve executions, new contact effects and connected legs
+with articulated ankles. The local walking-plane stance solver is not terrain IK.
 
 ## Actual screenshots
 

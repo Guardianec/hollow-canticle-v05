@@ -14,11 +14,17 @@ High/Medium/Low rendering controls are available there and in game settings. Ope
 `?visual=fallback` for the original presentation. Normal gameplay still generates its
 rooms, routes, encounters and module choices from the seed, using imported biome packs.
 
-There are 124 Blender-authored environment assets, 13 skinned characters, three LODs,
+There are 139 Blender-authored environment assets, 13 skinned characters, three LODs,
 15 shared PBR families, geometry-baked occlusion, seeded decals, reactive Shrine water,
 height fog and deep chasms. Each region has its own darker lighting palette. Technical
 integration is complete; artistic and hardware acceptance limits remain documented in
 the [visual review](docs/VISUAL_REVIEW-v0.5.md) and [QA report](docs/QA-v0.5.md).
+
+The [polish checkpoint](docs/POLISH-v0.5.md) adds twelve weapon-specific executions,
+connected whole-body attacks with articulated ankles, mixed flagstones, clearer HUD
+icons and modern strike/deflection effects. Walk toward a cleared doorway to cross
+automatically, or use E/the interaction button. Stand inside the pale seal and use
+E/the descent button to reach the next depth.
 
 ### Rebuild assets
 
@@ -36,7 +42,7 @@ npm run assets:validate
 1024px/512px WebP maps from lossless bake sources
 in the ignored `.cache/bakes/v05/` directory. Pass `npm run assets:build -- --rebake`
 to refresh cached material sources. The full-resolution runtime art download is about
-29 MiB before HTTP compression, with about 14 MiB for initial Ruins/cast art; other
+30 MiB before HTTP compression, with about 14 MiB for initial Ruins/cast art; other
 packs load on demand. See the review for exact measurements and memory estimates.
 References are preserved in `docs/references/v05/` and never used as game textures.
 
@@ -122,7 +128,7 @@ Normal parries dissipate shots and reward Focus/guard recovery. Perfect parries 
 toward their shooter, or a remaining hostile, at 1.3× speed with 1.6× HP damage and 62 posture
 pressure. Reflected shots cannot hit the player. Dodge and finisher protection also apply.
 
-Arrow defense uses a metallic fan and ping; magic uses compression rings and a deeper resonance.
+Arrow defense uses a metallic fan and ping; magic uses pale green motes and a deeper resonance.
 Effects originate at actual projectile contact. Ranged abilities cost charges at commitment,
 release after their cast startup, and regenerate one charge at a time during simulation time.
 Rooms do not refill them. Low HP damage, posture recovery at distance, and melee finishers

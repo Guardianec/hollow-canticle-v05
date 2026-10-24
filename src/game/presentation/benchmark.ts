@@ -5,7 +5,9 @@ import { AssetManager } from './assets';
 import { Actor } from './actors';
 import { Materials, Batches } from './materials';
 import { FOG_COLORS, heightFog, chasmMist, voidBackground } from './atmosphere';
-import { World } from '../world';
+import { World, type Effect } from '../world';
+import { EXECUTIONS } from '../executions';
+import { createWeaponEffect, updateWeaponEffect } from './weapon-effects';
 import { defaultSave } from '../save';
 import { BIOME_LIGHTING } from './lighting';
 import { waterSurface } from './water';
@@ -21,6 +23,9 @@ export async function startBenchmark() {
     <label>Pilgrim <select id="art-player"><option value="sword">Oathkeeper</option><option value="twins">Moth</option><option value="spear">Lancer</option><option value="great">Bellbearer</option></select></label>
     <label>Opponent <select id="art-enemy">${['warden', 'shield', 'duelist', 'spear', 'assassin', 'archer', 'monk', 'hexer', 'brute', 'beast', 'boss'].map((id) => `<option value="${id}">${id === 'boss' ? 'The Saint' : id}</option>`).join('')}</select></label>
     <label>Pose <select id="art-pose"><option value="live">Idle</option><option value="slash">Slash</option><option value="thrust">Thrust</option><option value="smash">Overhead</option><option value="parry">Parry</option><option value="dodge">Dodge</option><option value="finisher">Finisher</option></select></label>
+    <label>Execution <select id="art-execution"><option value="0">I</option><option value="1">II</option><option value="2">III</option></select></label>
+    <label>Weapon effect <select id="art-effect"><option value="none">None</option><option value="slash">Strike</option><option value="ring">Deflect</option><option value="perfect">Perfect deflect</option></select></label>
+    <label>Effect time <input id="art-effect-time" type="range" min="0" max="1" value="0.12" step="0.01"></label>
     <label>Pose time <input id="art-time" type="range" min="0" max="1" value="0.55" step="0.01"></label>
     <label><input id="art-phase" type="checkbox"> Saint phase II</label>
     <label><input id="art-motion" type="checkbox"> Animate atmosphere</label>
@@ -157,7 +162,7 @@ export async function startBenchmark() {
     place('ruins_brazier', x, 0, z);
     const flame = new T.Mesh(
       new T.ConeGeometry(0.12, 0.44, 8),
-      new T.MeshBasicMaterial({ color: new T.Color(5, 1.25, 0.2), toneMapped: false }),
+      new T.MeshBasicMaterial({ color: '#ffb46c' }),
     );
     flame.position.set(x, 1.23, z);
     stage.add(flame);
@@ -259,7 +264,7 @@ export async function startBenchmark() {
       l.intensity = profile.power;
     });
     flames.forEach((f) =>
-      (f.material as T.MeshBasicMaterial).color.set(profile.torch).multiplyScalar(3),
+      (f.material as T.MeshBasicMaterial).color.set(profile.torch).multiplyScalar(1.65),
     );
     halos.forEach((h) => h.material.color.set(profile.torch));
     app.querySelector('header span')!.textContent = profile.name.toUpperCase() + ' · ART BENCHMARK';
@@ -415,6 +420,20 @@ export async function startBenchmark() {
     frames = 0,
     at = last;
   let appliedQuality = '';
+  const effectChoice = app.querySelector<HTMLSelectElement>('#art-effect')!;
+  const effectTime = app.querySelector<HTMLInputElement>('#art-effect-time')!;
+  let effectKey = '',
+    effectArt: T.Group | undefined,
+    effect: Effect;
+  const clearEffect = () => {
+    effectArt?.removeFromParent();
+    effectArt?.traverse((obj) => {
+      if (obj instanceof T.Mesh || obj instanceof T.LineSegments) obj.geometry.dispose();
+      if (obj instanceof T.Mesh || obj instanceof T.LineSegments || obj instanceof T.Sprite)
+        (obj.material as T.Material).dispose();
+    });
+    effectArt = undefined;
+  };
   const draw = () => {
     const now = performance.now();
     const dt = Math.min(0.05, (now - last) / 1000);
@@ -438,6 +457,7 @@ export async function startBenchmark() {
     const options = {
       clip: ['parry', 'dodge'].includes(pose.value) ? 'live' : pose.value,
       clipTime: Number(poseTime.value),
+      executionVariant: Number(app.querySelector<HTMLSelectElement>('#art-execution')!.value),
       freeze: true,
       reducedMotion: !motion.checked,
     };
@@ -494,6 +514,42 @@ export async function startBenchmark() {
       'sword',
       options,
     );
+    const key = `${effectChoice.value}:${pilgrim.value}:${pose.value}:${options.executionVariant}`;
+    if (key !== effectKey) {
+      effectKey = key;
+      clearEffect();
+      if (effectChoice.value !== 'none') {
+        effect = {
+          x: 0,
+          y: 0,
+          angle: -0.5,
+          kind: effectChoice.value as Effect['kind'],
+          life: 0.4,
+          maxLife: 0.4,
+          color: '#e2d3b0',
+          scale: 1.2,
+          weapon: pilgrim.value,
+          attackKind:
+            pose.value === 'finisher'
+              ? EXECUTIONS[pilgrim.value][options.executionVariant].kind
+              : pose.value === 'thrust' || pilgrim.value === 'spear'
+                ? 'thrust'
+                : pose.value === 'smash'
+                  ? 'smash'
+                  : 'slash',
+          contact: effectChoice.value !== 'slash',
+        };
+        effectArt = createWeaponEffect(effect, materials.glow);
+        effectArt.position.set(
+          effect.kind === 'slash' ? -1.1 : 0,
+          1.25,
+          effect.kind === 'slash' ? 1 : 0.5,
+        );
+        stage.add(effectArt);
+      }
+    }
+    if (effectArt)
+      updateWeaponEffect(effectArt, effect, Number(effectTime.value), !motion.checked, true);
     flames.forEach((f, i) => (f.scale.y = 1 + Math.sin(clock.value * 9 + i) * 0.08));
     renderer.render(scene, camera);
     frames++;
@@ -511,6 +567,7 @@ export async function startBenchmark() {
     () => {
       cancelAnimationFrame(frame);
       controls.dispose();
+      clearEffect();
       player.dispose();
       enemy.dispose();
       old.dispose();

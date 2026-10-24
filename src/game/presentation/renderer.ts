@@ -57,6 +57,8 @@ export class Renderer {
   private bloom: UnrealBloomPass;
   private output: OutputPass;
   private veil = document.createElement('div');
+  private loadingNotice = document.createElement('div');
+  loading = true;
   private fade = 0;
   constructor(
     private parent: HTMLElement,
@@ -118,7 +120,7 @@ export class Renderer {
     this.scene.add(this.player.root);
     this.composer = new EffectComposer(this.webgl);
     this.composer.addPass(new RenderPass(this.scene, this.director.camera));
-    this.bloom = new UnrealBloomPass(new T.Vector2(1, 1), 0.4, 0.5, 1.05);
+    this.bloom = new UnrealBloomPass(new T.Vector2(1, 1), 0.16, 0.24, 1.5);
     this.composer.addPass(this.bloom);
     this.output = new OutputPass();
     this.composer.addPass(this.output);
@@ -128,6 +130,11 @@ export class Renderer {
     this.hud = new Hud(parent, world);
     this.veil.className = 'descent-veil';
     parent.append(this.veil);
+    this.loadingNotice.className = 'asset-loading';
+    this.loadingNotice.setAttribute('role', 'status');
+    this.loadingNotice.textContent = 'Preparing the pilgrimage…';
+    parent.append(this.loadingNotice);
+    this.webgl.domElement.style.visibility = 'hidden';
     const dustGeo = new T.BufferGeometry();
     dustGeo.setAttribute(
       'position',
@@ -192,6 +199,14 @@ export class Renderer {
   }
   draw(dt: number): void {
     const w = this.world;
+    void this.assets.preloadBiome(w.floor.biome);
+    this.loading = !this.assets.isBiomeSettled(w.floor.biome);
+    this.loadingNotice.hidden = !this.loading;
+    if (this.loading) {
+      this.webgl.domElement.style.visibility = 'hidden';
+      this.hud.root.hidden = true;
+      return;
+    }
     const lighting = BIOME_LIGHTING[w.floor.biome];
     this.ambient.color.set(lighting.sky);
     this.ambient.groundColor.set(lighting.ground);
@@ -234,7 +249,7 @@ export class Renderer {
           ],
           sharedMaterial = Object.values(this.materials.items);
         this.art.group.traverse((o) => {
-          if (o instanceof T.Mesh) {
+          if (o instanceof T.Mesh || o instanceof T.LineSegments) {
             if (o.userData.imported) {
               if (o instanceof T.InstancedMesh) o.dispose();
               return;
@@ -246,8 +261,7 @@ export class Renderer {
           } else if (o instanceof T.Sprite) o.material.dispose();
         });
       }
-      this.materials.items.stone.roughness = w.floor.biome === 1 ? 0.57 : 0.94;
-      void this.assets.preloadBiome(w.floor.biome);
+      this.materials.items.stone.roughness = w.floor.biome === 1 ? 0.78 : 0.94;
       this.art = buildDungeon(w.floor, this.materials, this.assets);
       this.scene.add(this.art.group);
       this.floor = w.floor;
@@ -399,7 +413,7 @@ export class Renderer {
       torch.flame.scale.y = 1.1 * flicker;
       torch.flame.rotation.y = w.visualTime * 1.6;
       torch.flame.rotation.z = Math.sin(w.visualTime * 8 + torch.seed) * 0.15;
-      torch.halo.material.opacity = 0.19 * flicker;
+      torch.halo.material.opacity = 0.11 * flicker;
     }
     for (const [i, banner] of (this.art?.banners ?? []).entries()) {
       const positions = banner.geometry.attributes.position;
@@ -490,6 +504,7 @@ export class Renderer {
     w.presentation.drawCalls = this.webgl.info.render.calls;
     w.presentation.triangles = this.webgl.info.render.triangles;
     this.fade = Math.max(0, this.fade - dt * 1.6);
+    this.webgl.domElement.style.visibility = 'visible';
     this.veil.style.opacity = String(this.fade);
   }
   focusByPointer(dx: number, dy: number): void {
@@ -524,6 +539,7 @@ export class Renderer {
     });
     this.hud.root.remove();
     this.veil.remove();
+    this.loadingNotice.remove();
     this.canvas.remove();
   }
 }

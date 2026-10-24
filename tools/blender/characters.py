@@ -41,6 +41,7 @@ def build(m):
         for side in [-1,1]:
             x=side*.17
             leg='rightLeg' if side<0 else 'leftLeg'; shin='rightShin' if side<0 else 'leftShin'
+            foot='rightFoot' if side<0 else 'leftFoot'
             trouser=shape('trouser',[(.39,.085,.10,x,0),(.45,.105,.11,x,0),(.52,.115,.12,x,0),(.65,.125,.13,x,0),(.8,.13,.13,x,0),(.91,.12,.115,x,0)],'heavy_cloth',leg,32,.025)
             lower=trouser.vertex_groups.new(name=shin)
             for v in trouser.data.vertices:
@@ -48,8 +49,8 @@ def build(m):
                 trouser.vertex_groups[leg].add([v.index],1-weight,'REPLACE')
                 lower.add([v.index],weight,'REPLACE')
             shape('greave',[(.1,.09,.1,x,0),(.22,.1,.12,x,0),(.39,.12,.14,x,-.02),(.46,.1,.115,x,0)],'worn_iron','rightShin' if side<0 else 'leftShin')
-            shape('boot',[(.02,.095,.145,x,-.055),(.065,.105,.16,x,-.06),(.12,.095,.135,x,-.04),(.22,.085,.09,x,0)],'worn_leather',shin,32)
-            shape('sabatons',[(.065,.10,.155,x,-.06),(.09,.101,.145,x,-.05),(.14,.085,.10,x,-.02)],'worn_iron',shin,24)
+            shape('boot',[(.02,.095,.145,x,-.055),(.065,.105,.16,x,-.06),(.12,.095,.135,x,-.04),(.22,.085,.09,x,0)],'worn_leather',foot,32)
+            shape('sabatons',[(.065,.10,.155,x,-.06),(.09,.101,.145,x,-.05),(.14,.085,.10,x,-.02)],'worn_iron',foot,24)
             shape('knee shield',[(.39,.09,.035,x,-.12),(.45,.125,.065,x,-.14),(.52,.085,.04,x,-.13)],'worn_iron','rightLeg' if side<0 else 'leftLeg')
             arm='rightArm' if side<0 else 'leftArm'; fore='rightForearm' if side<0 else 'leftForearm'
             sx=side*.36
@@ -171,6 +172,7 @@ def make_rig(name,body,width,weapon):
                      ('leftArm',(.36,0,1.4),'torso'),('leftForearm',(.36,0,1.06),'leftArm'),
                      ('rightLeg',(-.17,0,.86),'root'),('rightShin',(-.17,0,.46),'rightLeg'),
                      ('leftLeg',(.17,0,.86),'root'),('leftShin',(.17,0,.46),'leftLeg'),('blade',(-.36,-.02,.70),'rightForearm'),
+                     ('rightFoot',(-.17,0,.12),'rightShin'),('leftFoot',(.17,0,.12),'leftShin'),
                      ('offhand',(.36,-.02,.70),'leftForearm'),('cape0',(0,.18,1.46),'torso'),('cape1',(0,.25,.95),'cape0'),('cape2',(0,.33,.45),'cape1')]
         for bone,head,parent in definitions:
             head=(head[0]*width,head[1],head[2])
@@ -199,7 +201,7 @@ def build_beast(m):
         x=side*.17
         shape('sinewed thigh',[(.43,.075,.09,x,.03),(.56,.125,.13,x,.03),(.82,.16,.16,x,0),(.94,.11,.12,x,0)],'worn_leather',leg,32,.05)
         shape('hock',[(.12,.07,.09,x,.04),(.26,.08,.12,x,.09),(.44,.10,.12,x,.02)],'worn_leather',shin,24,.04)
-        shape('splayed foot',[(.02,.115,.19,x,-.09),(.09,.12,.20,x,-.09),(.17,.07,.10,x,.02)],'worn_leather',shin)
+        shape('splayed foot',[(.02,.115,.19,x,-.09),(.09,.12,.20,x,-.09),(.17,.07,.10,x,.02)],'worn_leather','rightFoot' if side<0 else 'leftFoot')
         x=side*.36
         shape('corded upper arm',[(1.03,.075,.09,x,0),(1.22,.14,.14,x,0),(1.45,.14,.16,x,.02)],'worn_leather',arm,28,.05)
         shape('elongated forearm',[(.61,.09,.12,x,-.03),(.78,.13,.13,x,0),(1.05,.09,.10,x,0)],'worn_leather',fore,28,.07)

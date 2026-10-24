@@ -7,6 +7,17 @@ const safe = (s: string) =>
     /[&<>"']/g,
     (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!,
   );
+const symbol = (name: string) => {
+  const paths: Record<string, string> = {
+    hp: 'M12 20 4 12C-1 6 6 1 12 7 18 1 25 6 20 12Z',
+    guard: 'M12 2 21 6 19 15 12 22 5 15 3 6Z M12 6V17',
+    focus: 'M12 2 20 12 12 22 4 12Z M8 12H16 M12 8V16',
+    stairs: 'M3 5H9V11H15V17H21 M16 4V10 M13 7 16 10 19 7',
+    ranged: 'M4 20 20 4 M10 4H20V14 M4 14V20H10',
+    item: 'M9 2H15 M10 2V8L5 16Q3 22 12 22Q21 22 19 16L14 8V2 M7 14H17',
+  };
+  return `<svg class="hud-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${paths[name]}"/></svg>`;
+};
 
 export class Hud {
   readonly root = document.createElement('div');
@@ -69,7 +80,13 @@ export class Hud {
       label +
       '" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' +
       Math.round(value) +
-      '"><i style="width:' +
+      '" title="' +
+      label +
+      '">' +
+      (['hp', 'guard', 'focus'].includes(className) && !label.startsWith('Enemy')
+        ? '<span class="resource-icon">' + symbol(className) + '</span>'
+        : '') +
+      '<i style="width:' +
       Math.max(0, Math.min(100, value)) +
       '%"></i></div>';
     const toast = w.toast && w.toast.until > w.time ? w.toast : undefined;
@@ -96,6 +113,9 @@ export class Hud {
     this.root.classList.toggle('duel-hud', duel > 0.5);
     this.root.classList.toggle('finisher-hud', w.player.state === 'finisher');
     this.root.dataset.camera = w.presentation.mode;
+    const interactionFocused =
+      this.root.contains(document.activeElement) &&
+      (document.activeElement as HTMLElement).dataset.action === 'interact';
     this.root.innerHTML =
       '<div class="vitality"><span class="oath-sigil">⟐</span><div><span class="hud-label">' +
       safe(w.character.name.toUpperCase()) +
@@ -124,6 +144,13 @@ export class Hud {
       '" aria-label="Discovered dungeon rooms">' +
       map +
       '</svg></div>' +
+      (w.room.kind === 'exit'
+        ? '<div class="descent-guidance">' +
+          symbol('stairs') +
+          '<strong>Next depth</strong><span>' +
+          (w.combat ? 'Clear the chamber to descend' : 'Stand inside the pale seal · E / click') +
+          '</span></div>'
+        : '') +
       (w.combat && e
         ? '<div class="enemy-title"><span>' +
           safe(e.def.name) +
@@ -139,7 +166,13 @@ export class Hud {
           '</span></div>'
         : '') +
       (w.prompt
-        ? '<div class="context-prompt"><kbd>E</kbd>' + safe(w.prompt.text) + '</div>'
+        ? '<div class="context-prompt"><button data-action="interact"><kbd>E</kbd><span>' +
+          safe(w.prompt.text) +
+          '</span><b aria-hidden="true">' +
+          (w.prompt.passage ? '→' : '◇') +
+          '</b></button>' +
+          (w.prompt.passage ? '<small>Walk through · or press E / click</small>' : '') +
+          '</div>'
         : '') +
       (toast
         ? '<div class="quiet-toast" style="color:' +
@@ -178,7 +211,7 @@ export class Hud {
     const ranged = w.character.ranged;
     this.root.insertAdjacentHTML(
       'beforeend',
-      `<div class="arsenal-hud"><div class="charge-title">${safe(ranged.name)} <kbd>R</kbd></div><div class="ranged-charges" aria-label="${p.rangedCharges} of ${ranged.charges} ranged charges">${Array.from({ length: ranged.charges }, (_, i) => `<span class="${i < p.rangedCharges ? 'full' : ''} ${i === p.rangedCharges - 1 && w.time < this.restoredUntil ? 'restored' : ''}">${ranged.kind === 'wave' ? '⌁' : ranged.kind === 'javelin' ? '↟' : ranged.kind === 'knife' ? '╱' : '†'}${i === p.rangedCharges ? `<i style="height:${(p.recharge / ranged.recharge) * 100}%"></i>` : ''}</span>`).join('')}</div><div class="satchel"><kbd>Q</kbd> ${safe(w.inventory.item?.name ?? 'Satchel empty')} ${w.inventory.item ? `×${w.inventory.slots[w.inventory.selected].count}` : ''}<small>1 / 2 · ${w.inventory.count}/5 offerings</small></div><div class="active-buffs">${w.buffs.active
+      `<div class="arsenal-hud"><div class="charge-title">${symbol('ranged')}${safe(ranged.name)} <kbd>R</kbd></div><div class="ranged-charges" aria-label="${p.rangedCharges} of ${ranged.charges} ranged charges">${Array.from({ length: ranged.charges }, (_, i) => `<span class="${i < p.rangedCharges ? 'full' : ''} ${i === p.rangedCharges - 1 && w.time < this.restoredUntil ? 'restored' : ''}">${ranged.kind === 'wave' ? '⌁' : ranged.kind === 'javelin' ? '↟' : ranged.kind === 'knife' ? '╱' : '†'}${i === p.rangedCharges ? `<i style="height:${(p.recharge / ranged.recharge) * 100}%"></i>` : ''}</span>`).join('')}</div><div class="satchel">${symbol('item')}<kbd>Q</kbd> ${safe(w.inventory.item?.name ?? 'Satchel empty')} ${w.inventory.item ? `×${w.inventory.slots[w.inventory.selected].count}` : ''}<small>1 / 2 · change item</small></div><div class="active-buffs">${w.buffs.active
         .slice(-5)
         .map((b) => {
           const def = BUFFS.find((d) => d.id === b.id)!;
@@ -187,6 +220,10 @@ export class Hud {
         })
         .join('')}</div></div>`,
     );
+    if (interactionFocused)
+      this.root
+        .querySelector<HTMLButtonElement>('[data-action="interact"]')
+        ?.focus({ preventScroll: true });
     const pickup = w.pickups.find(
       (i) =>
         i.room === w.roomId && i.depth === w.floor.depth && Math.hypot(i.x - p.x, i.y - p.y) < 85,

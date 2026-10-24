@@ -1,4 +1,5 @@
 import * as T from 'three';
+import { descentSeal } from './descent';
 import { ROOM_PITCH, doorPosition, type Floor, type Room } from '../dungeon';
 import { geometryFor, elevationAt, insideRoom } from '../geometry';
 import { Random } from '../random';
@@ -595,9 +596,11 @@ export function buildDungeon(floor: Floor, m: Materials, assets?: AssetManager):
       );
       torch(p.clone().add(new T.Vector3(0.9, 0, 0.5)), room.id);
     }
-    if (room.kind === 'exit')
+    if (room.kind === 'exit') {
+      group.add(descentSeal(p));
       for (let i = 0; i < 9; i++)
         box('darkStone', p.x, p.y - i * 0.13, p.z - i * 0.32, 2.2, 0.15, 0.36);
+    }
     batch.build(group);
   }
   // Lower ruins and giant pillars recede through blue fog, well below the playable level.

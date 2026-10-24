@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.0 polish — 2026-10-24 (local checkpoint)
+
+- Reduced bloom and Shrine reflections while retaining separate regional lighting.
+- Mixed six flagstone layouts into seeded surface patches and varied architectural detail.
+- Added three executions per pilgrim, shared-root body motion and articulated ankles.
+- Rebuilt strike and melee/projectile deflection effects with thin trails and contact sparks.
+- Added clear descent seals, automatic doorway passage, E/click fallback and readable HUD icons.
+- Concealed initial/biome loading and suspended simulation until art settles.
+- Validated 152 assets and 102 tests; see `docs/POLISH-v0.5.md` for captures and review limits.
+
 ## 0.5.0 — 2026-10-23 (local visual review build)
 
 - Expanded the Blender pipeline to all five biomes: 124 environment assets, 13 rigged

@@ -20,7 +20,7 @@ export const BIOME_LIGHTING = [
     ambient: 0.3,
     moon: '#8ebbbd',
     sun: 0.58,
-    environment: 0.16,
+    environment: 0.1,
     exposure: 1.08,
     torch: '#75d8c3',
     power: 22,
