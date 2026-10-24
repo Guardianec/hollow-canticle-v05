@@ -27,8 +27,9 @@ export interface Save {
   characters: string[];
   arsenalTutorial: boolean;
 }
-export const SAVE_KEY = 'hollow-canticle:v1';
-export const RUN_HISTORY_KEY = 'hollow-canticle:local-runs:v1';
+export const SAVE_KEY = 'hollow-canticle:v05';
+export const RUN_HISTORY_KEY = 'hollow-canticle:local-runs:v05';
+const ALPHA_SAVE_KEY = 'hollow-canticle:v1';
 export function recordRun(
   seed: string,
   character: string,
@@ -152,7 +153,12 @@ export function parseSave(raw: string | null): Save {
 
 export function loadSave(): Save {
   try {
-    return parseSave(localStorage.getItem(SAVE_KEY));
+    const current = localStorage.getItem(SAVE_KEY);
+    if (current !== null) return parseSave(current);
+    // Pages projects share an origin: copy progress once, then keep alpha untouched.
+    const migrated = parseSave(localStorage.getItem(ALPHA_SAVE_KEY));
+    persist(migrated);
+    return migrated;
   } catch {
     return defaultSave();
   }

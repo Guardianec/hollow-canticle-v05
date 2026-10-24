@@ -9,6 +9,8 @@
 - Added clear descent seals, automatic doorway passage, E/click fallback and readable HUD icons.
 - Concealed initial/biome loading and suspended simulation until art settles.
 - Validated 152 assets and 102 tests; see `docs/POLISH-v0.5.md` for captures and review limits.
+- Publication uses a separate v0.5 repository and browser-save namespace to preserve
+  the alpha; validation expands to 105 tests including save isolation and migration.
 
 ## 0.5.0 — 2026-10-23 (local visual review build)
 

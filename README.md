@@ -3,8 +3,16 @@
 A procedural melee action roguelike about reading a blade, breaking a guard, and keeping an oath.
 
 The v0.5 visual rebuild starts from accepted v0.4 commit
-`8c83c8c4baa3476aaa9caa7b37bb9debfe13efd4`. This is a local review build with all
-five imported biome kits and the complete cast. Main remains unchanged.
+`8c83c8c4baa3476aaa9caa7b37bb9debfe13efd4`, with all five imported biome kits
+and the complete cast. This preview has its own repository and deployment;
+the original alpha repository and game remain preserved.
+
+[Play v0.5](https://guardianec.github.io/hollow-canticle-v05/) ·
+[Play the preserved alpha](https://guardianec.github.io/hollow-canticle/) ·
+[Deployment notes](docs/DEPLOYMENT-v0.5.md)
+
+The preview has separate browser progress. Existing unlocks are copied once;
+playing or resetting v0.5 leaves alpha progress untouched.
 
 ![Procedurally generated Blender environment](docs/screenshots/v05/procedural-seed-02.jpg)
 

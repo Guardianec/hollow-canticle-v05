@@ -1,6 +1,6 @@
 import { BIOMES, ENEMIES, RELICS, WEAPONS } from './game/data';
 import { makeFloor, obstaclesFor } from './game/dungeon';
-import { persist, defaultSave, SAVE_KEY, RUN_HISTORY_KEY } from './game/save';
+import { persist, defaultSave, RUN_HISTORY_KEY } from './game/save';
 import { World } from './game/world';
 import { CHARACTERS, characterFor } from './game/characters';
 import { CharacterGallery } from './game/presentation/gallery';
@@ -253,13 +253,13 @@ export class Interface {
         );
         break;
       case 'reset-confirm': {
+        Object.assign(w.save, defaultSave());
+        persist(w.save);
         try {
-          localStorage.removeItem(SAVE_KEY);
           localStorage.removeItem(RUN_HISTORY_KEY);
         } catch {
           /* Continue with an in-memory reset. */
         }
-        Object.assign(w.save, defaultSave());
         w.audio.settings = w.save.settings;
         w.mode = 'menu';
         this.close();
