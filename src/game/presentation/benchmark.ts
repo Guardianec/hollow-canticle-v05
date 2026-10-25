@@ -9,6 +9,8 @@ import { World, type Effect } from '../world';
 import { EXECUTIONS } from '../executions';
 import { createWeaponEffect, updateWeaponEffect } from './weapon-effects';
 import { defaultSave } from '../save';
+import { GRAPHICS, GRAPHICS_LEVELS, graphicsLevel } from '../graphics';
+import { LOCOMOTION_STATES } from './animation-state';
 import { BIOME_LIGHTING } from './lighting';
 import { waterSurface } from './water';
 
@@ -17,19 +19,19 @@ export async function startBenchmark() {
   const app = document.querySelector<HTMLElement>('#app')!;
   app.innerHTML = `<main class="art-benchmark"><canvas aria-label="Ruins visual benchmark"></canvas>
     <header><a href="${import.meta.env.BASE_URL}">HOLLOW CANTICLE</a><span>RUINS · ART BENCHMARK</span></header>
-    <aside><label>View <select id="art-view"><option value="exploration">Exploration</option><option value="duel">Close duel</option><option value="void">Bridge & void</option><option value="materials">Surface study</option><option value="comparison">v0.4 / Blender</option></select></label>
-    <label>Quality <select id="art-quality"><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></label>
+    <aside><label>View <select id="art-view"><option value="animation">Animation reference</option><option value="exploration">Exploration</option><option value="duel">Close duel</option><option value="void">Bridge & void</option><option value="materials">Surface study</option><option value="comparison">v0.4 / Blender</option></select></label>
+    <label>Quality <select id="art-quality">${GRAPHICS_LEVELS.map((level) => `<option value="${level}">${GRAPHICS[level].label}</option>`).join('')}</select></label>
     <label>Region <select id="art-biome">${BIOME_LIGHTING.map((p, i) => `<option value="${i}">${p.name}</option>`).join('')}</select></label>
-    <label>Pilgrim <select id="art-player"><option value="sword">Oathkeeper</option><option value="twins">Moth</option><option value="spear">Lancer</option><option value="great">Bellbearer</option></select></label>
+    <label>Pilgrim <select id="art-player"><option value="sword">Oathkeeper</option><option value="twins">Moth</option><option value="spear">Lancer</option><option value="great">Bellbearer</option><option value="shinobi">Shinobi</option></select></label>
     <label>Opponent <select id="art-enemy">${['warden', 'shield', 'duelist', 'spear', 'assassin', 'archer', 'monk', 'hexer', 'brute', 'beast', 'boss'].map((id) => `<option value="${id}">${id === 'boss' ? 'The Saint' : id}</option>`).join('')}</select></label>
-    <label>Pose <select id="art-pose"><option value="live">Idle</option><option value="slash">Slash</option><option value="thrust">Thrust</option><option value="smash">Overhead</option><option value="parry">Parry</option><option value="dodge">Dodge</option><option value="finisher">Finisher</option></select></label>
+    <label>Pose <select id="art-pose"><option value="live">Live idle</option>${LOCOMOTION_STATES.map((state) => `<option>${state}</option>`).join('')}<option value="riposte">Shinobi riposte</option><option value="slash">Slash</option><option value="thrust">Thrust</option><option value="smash">Overhead</option><option value="parry">Parry</option><option value="dodge">Dodge</option><option value="finisher">Finisher</option></select></label>
     <label>Execution <select id="art-execution"><option value="0">I</option><option value="1">II</option><option value="2">III</option></select></label>
-    <label>Weapon effect <select id="art-effect"><option value="none">None</option><option value="slash">Strike</option><option value="ring">Deflect</option><option value="perfect">Perfect deflect</option></select></label>
+    <label>Weapon effect <select id="art-effect"><option value="none">None</option><option value="slash">Strike</option><option value="ring">Deflect</option><option value="perfect">Perfect deflect</option><option value="break">Guard break</option><option value="finish">Finisher</option></select></label>
     <label>Effect time <input id="art-effect-time" type="range" min="0" max="1" value="0.12" step="0.01"></label>
     <label>Pose time <input id="art-time" type="range" min="0" max="1" value="0.55" step="0.01"></label>
     <label><input id="art-phase" type="checkbox"> Saint phase II</label>
     <label><input id="art-motion" type="checkbox"> Animate atmosphere</label>
-    <button id="art-capture">Save screenshot</button><output id="art-status" aria-live="polite">Loading Blender pack…</output></aside>
+    <button id="art-capture">Save screenshot</button><button id="art-sequence">Save 16-frame motion study</button><output id="art-status" aria-live="polite">Loading Blender pack…</output></aside>
     <footer><span>THE FORGOTTEN RUINS</span><span>Drag to orbit · Scroll to inspect</span><output id="art-metrics"></output></footer></main>`;
   const style = document.createElement('style');
   style.textContent = `.art-benchmark{position:fixed;inset:0;background:#172a3b;color:#ddd8c7}.art-benchmark canvas{width:100%;height:100%;display:block}.art-benchmark header{position:absolute;left:30px;top:24px;display:flex;gap:30px;align-items:center;font-size:11px;letter-spacing:.19em}.art-benchmark header a{font-family:'Cormorant Garamond',serif;font-size:23px;color:#e1d8bb;text-decoration:none}.art-benchmark header span{color:#a2b5bd}.art-benchmark aside{position:absolute;right:24px;top:24px;width:180px;max-height:calc(100vh - 100px);overflow:auto;display:grid;gap:12px;padding:17px;background:#0c141bda;border:1px solid #b1a27b40;font-size:11px}.art-benchmark label{display:grid;gap:5px}.art-benchmark select,.art-benchmark button{background:#18252c;color:#ded8c9;border:1px solid #89958c55;padding:7px;font:inherit}.art-benchmark input[type=checkbox]{width:auto}.art-benchmark footer{position:absolute;bottom:20px;left:30px;right:30px;display:flex;justify-content:space-between;gap:20px;font-size:10px;letter-spacing:.1em;color:#a7b5ba}.art-benchmark output{font-size:10px;color:#a9beb9}@media(max-width:600px){.art-benchmark aside{width:132px;right:10px;top:64px;gap:7px;padding:10px}.art-benchmark header{left:15px;gap:12px}.art-benchmark header span{font-size:8px}.art-benchmark footer{left:15px}.art-benchmark footer>span:nth-child(2){display:none}}`;
@@ -72,7 +74,7 @@ export async function startBenchmark() {
   scene.add(inspection);
   const assets = new AssetManager(
     'imported',
-    !['low', 'medium'].includes(params.get('quality') ?? ''),
+    GRAPHICS[graphicsLevel(params.get('quality'))].highTextures,
   );
   await assets.preloadBiome(0);
   const status = app.querySelector<HTMLOutputElement>('#art-status')!;
@@ -289,6 +291,27 @@ export async function startBenchmark() {
   stage.add(player.root, enemy.root);
   const pilgrim = app.querySelector<HTMLSelectElement>('#art-player')!;
   const opponent = app.querySelector<HTMLSelectElement>('#art-enemy')!;
+  const crowd = new T.Group();
+  scene.add(crowd);
+  const crowdActors = [
+    'player-shinobi',
+    'player-sword',
+    'player-twins',
+    'player-great',
+    'warden',
+    'duelist',
+    'archer',
+    'monk',
+    'assassin',
+    'brute',
+    'spear',
+    'shield',
+  ].map((id, i) => {
+    const actor = new Actor(materials, id, i < 4, assets);
+    actor.root.position.set(((i % 4) - 1.5) * 2.3, 0, (Math.floor(i / 4) - 1) * 2.5);
+    crowd.add(actor.root);
+    return actor;
+  });
   opponent.value = 'shield';
   pilgrim.addEventListener('change', () => {
     player.dispose();
@@ -296,6 +319,7 @@ export async function startBenchmark() {
     player = new Actor(materials, 'player-' + pilgrim.value, true, assets);
     player.root.position.set(-1.1, 0, 1);
     stage.add(player.root);
+    updateView();
   });
   opponent.addEventListener('change', () => {
     enemy.dispose();
@@ -366,40 +390,56 @@ export async function startBenchmark() {
     scene.add(mist);
   }
   const view = app.querySelector<HTMLSelectElement>('#art-view')!;
+  view.insertAdjacentHTML('beforeend', '<option value="crowd">4 players + 8 enemies</option>');
   const quality = app.querySelector<HTMLSelectElement>('#art-quality')!;
   const pose = app.querySelector<HTMLSelectElement>('#art-pose')!;
+  pose.insertAdjacentHTML('beforeend', '<option value="ranged">Ranged offering</option>');
   const motion = app.querySelector<HTMLInputElement>('#art-motion')!;
   const poseTime = app.querySelector<HTMLInputElement>('#art-time')!;
   const views: Record<string, { position: T.Vector3; target: T.Vector3 }> = {
+    animation: { position: new T.Vector3(3.6, 2.3, 6), target: new T.Vector3(0, 1, 0) },
+    crowd: { position: new T.Vector3(9, 9, 14), target: new T.Vector3(0, 1, 0) },
     exploration: { position: new T.Vector3(13, 13, 17), target: new T.Vector3(0, 1, 0) },
     duel: { position: new T.Vector3(3.8, 2.5, 6), target: new T.Vector3(0, 1.05, 0.6) },
     void: { position: new T.Vector3(17, 8, 27), target: new T.Vector3(0, -4, 9) },
     materials: { position: new T.Vector3(0, 1.4, 8), target: new T.Vector3(0, 0.5, 0) },
     comparison: { position: new T.Vector3(6, 4, 10), target: new T.Vector3(0, 1.5, -0.5) },
   };
+  const sceneFog = scene.fog;
   function updateView() {
     const v = views[view.value];
     camera.position.copy(v.position);
     controls.target.copy(v.target);
     controls.update();
-    stage.visible = !['comparison', 'materials'].includes(view.value);
+    stage.visible = !['comparison', 'materials', 'crowd'].includes(view.value);
+    crowd.visible = view.value === 'crowd';
     compare.visible = view.value === 'comparison';
     study.visible = view.value === 'materials';
-    inspection.visible = study.visible || compare.visible;
+    const reference = view.value === 'animation';
+    inspection.visible = study.visible || compare.visible || reference;
+    inspection.intensity = reference ? 4 : 2;
+    ambient.intensity = reference ? 1.6 : BIOME_LIGHTING[Number(region.value)].ambient;
+    scene.environmentIntensity = reference
+      ? 0.65
+      : BIOME_LIGHTING[Number(region.value)].environment;
+    stage.children.forEach((child) => (child.visible = !reference || child === player.root));
+    player.root.position.set(reference ? 0 : -1.1, 0, reference ? 0 : 1);
+    scene.background = reference ? new T.Color('#20282f') : voidBackground(Number(region.value));
+    scene.fog = reference ? null : sceneFog;
     lights.forEach((l) => (l.visible = stage.visible));
   }
   view.value =
     params.get('view') && views[params.get('view')!] ? params.get('view')! : 'exploration';
-  quality.value = ['low', 'medium', 'high'].includes(params.get('quality') ?? '')
-    ? params.get('quality')!
-    : 'high';
+  quality.value = graphicsLevel(params.get('quality'));
   motion.checked = false;
   view.addEventListener('change', updateView);
   updateView();
   quality.addEventListener('change', () => {
-    void assets.setTextureQuality(quality.value === 'high').catch((error) => {
-      status.value = String(error);
-    });
+    void assets
+      .setTextureQuality(GRAPHICS[graphicsLevel(quality.value)].highTextures)
+      .catch((error) => {
+        status.value = String(error);
+      });
   });
   const resize = () => {
     renderer.setSize(innerWidth, innerHeight, false);
@@ -410,7 +450,7 @@ export async function startBenchmark() {
   window.addEventListener('resize', resize);
   app.querySelector('#art-capture')!.addEventListener('click', () => {
     const link = document.createElement('a');
-    link.download = `hollow-canticle-v05-${view.value}-${quality.value}.png`;
+    link.download = `hollow-canticle-v07-${view.value}-${quality.value}.png`;
     link.href = canvas.toDataURL('image/png');
     link.click();
   });
@@ -420,6 +460,7 @@ export async function startBenchmark() {
     frames = 0,
     at = last;
   let appliedQuality = '';
+  let qualityAt = 0;
   const effectChoice = app.querySelector<HTMLSelectElement>('#art-effect')!;
   const effectTime = app.querySelector<HTMLInputElement>('#art-effect-time')!;
   let effectKey = '',
@@ -434,7 +475,7 @@ export async function startBenchmark() {
     });
     effectArt = undefined;
   };
-  const draw = () => {
+  const draw = (capture = false) => {
     const now = performance.now();
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
@@ -443,24 +484,54 @@ export async function startBenchmark() {
     materials.time.value = clock.value;
     if (appliedQuality !== quality.value) {
       appliedQuality = quality.value;
-      renderer.setPixelRatio(
-        quality.value === 'high'
-          ? Math.min(devicePixelRatio, 1.5)
-          : quality.value === 'medium'
-            ? 1
-            : 0.75,
+      qualityAt = now;
+      frames = 0;
+      at = now;
+      app.querySelector<HTMLOutputElement>('#art-metrics')!.dataset.profile = '';
+      const profile = GRAPHICS[graphicsLevel(quality.value)];
+      renderer.setPixelRatio(Math.min(devicePixelRatio, profile.pixelRatio));
+      renderer.shadowMap.enabled = profile.shadowSize > 0;
+      moon.shadow.map?.dispose();
+      moon.shadow.map = null;
+      moon.shadow.mapSize.setScalar(profile.shadowSize || 512);
+      lod.levels[1].distance = profile.lod[0];
+      lod.levels[2].distance = profile.lod[1];
+      lights.forEach(
+        (light, i) => (light.visible = i < profile.maxLights && view.value !== 'animation'),
       );
-      renderer.shadowMap.enabled = quality.value !== 'low';
-      lod.levels[1].distance = quality.value === 'high' ? 34 : quality.value === 'medium' ? 15 : 0;
-      lod.levels[2].distance = quality.value === 'low' ? 20 : 65;
+      resize();
     }
     const options = {
-      clip: ['parry', 'dodge'].includes(pose.value) ? 'live' : pose.value,
-      clipTime: Number(poseTime.value),
+      clip: pose.value,
+      clipTime: motion.checked && !capture ? (clock.value % 2) / 2 : Number(poseTime.value),
+      velocity: [
+        'run',
+        'run-start',
+        'stop-run',
+        'turn',
+        'combat-forward',
+        'combat-backward',
+        'combat-strafe',
+      ].includes(pose.value)
+        ? 200
+        : 0,
+      turnRate: pose.value === 'turn' ? 2 : 0,
       executionVariant: Number(app.querySelector<HTMLSelectElement>('#art-execution')!.value),
-      freeze: true,
+      freeze: pose.value !== 'live',
       reducedMotion: !motion.checked,
     };
+    if (crowd.visible)
+      crowdActors.forEach((actor, i) =>
+        actor.animate(
+          { ...world.player, x: clock.value * 180, facing: i % 2 ? 0.5 : -0.5 },
+          clock.value,
+          clock.value,
+          true,
+          1,
+          i < 4 ? ['shinobi', 'sword', 'twins', 'great'][i] : 'sword',
+          { ...options, freeze: false },
+        ),
+      );
     const entity = {
       ...world.player,
       state:
@@ -471,50 +542,54 @@ export async function startBenchmark() {
             : ('idle' as const),
       stateAt: pose.value === 'dodge' ? clock.value - Number(poseTime.value) * 0.3 : 0,
     };
-    player.animate(
-      { ...entity, facing: -0.5 },
-      clock.value,
-      clock.value,
-      false,
-      view.value === 'duel' ? 1 : 0,
-      pilgrim.value,
-      options,
-    );
-    enemy.animate(
-      {
-        ...entity,
-        facing: Math.PI - 0.5,
-        phase:
-          opponent.value === 'boss' && app.querySelector<HTMLInputElement>('#art-phase')!.checked
-            ? 2
-            : 1,
-      },
-      clock.value,
-      clock.value,
-      false,
-      view.value === 'duel' ? 1 : 0,
-      'sword',
-      options,
-    );
-    old.animate(
-      { ...entity, facing: Math.PI / 2 },
-      clock.value,
-      clock.value,
-      false,
-      1,
-      'sword',
-      options,
-    );
-    newer.animate(
-      { ...entity, facing: Math.PI / 2 },
-      clock.value,
-      clock.value,
-      false,
-      1,
-      'sword',
-      options,
-    );
-    const key = `${effectChoice.value}:${pilgrim.value}:${pose.value}:${options.executionVariant}`;
+    if (stage.visible)
+      player.animate(
+        { ...entity, facing: -0.5 },
+        clock.value,
+        clock.value,
+        false,
+        pose.value.startsWith('combat-') || view.value === 'duel' ? 1 : 0,
+        pilgrim.value,
+        options,
+      );
+    if (stage.visible)
+      enemy.animate(
+        {
+          ...entity,
+          facing: Math.PI - 0.5,
+          phase:
+            opponent.value === 'boss' && app.querySelector<HTMLInputElement>('#art-phase')!.checked
+              ? 2
+              : 1,
+        },
+        clock.value,
+        clock.value,
+        false,
+        view.value === 'duel' ? 1 : 0,
+        'sword',
+        options,
+      );
+    if (compare.visible)
+      old.animate(
+        { ...entity, facing: Math.PI / 2 },
+        clock.value,
+        clock.value,
+        false,
+        1,
+        'sword',
+        options,
+      );
+    if (compare.visible)
+      newer.animate(
+        { ...entity, facing: Math.PI / 2 },
+        clock.value,
+        clock.value,
+        false,
+        1,
+        'sword',
+        options,
+      );
+    const key = `${view.value}:${quality.value}:${effectChoice.value}:${pilgrim.value}:${pose.value}:${options.executionVariant}`;
     if (key !== effectKey) {
       effectKey = key;
       clearEffect();
@@ -539,13 +614,17 @@ export async function startBenchmark() {
                   : 'slash',
           contact: effectChoice.value !== 'slash',
         };
-        effectArt = createWeaponEffect(effect, materials.glow);
+        effectArt = createWeaponEffect(
+          effect,
+          materials.glow,
+          GRAPHICS[graphicsLevel(quality.value)].particles,
+        );
         effectArt.position.set(
           effect.kind === 'slash' ? -1.1 : 0,
           1.25,
           effect.kind === 'slash' ? 1 : 0.5,
         );
-        stage.add(effectArt);
+        (crowd.visible ? crowd : stage).add(effectArt);
       }
     }
     if (effectArt)
@@ -555,12 +634,53 @@ export async function startBenchmark() {
     frames++;
     if (now - at > 1000) {
       app.querySelector<HTMLOutputElement>('#art-metrics')!.value =
-        `${Math.round((frames * 1000) / (now - at))} FPS · ${renderer.info.render.calls} calls · ${renderer.info.render.triangles.toLocaleString()} triangles`;
+        `${GRAPHICS[graphicsLevel(quality.value)].label} · ${Math.round((frames * 1000) / (now - at))} FPS · ${renderer.info.render.calls} calls · ${renderer.info.render.triangles.toLocaleString()} triangles · ${renderer.info.memory.geometries} geometries / ${renderer.info.memory.textures} textures`;
+      if (now - qualityAt >= 2000)
+        app.querySelector<HTMLOutputElement>('#art-metrics')!.dataset.profile = quality.value;
       frames = 0;
       at = now;
     }
-    frame = requestAnimationFrame(draw);
+    if (!capture) frame = requestAnimationFrame(() => draw());
   };
+  app.querySelector('#art-sequence')!.addEventListener('click', () => {
+    const sheet = document.createElement('canvas');
+    sheet.width = 1600;
+    sheet.height = 1120;
+    const context = sheet.getContext('2d')!;
+    const saved = poseTime.value;
+    for (let i = 0; i < 16; i++) {
+      poseTime.value = String(i / 15);
+      draw(true);
+      context.drawImage(canvas, (i % 4) * 400, Math.floor(i / 4) * 280, 400, 280);
+      context.fillStyle = '#e9d7ad';
+      context.font = '12px sans-serif';
+      context.fillText(
+        pilgrim.value + ' / ' + pose.value + ' / ' + (i / 15).toFixed(2),
+        (i % 4) * 400 + 8,
+        Math.floor(i / 4) * 280 + 20,
+      );
+    }
+    poseTime.value = saved;
+    app.querySelector('#art-motion-study')?.remove();
+    const review = document.createElement('dialog');
+    review.id = 'art-motion-study';
+    review.style.cssText =
+      'width:90vw;max-width:1600px;background:#142029;color:#e9d7ad;border:1px solid #b8a475;padding:12px';
+    const image = document.createElement('img');
+    image.src = sheet.toDataURL('image/png');
+    image.alt = `${pilgrim.value} / ${pose.value} / 16 sampled frames`;
+    image.style.width = '100%';
+    const link = document.createElement('a');
+    link.download = 'hollow-canticle-v07-' + pilgrim.value + '-' + pose.value + '-frames.png';
+    link.href = image.src;
+    link.textContent = 'Save PNG';
+    const close = document.createElement('button');
+    close.textContent = 'Close study';
+    close.onclick = () => review.close();
+    review.append(image, link, close);
+    app.append(review);
+    review.showModal();
+  });
   draw();
   window.addEventListener(
     'pagehide',
@@ -572,6 +692,7 @@ export async function startBenchmark() {
       enemy.dispose();
       old.dispose();
       newer.dispose();
+      crowdActors.forEach((actor) => actor.dispose());
       assets.dispose();
       materials.dispose();
       env.dispose();

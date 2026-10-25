@@ -1,5 +1,21 @@
 # Next releases
 
+## v0.7 Living Steel review
+
+Implemented: animation layers and transitions; five Pilgrims including Shinobi;
+server-owned nonlethal melee/ranged ripostes; shared floor/collision/wall data;
+socket and gate validation; Very Low through Extreme graphics budgets; pooled
+combat effects; item quickbar and satchel; optional training courtyard; neutral
+animation review, crowd benchmark and motion-sheet export.
+
+The [v0.7 QA record](docs/QA-v0.7.md) separates automated validation, inspected
+rendered samples and local load measurements from remaining acceptance work.
+Before wider release, run sustained human PvP balance sessions, integrated-GPU
+playtests, complete multi-floor journeys and artistic review against the three
+reference boards. Dynamic resolution and animation update-rate LOD remain
+optional future optimizations. Advanced weather/light shafts and difficulty/boss
+overhauls belong to later releases.
+
 ## v0.5 visual review
 
 All five Blender biome kits and the cast are integrated into the seeded game.

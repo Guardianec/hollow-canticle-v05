@@ -94,7 +94,7 @@ export class ImportedActor {
       shell.visible = strength > 0;
     });
   }
-  animate(pose: Pose, time: number, aimForward = false, phase = 1) {
+  animate(pose: Pose, time: number, aimForward = false, phase = 1, hipYaw = 0, cloth = 0) {
     for (const [source, material] of this.bossMaterials)
       if (
         source instanceof T.MeshStandardMaterial &&
@@ -134,6 +134,9 @@ export class ImportedActor {
     if (pelvis) {
       // Torso and thighs are siblings: locomotion belongs to their common ancestor.
       pelvis.bone.position.copy(pelvis.position).add(new T.Vector3(0, pose.lift, pose.advance));
+      pelvis.bone.quaternion
+        .copy(pelvis.rest)
+        .multiply(new T.Quaternion().setFromAxisAngle(new T.Vector3(0, 1, 0), hipYaw));
     }
     this.root.updateWorldMatrix(true, true);
     const soleFrame = this.root.getWorldQuaternion(new T.Quaternion());
@@ -192,7 +195,8 @@ export class ImportedActor {
           .multiply(
             new T.Quaternion().setFromAxisAngle(
               new T.Vector3(1, 0, 0),
-              Math.sin(time * 2.4 + i) * 0.035 -
+              Math.sin(time * 2.4 + i) * 0.035 +
+                cloth * (i + 1) * 0.28 -
                 (i === 0 ? pose.torso[0] * 0.48 + (phase === 2 ? 0.25 : 0) : 0),
             ),
           );

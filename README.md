@@ -1,4 +1,25 @@
-# Hollow Canticle — v0.6.0 Online Co-op & Duels
+# Hollow Canticle — v0.7.0 Living Steel & Foundations
+
+Living Steel adds layered character animation, the Ashen Shinobi, authoritative
+nonlethal ripostes, shared visual/collision room geometry, five graphics profiles,
+a visible offering quickbar, a detailed satchel, and replayable optional training.
+
+Start from `codex/v0.7.0-living-steel`. This branch is a review candidate; the
+public play link below still points to the accepted multiplayer deployment.
+See [v0.7 QA and implementation report](docs/QA-v0.7.md) for rules, measurements,
+motion studies and acceptance limits.
+
+Open `?debug` for the Combat Lab and collision overlay. Open
+`?benchmark&view=animation` for neutral actor review, camera orbit, pose scrubbing
+and 16-frame motion studies. The benchmark also includes a four-player/eight-enemy
+rendering workload. Rebuild only the character pack with
+`node tools/assets-build.mjs --characters-only`.
+
+Shinobi has a separate black cloth and asymmetric lacquer-armour model, a shallow
+travelling hat, short split scarf, curved katana and bronze springlock. Unlock him
+for 16 Chronicle embers offline; all five Pilgrims are available online and in
+training. Deflection or a springlock hit within 245 units opens a riposte: press
+attack to dash, cut and return. The cut leaves at least 1 HP for a finisher.
 
 **Online Co-op: 2–4 players · 1v1 Duels · Free friend-room codes**
 
@@ -25,6 +46,10 @@ Run `npm run dev:server` and `npm run dev` in two terminals. See
 
 ## Preserved v0.5 visual foundation
 
+Animation, combat, Shinobi, world and UI references for current and future work
+are saved in the [v0.7 reference library](docs/references/v07/README.md), alongside
+the original Living Steel & Foundations release brief.
+
 A procedural melee action roguelike about reading a blade, breaking a guard, and keeping an oath.
 
 The v0.5 visual rebuild starts from accepted v0.4 commit
@@ -47,8 +72,8 @@ High/Medium/Low rendering controls are available there and in game settings. Ope
 `?visual=fallback` for the original presentation. Normal gameplay still generates its
 rooms, routes, encounters and module choices from the seed, using imported biome packs.
 
-There are 139 Blender-authored environment assets, 13 skinned characters, three LODs,
-15 shared PBR families, geometry-baked occlusion, seeded decals, reactive Shrine water,
+There are 139 Blender-authored environment assets, 14 skinned characters, three LODs,
+17 shared PBR families, geometry-baked occlusion, seeded decals, reactive Shrine water,
 height fog and deep chasms. Each region has its own darker lighting palette. Technical
 integration is complete; artistic and hardware acceptance limits remain documented in
 the [visual review](docs/VISUAL_REVIEW-v0.5.md) and [QA report](docs/QA-v0.5.md).
@@ -107,21 +132,22 @@ npm run preview
 The game is a static site. Fonts, original textures, geometry, synthesized audio and saves
 stay local. Keyboard and mouse are required; mobile layouts support the menus.
 
-## Four Pilgrims
+## Five Pilgrims
 
-| Pilgrim        | Melee identity                                                                   | Ranged offering                                                | Capacity / sequential recharge | Inherent trait                                    |
-| -------------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------- | ------------------------------ | ------------------------------------------------- |
-| Oathkeeper     | Balanced cuts, advancing sweep, finishing point; forgiving guard                 | Silver Needle: fast, precise posture tool                      | 3 / 8 seconds per charge       | Perfect parries advance recharge by 1 second      |
-| Moth           | Alternating hands, cross cut, step-through sweep; quick, close pressure          | Moth Knives: one quick knife per press                         | 5 / 5 seconds                  | Fourth-chain hits advance recharge by 0.8 seconds |
-| Pilgrim Lancer | Long, short and advancing thrusts, retreating sweep; spacing and counters        | Pilgrim’s Javelin: committed throw, pierces one additional foe | 2 / 11 seconds                 | Reflections deal 20% more posture pressure        |
-| Bellbearer     | Full-body cuts, reverse sweep, overhead and shouldered thrust; crushing pressure | Last Toll: narrow travelling ground resonance                  | 2 / 12.5 seconds               | Guard breaks advance recharge by 2 seconds        |
+| Pilgrim        | Melee identity                                                                   | Ranged offering                                                | Capacity / sequential recharge | Inherent trait                                         |
+| -------------- | -------------------------------------------------------------------------------- | -------------------------------------------------------------- | ------------------------------ | ------------------------------------------------------ |
+| Oathkeeper     | Balanced cuts, advancing sweep, finishing point; forgiving guard                 | Silver Needle: fast, precise posture tool                      | 3 / 8 seconds per charge       | Perfect parries advance recharge by 1 second           |
+| Moth           | Alternating hands, cross cut, step-through sweep; quick, close pressure          | Moth Knives: one quick knife per press                         | 5 / 5 seconds                  | Fourth-chain hits advance recharge by 0.8 seconds      |
+| Pilgrim Lancer | Long, short and advancing thrusts, retreating sweep; spacing and counters        | Pilgrim’s Javelin: committed throw, pierces one additional foe | 2 / 11 seconds                 | Reflections deal 20% more posture pressure             |
+| Bellbearer     | Full-body cuts, reverse sweep, overhead and shouldered thrust; crushing pressure | Last Toll: narrow travelling ground resonance                  | 2 / 12.5 seconds               | Guard breaks advance recharge by 2 seconds             |
+| Ashen Shinobi  | Compact katana cuts; defensive guard pressure and nonlethal dash/return riposte  | Cinder Springlock: low damage, close-hit riposte setup         | 3 / 9 seconds                  | Normal/perfect deflections deal 20%/40% extra pressure |
 
 Each has a four-step chain, a dedicated counter, a heavy input, a dodge follow-up and an
 advancing opener. Waiting resets the chain. Attack buffering and recovery cancels preserve
 parry/dodge response; simulation startup and recovery also drive animation timing.
 
-The Oathkeeper starts unlocked. Chronicle unlock prices remain 4 / 8 / 12 embers for the
-Moth / Lancer / Bellbearer. All four models can be previewed. Existing weapon unlocks and
+The Oathkeeper starts unlocked. Chronicle unlock prices are 4 / 8 / 12 / 16 embers for the
+Moth / Lancer / Bellbearer / Shinobi. All five models can be previewed. Existing weapon unlocks and
 previously used weapons migrate to their corresponding Pilgrims.
 
 ## Focus and camera

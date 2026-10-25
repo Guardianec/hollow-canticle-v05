@@ -40,6 +40,7 @@ export function characterAsset(id: string) {
     'player-twins': 'moth',
     'player-spear': 'lancer',
     'player-great': 'bellbearer',
+    'player-shinobi': 'shinobi',
     shield: 'warden',
     warden: 'oathkeeper',
     boss: 'saint',

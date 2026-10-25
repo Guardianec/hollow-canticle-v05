@@ -14,7 +14,7 @@ def build(m):
     }
     for name,(weapon,width,cloth) in designs.items():
         shield=name=='warden'
-        hood=name in ['moth','assassin','archer','monk','hexer','lancer']
+        hood=name in ['moth','assassin','archer','monk','hexer','lancer','shinobi']
         robed=name in ['monk','hexer','saint']
         parts=[]
         def piece(obj,bone):
@@ -161,7 +161,96 @@ def build(m):
         for vertex in body.data.vertices: vertex.co.x*=width
         result[name]=make_rig(name,body,width,weapon)
     result['beast']=build_beast(m)
+    result['shinobi']=build_shinobi(m)
     return result
+
+def build_shinobi(m):
+    """A separate cloth-and-lacquer silhouette; only the semantic rig is shared."""
+    parts=[]
+    def piece(obj,bone):
+        obj.vertex_groups.new(name=bone).add(list(range(len(obj.data.vertices))),1,'REPLACE')
+        parts.append(obj)
+        return obj
+    def shape(label,rings,material,bone,sides=24,folds=0):
+        return piece(loft(label,rings,m[material],sides,folds),bone)
+    def plate(label,outline,bone,material='shinobi_lacquer'):
+        n=len(outline)
+        verts=outline+[(x,y+.012,z) for x,y,z in outline]
+        faces=[tuple(reversed(range(n))),tuple(range(n,2*n))]+[(i,(i+1)%n,(i+1)%n+n,i+n) for i in range(n)]
+        return bevel(piece(mesh(label,verts,faces,m[material]),bone),.004,1)
+    shape('black cross-wrapped jacket',[(.86,.22,.14,0,0),(1.01,.195,.135,0,0),(1.23,.245,.155,0,0),(1.43,.27,.14,0,0),(1.5,.16,.11,0,0)],'shinobi_cloth','torso',32,.04)
+    # Overlapping diagonal panels replace the other Pilgrims' forged breastplate.
+    plate('overlapping jacket lapel',[(-.23,-.15,1.42),(-.08,-.175,1.47),(.18,-.16,1.03),(.07,-.165,1.0)],'torso','shinobi_cloth')
+    for i in range(4):
+        z=1.15+i*.072
+        plate('offset chest lamella',[(.025,-.175,z),(.235,-.15,z+.025),(.24,-.153,z+.085),(.015,-.18,z+.06)],'torso')
+    shape('wound waist sash',[(.94,.23,.158,0,0),(1.03,.22,.155,0,0),(1.07,.215,.15,0,0)],'shinobi_cloth','torso',32,.035)
+    piece(tube('diagonal binding cord',[(-.21,-.165,1.4),(.06,-.185,1.08),(.21,-.16,.99)],.009,m['worn_leather']),'torso')
+    plate('small tarnished sash clasp',[(-.055,-.17,.99),(.015,-.17,.99),(.015,-.17,1.035),(-.055,-.17,1.035)],'torso','aged_bronze')
+    for side in [-1,1]:
+        x=side*.17; leg='rightLeg' if side<0 else 'leftLeg'; shin='rightShin' if side<0 else 'leftShin'; foot='rightFoot' if side<0 else 'leftFoot'
+        trouser=shape('loose tapered black trousers',[(.42,.072,.082,x,0),(.58,.12,.12,x,0),(.77,.145,.14,x,.01),(.91,.12,.12,x,0)],'shinobi_cloth',leg,28,.05)
+        lower=trouser.vertex_groups.new(name=shin)
+        for v in trouser.data.vertices:
+            weight=max(0,min(1,(.54-v.co.z)/.13)); trouser.vertex_groups[leg].add([v.index],1-weight,'REPLACE'); lower.add([v.index],weight,'REPLACE')
+        shape('cloth gaiter',[(.1,.068,.085,x,0),(.28,.078,.085,x,0),(.46,.075,.085,x,0)],'shinobi_cloth',shin)
+        for k in range(5):
+            z=.16+k*.055
+            shape('gaiter wrapping',[(z,.076,.092,x,-.003),(z+.02,.075,.09,x,-.003)],'shinobi_cloth',shin,20)
+        # Soft divided toes and no steel sabatons or knee shields.
+        for toe in [-1,1]:
+            shape('split soft boot',[(.025,.037,.125,x+toe*.039,-.055),(.08,.041,.135,x+toe*.039,-.06),(.14,.033,.065,x+toe*.035,.01)],'shinobi_cloth',foot,20)
+        arm='rightArm' if side<0 else 'leftArm'; fore='rightForearm' if side<0 else 'leftForearm'; sx=side*.36
+        sleeve=shape('fitted black sleeve',[(1.0,.065,.068,sx,0),(1.15,.072,.077,sx,0),(1.39,.08,.085,sx,0),(1.45,.055,.065,sx,0)],'shinobi_cloth',arm,24,.04)
+        lower=sleeve.vertex_groups.new(name=fore)
+        for v in sleeve.data.vertices:
+            weight=max(0,min(1,(1.13-v.co.z)/.15)); sleeve.vertex_groups[arm].add([v.index],1-weight,'REPLACE'); lower.add([v.index],weight,'REPLACE')
+        shape('wrapped forearm',[(.76,.06,.065,sx,0),(.92,.075,.08,sx,0),(1.05,.065,.07,sx,0)],'shinobi_cloth',fore)
+        for k in range(4):
+            z=.79+k*.055
+            shape('forearm binding',[(z,.07,.076,sx,0),(z+.024,.069,.075,sx,0)],'shinobi_cloth',fore,20)
+        shape('black glove',[(.66,.058,.062,sx,-.015),(.75,.07,.074,sx,-.005),(.8,.061,.066,sx,0)],'shinobi_cloth',fore)
+        for back in [-1,1]:
+            plate('short split jacket skirt',[(side*.04,back*.16,.96),(side*.23,back*.145,.96),(side*.27,back*.19,.61),(side*.11,back*.2,.69)],'torso','shinobi_cloth')
+    # One angular shoulder guard; the sword shoulder stays soft and unarmoured.
+    for i in range(3):
+        z=1.43-i*.065
+        plate('left angular shoulder plate',[(.27,-.12,z+.08),(.43,-.14,z+.045),(.49,-.10,z-.02),(.45,.10,z-.02),(.27,.10,z+.08)],'leftArm')
+    plate('left mechanical forearm guard',[(.3,-.085,.82),(.42,-.085,.82),(.43,-.08,1.04),(.29,-.08,1.03)],'leftForearm')
+    shape('masked head',[(1.5,.08,.075,0,0),(1.61,.11,.095,0,-.015),(1.73,.115,.10,0,0),(1.79,.075,.075,0,.01)],'shinobi_cloth','head',32)
+    shape('low wrapped face mask',[(1.54,.105,.045,0,-.07),(1.65,.112,.035,0,-.09),(1.68,.1,.025,0,-.095)],'shinobi_cloth','head')
+    # Broad, shallow travelling hat gives a clearly different head silhouette.
+    shape('low angular travelling hat',[(1.735,.345,.285,0,-.035),(1.76,.34,.28,0,-.035),(1.875,.115,.105,0,.015),(1.9,.04,.035,0,.015)],'shinobi_lacquer','head',12)
+    piece(tube('hat bound edge',[(math.cos(math.tau*i/12)*.345,-.035+math.sin(math.tau*i/12)*.285,1.74) for i in range(13)],.008,m['shinobi_cloth']),'head')
+    shape('short black neck wrap',[(1.46,.12,.115,0,0),(1.56,.14,.12,0,0),(1.61,.12,.10,0,0)],'shinobi_cloth','torso',28,.04)
+    for side,length in [(-1,.48),(1,.65)]:
+        verts=[]; faces=[]
+        for j in range(9):
+            t=j/8
+            for i in range(4):
+                u=i/3
+                verts.append((side*(.05+u*.11+t*.12),.15+t*.11+math.sin(t*5+u)*.012,1.53-t*length+(u-.5)*.03))
+        for j in range(8):
+            for i in range(3):
+                a=j*4+i; faces.append((a,a+1,a+5,a+4))
+        tail=mesh('short split scarf tail',verts,faces,m['shinobi_cloth'],True)
+        for k in range(3):
+            group=tail.vertex_groups.new(name=f'cape{k}')
+            for j in range(9):
+                weight=max(0,1-abs(j/8*2-k))
+                if weight: group.add(list(range(j*4,j*4+4)),weight,'REPLACE')
+        parts.append(tail)
+    x=-.36
+    shape('long wrapped katana grip',[(.64,.025,.025,x,-.02),(.89,.025,.025,x,-.02)],'shinobi_cloth','blade',16)
+    shape('plain katana disc guard',[(.885,.06,.035,x,-.02),(.91,.06,.035,x,-.02)],'shinobi_lacquer','blade',24)
+    shape('curved single edge katana',[(.91,.03,.009,x,-.02),(1.3,.028,.008,x+.018,-.02),(1.66,.019,.006,x+.065,-.02),(1.87,.001,.001,x+.115,-.02)],'worn_iron','blade',4)
+    piece(tube('black lacquer scabbard',[(.2,.1,1.02),(.34,.18,.77),(.53,.26,.4)],.031,m['shinobi_lacquer']),'torso')
+    shape('compact springlock grip',[(.67,.04,.05,.36,-.02),(.84,.045,.055,.36,-.02)],'shinobi_lacquer','offhand',12)
+    piece(tube('short bronze springlock barrel',[(.36,-.02,.81),(.36,-.02,1.03)],.031,m['aged_bronze']),'offhand')
+    piece(tube('external winding spring',[(.36+math.cos(t)*.04,-.02+math.sin(t)*.04,.81+t*.008) for t in [i*.3 for i in range(36)]],.006,m['worn_iron']),'offhand')
+    rig=make_rig('shinobi',join(parts,'shinobi_body'),1,'shinobi')
+    rig['design']='black wrapped cloth; asymmetric lacquer lamella; travelling hat; split scarf; no knight cuirass'
+    return rig
 
 def make_rig(name,body,width,weapon):
         armdata=bpy.data.armatures.new(name+'_skeleton'); rig=bpy.data.objects.new(name+'_LOD0',armdata)

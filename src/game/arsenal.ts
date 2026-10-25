@@ -196,6 +196,8 @@ export class Arsenal {
         w.threats.release(enemy.id);
       }
       enemy.recoilAt = w.time;
+      if (!shot.reflected && shot.owner === (w.network ? `p:${w.network.id}` : 'player'))
+        w.offerRiposte(enemy);
       w.stats.rangedHits++;
       w.impact(
         shot.x,
@@ -233,6 +235,16 @@ export class Arsenal {
     else {
       const before = { ...p };
       this.hooks.hurt(shot.damage, shot.kind === 'arrow' ? 'ASHEN ARROW' : 'RESONANT ORB');
+      const shooter = w.network?.owner(shot.owner);
+      if (shooter?.network?.strike && shooter.enemies[0]) {
+        Object.assign(shooter.enemies[0], {
+          x: p.x,
+          y: p.y,
+          hp: p.hp,
+          state: p.state === 'stagger' ? 'broken' : 'idle',
+        });
+        shooter.offerRiposte(shooter.enemies[0]);
+      }
       w.network?.projectileContact?.(shot, Math.max(0, before.hp - p.hp), before);
       shot.lifetime = 0;
     }

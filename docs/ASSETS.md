@@ -25,7 +25,19 @@ The three `target-*.png` files are supplied quality references, with separate ro
 for exploration, dungeon structure, and combat. These files are documentation only;
 the renderer never imports them and they are not present in the production build.
 
+The three supplied animation, combat, Shinobi, world and UI sheets for v0.7 and
+future work, together with the complete original release brief, are preserved in
+the [v0.7 reference library](references/v07/README.md). Its index records the
+original filenames and explains how to use the archived material.
+
 ## v0.5 Blender content
+
+For the v0.7 additions, the existing environment pipeline is retained. Shinobi
+adds one separately authored skinned body and two dedicated black cloth/lacquer
+PBR families, bringing the runtime inventory to 153 assets and 17 material
+families. The hat, mask, asymmetric armour, scarf, katana and sidearm are original
+geometry in `tools/blender/characters.py`; none is sampled from the reference
+images. See [v0.7 QA](QA-v0.7.md) for the current inventory and review limits.
 
 `tools/blender/` builds 124 environment assets and 13 rigs, each with three LODs,
 and fifteen material families. Runtime files live in `public/assets/v05/`; their

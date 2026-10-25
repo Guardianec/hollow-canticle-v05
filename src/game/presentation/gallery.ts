@@ -68,7 +68,7 @@ export class CharacterGallery {
     this.actors.forEach((actor, i) => {
       const selected = this.world.selection === CHARACTERS[i].id;
       actor.root.position.set(
-        (i - 1.5) * (this.camera.right / 2),
+        (i - (CHARACTERS.length - 1) / 2) * (this.camera.right / (CHARACTERS.length / 2)),
         selected ? 0.08 : 0,
         selected ? 0.3 : -0.25,
       );

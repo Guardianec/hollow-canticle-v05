@@ -3,7 +3,8 @@ import type { Enemy, Player } from '../world';
 import { Materials } from './materials';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { BODY_PROFILES } from './profiles';
-import { animateCharacter, JOINTS } from './animation';
+import { JOINTS } from './animation';
+import { AnimationStateMachine } from './animation-state';
 import { characterFor } from '../characters';
 import { AssetManager, characterAsset } from './assets';
 import { ImportedActor } from './imported-actor';
@@ -27,11 +28,9 @@ export class Actor {
   readonly mantle = new T.Group();
   readonly revelation = new T.Group();
   private profile;
-  private previousTime = -1;
-  private previousFacing = 0;
+  readonly animation = new AnimationStateMachine();
   private turning = 0;
   private previousAdvance = 0;
-  private smoothed = new Map<string, T.Vector3>();
   private lastPosition?: T.Vector3;
   private contact: T.Mesh;
   private cape: T.Mesh;
@@ -51,6 +50,7 @@ export class Actor {
   ) {
     const m = materials;
     const profile = (this.profile = BODY_PROFILES[id] ?? BODY_PROFILES.warden);
+    const shinobi = id === 'player-shinobi';
     const contactGeometry = new T.PlaneGeometry(1, 1);
     this.ownedGeometry.add(contactGeometry);
     this.contact = new T.Mesh(
@@ -68,43 +68,50 @@ export class Actor {
     this.contact.scale.set(profile.chest[0] * 1.2, 0.85, 1);
     this.root.add(this.contact);
     this.steel = new T.MeshStandardMaterial({
-      color: player ? '#899d9f' : '#657783',
+      color: shinobi ? '#111922' : player ? '#899d9f' : '#657783',
       map: m.weave,
-      metalness: 0.68,
-      roughness: 0.38,
+      metalness: shinobi ? 0.4 : 0.68,
+      roughness: shinobi ? 0.65 : 0.38,
       flatShading: true,
     });
     const dark = new T.MeshStandardMaterial({
-      color: player
-        ? '#17232b'
-        : id === 'monk'
-          ? '#858376'
-          : id === 'assassin'
-            ? '#302932'
-            : '#2d333a',
+      color: shinobi
+        ? '#0c1118'
+        : player
+          ? '#17232b'
+          : id === 'monk'
+            ? '#858376'
+            : id === 'assassin'
+              ? '#302932'
+              : '#2d333a',
       roughness: 0.93,
     });
     this.cloak = new T.MeshStandardMaterial({
-      color: player
-        ? id === 'player-twins'
-          ? '#49364f'
-          : id === 'player-spear'
-            ? '#435463'
-            : id === 'player-great'
-              ? '#514739'
-              : '#34434c'
-        : id === 'monk'
-          ? '#b7b3a0'
-          : id === 'duelist'
-            ? '#5a292a'
-            : '#252a30',
+      color: shinobi
+        ? '#090e14'
+        : player
+          ? id === 'player-twins'
+            ? '#49364f'
+            : id === 'player-spear'
+              ? '#435463'
+              : id === 'player-great'
+                ? '#514739'
+                : '#34434c'
+          : id === 'monk'
+            ? '#b7b3a0'
+            : id === 'duelist'
+              ? '#5a292a'
+              : '#252a30',
       map: m.weave,
       bumpMap: m.weave,
       bumpScale: 0.035,
       roughness: 1,
       side: T.DoubleSide,
     });
-    const leather = new T.MeshStandardMaterial({ color: '#4b392c', roughness: 0.9 });
+    const leather = new T.MeshStandardMaterial({
+      color: shinobi ? '#191c20' : '#4b392c',
+      roughness: 0.9,
+    });
     const skin = new T.MeshStandardMaterial({
       color: player ? '#79604b' : '#776a58',
       roughness: 1,
@@ -134,7 +141,7 @@ export class Actor {
     mesh(
       this.torso,
       id === 'monk' ? m.sphere : m.rounded,
-      id === 'monk' ? this.cloak : id === 'beast' ? m.items.moss : this.steel,
+      shinobi || id === 'monk' ? this.cloak : id === 'beast' ? m.items.moss : this.steel,
       0,
       0.26,
       0.08,
@@ -210,8 +217,17 @@ export class Actor {
     this.torso.add(this.rightArm, this.leftArm);
     for (const [i, arm] of [this.rightArm, this.leftArm].entries()) {
       const forearm = i === 0 ? this.rightForearm : this.leftForearm;
-      const heavy =
-        id === 'brute' ? 1.45 : id === 'shield' && i === 1 ? 1.3 : id === 'duelist' ? 0.7 : 1;
+      const heavy = shinobi
+        ? i === 0
+          ? 0.55
+          : 0.8
+        : id === 'brute'
+          ? 1.45
+          : id === 'shield' && i === 1
+            ? 1.3
+            : id === 'duelist'
+              ? 0.7
+              : 1;
       mesh(
         arm,
         m.rounded,
@@ -306,7 +322,10 @@ export class Actor {
       sash.rotation.z = 0.7;
       const pauldron = mesh(this.leftArm, m.rounded, this.steel, 0.07, 0.015, 0, 0.52, 0.13, 0.52);
       pauldron.rotation.z = 0.22;
-      mesh(this.head, m.cone, this.cloak, 0, 0.37, -0.07, 0.35, 0.25, 0.33);
+      if (shinobi) {
+        mesh(this.head, m.cone, this.steel, 0, 0.32, 0, 0.82, 0.16, 0.7);
+        mesh(this.head, m.cylinder, this.cloak, 0, 0.25, 0, 0.84, 0.025, 0.72);
+      } else mesh(this.head, m.cone, this.cloak, 0, 0.37, -0.07, 0.35, 0.25, 0.33);
     }
     if (id === 'shield') {
       const shield = new T.Group();
@@ -687,54 +706,38 @@ export class Actor {
       freeze: boolean;
       reducedMotion?: boolean;
       executionVariant?: number;
+      velocity?: number;
+      turnRate?: number;
+      targetFacing?: number;
     },
   ) {
     if (this.player) this.setWeapon(weapon);
-    const dt = this.previousTime < 0 ? 1 : Math.max(0, Math.min(0.05, time - this.previousTime));
-    this.previousTime = time;
     if (this.lastPosition)
       walking = walking && this.root.position.distanceToSquared(this.lastPosition) > 0.000002;
     this.lastPosition ??= new T.Vector3();
     this.lastPosition.copy(this.root.position);
-    const preview = options?.freeze
-      ? { clip: options.clip, time: options.clipTime, variant: options.executionVariant }
-      : undefined;
-    const sample = animateCharacter(
-      this.id,
-      entity,
-      time,
-      walking,
-      this.weaponId,
-      duel > 0.1,
-      preview,
-    );
+    const preview = options?.freeze;
+    const sample = this.animation.sample(this.id, entity, time, this.weaponId, duel > 0.1, {
+      clip: preview ? options.clip : 'live',
+      time: options?.clipTime ?? 0,
+      variant: options?.executionVariant,
+      velocity: options?.velocity,
+      turnRate: options?.turnRate,
+      targetFacing: options?.targetFacing,
+      reducedMotion: options?.reducedMotion,
+    });
     const pose = sample.pose;
-    if (entity.state === 'parry') {
-      pose.rightArm = [-1.25, -0.35, -0.65];
-      pose.leftArm = [-1, 0.45, 0.4];
-      pose.rightForearm = [-0.8, 0, 0];
-    }
-    const facing = -entity.facing + Math.PI / 2;
-    this.turning = T.MathUtils.damp(
-      this.turning,
-      Math.atan2(Math.sin(facing - this.previousFacing), Math.cos(facing - this.previousFacing)),
-      8,
-      Math.max(dt, 0.001),
-    );
-    this.previousFacing = facing;
+    const facing = -this.animation.facing + Math.PI / 2;
+    this.turning = this.animation.cloth;
     this.root.rotation.y = facing;
-    const blend = preview || dt === 1 ? 1 : 1 - Math.exp(-dt * 24);
     for (const joint of JOINTS) {
-      const target = new T.Vector3(...pose[joint]);
-      const current = this.smoothed.get(joint) ?? target.clone();
-      current.lerp(target, blend);
-      this.smoothed.set(joint, current);
-      this[joint].rotation.set(current.x, current.y, current.z);
+      this[joint].rotation.set(...pose[joint]);
     }
     if (this.weaponId !== 'bow' && this.weaponId !== 'bell') this.blade.rotation.x += Math.PI / 2;
     this.root.rotation.z = pose.lean;
     this.contact.visible = entity.state !== 'dead';
     this.body.position.set(0, pose.lift, pose.advance);
+    this.body.rotation.y = this.animation.hips;
     const phase = 'phase' in entity ? entity.phase : 1;
     this.mantle.visible = phase === 1;
     this.revelation.visible = phase === 2;
@@ -792,6 +795,8 @@ export class Actor {
         options?.reducedMotion ? 0 : clock,
         this.weaponId === 'spear' || sample.name.includes('/thrust/'),
         phase,
+        this.animation.hips,
+        this.animation.cloth,
       );
     }
     return sample;

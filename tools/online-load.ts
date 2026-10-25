@@ -20,6 +20,7 @@ try {
       const client = await test.connectTo(room, { name: `Load ${i} ${j}` });
       client.onMessage('event', () => undefined);
       client.onMessage('ping', (token) => client.send('pong', token));
+      room.state.players.get(client.sessionId)!.weapon = ['shinobi', 'twins', 'spear', 'great'][j];
       room.state.players.get(client.sessionId)!.ready = true;
       clients.push(client);
       const send = client.connection.send.bind(client.connection);
@@ -99,7 +100,7 @@ try {
       'Combined server and 20 SDK clients in one Node process. WebSocket payload bytes; excludes framing/TLS. Invincible clients keep workload active. Local hardware, not Render measurement.',
   };
   await mkdir('docs/metrics', { recursive: true });
-  await writeFile('docs/metrics/v06-load.json', JSON.stringify(result, null, 2) + '\n');
+  await writeFile('docs/metrics/v07-load.json', JSON.stringify(result, null, 2) + '\n');
   console.log(JSON.stringify(result, null, 2));
 } finally {
   await test.cleanup();

@@ -12,7 +12,8 @@ await Promise.all([MeshoptEncoder.ready, MeshoptDecoder.ready]);
 const io = new NodeIO()
   .registerExtensions(ALL_EXTENSIONS)
   .registerDependencies({ 'meshopt.encoder': MeshoptEncoder, 'meshopt.decoder': MeshoptDecoder });
-for (const pack of Object.values(manifest.packs)) {
+const charactersOnly = process.argv.includes('--characters-only');
+for (const pack of charactersOnly ? [manifest.packs.pilgrims] : Object.values(manifest.packs)) {
   const file = resolve(output, pack.file);
   const document = await io.read(file);
   await document.transform(
@@ -33,7 +34,10 @@ for (const pack of Object.values(manifest.packs)) {
   }
   pack.bytes = statSync(file).size;
 }
-for (const family of Object.values(manifest.materials)) {
+const characterMaterials = new Set(manifest.packs.pilgrims.materials);
+for (const [, family] of Object.entries(manifest.materials).filter(
+  ([name, family]) => !charactersOnly || !family.low || characterMaterials.has(name),
+)) {
   family.low = {};
   for (const kind of ['baseColor', 'normal', 'roughness', 'ao']) {
     const file = family[kind].replace(/\.webp$/, '.png');

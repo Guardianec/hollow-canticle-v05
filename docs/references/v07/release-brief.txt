@@ -1,0 +1,2701 @@
+You are continuing development of **Hollow Canticle**.
+
+This release is:
+
+# Hollow Canticle v0.7.0 — Living Steel & Foundations
+
+This is a major combined release.
+
+It combines what would otherwise have been:
+
+- a technical/foundation patch;
+- an animation overhaul;
+- a combat-presentation overhaul;
+- a new playable character release.
+
+The primary goal is:
+
+> Make Hollow Canticle feel dramatically more alive, fluid, readable, polished, and responsive without breaking multiplayer or the existing gameplay systems.
+
+This release must improve:
+
+1. character locomotion;
+2. idle animation;
+3. combat stance animation;
+4. animation transitions;
+5. turning behavior;
+6. enemy animation identity;
+7. combat VFX;
+8. Shinobi playable character;
+9. dungeon collision/visual consistency;
+10. item-selection clarity;
+11. optional tutorial;
+12. graphics presets;
+13. low-end optimization;
+14. infrastructure for future Extreme graphics.
+
+Do NOT turn this release into the difficulty/boss/weather overhaul.
+
+Those belong primarily to later releases.
+
+---
+
+# 1. ACCEPTED BASELINE
+
+The multiplayer release is currently the latest accepted foundation.
+
+Repository:
+
+`Guardianec/hollow-canticle-v05`
+
+Accepted multiplayer branch:
+
+`codex/v0.6.0-online-multiplayer`
+
+Accepted deployed multiplayer commit:
+
+```text
+273a52afc6f660f771b260df784df8fe96787eb0
+```
+
+Do NOT accidentally start from the older `main` if it has not yet been merged.
+
+First run:
+
+```bash
+git fetch origin
+git switch codex/v0.6.0-online-multiplayer
+git pull --ff-only
+git rev-parse HEAD
+```
+
+Verify that the current multiplayer implementation is intact.
+
+Then run:
+
+```bash
+npm install
+npm run lint
+npm run test
+npm run build
+```
+
+Run multiplayer/server tests as appropriate.
+
+Only after the baseline is confirmed should development begin.
+
+---
+
+# 2. CREATE A NEW BRANCH
+
+Create:
+
+```text
+codex/v0.7.0-living-steel
+```
+
+from the accepted multiplayer commit.
+
+Push immediately.
+
+Do NOT modify:
+
+`main`
+
+or:
+
+`codex/v0.6.0-online-multiplayer`
+
+All work belongs on:
+
+```text
+codex/v0.7.0-living-steel
+```
+
+Do not merge automatically.
+
+---
+
+# 3. REFERENCE IMAGES
+
+Three custom visual reference images will be provided for this release.
+
+Expected location:
+
+```text
+docs/references/v07/
+```
+
+Suggested categories:
+
+```text
+01-locomotion-and-transitions.png
+02-combat-vfx-and-shinobi.png
+03-world-ui-quality-reference.png
+```
+
+Treat these as an animation/art-direction specification.
+
+They will illustrate:
+
+- body tilt;
+- running posture;
+- turning;
+- idle poses;
+- combat stance;
+- animation transitions;
+- parry poses;
+- Shinobi movement;
+- Shinobi riposte;
+- combat VFX;
+- world readability;
+- graphics quality differences.
+
+Do NOT use the reference images as textures.
+
+Do NOT trace them literally.
+
+Use them as:
+
+- pose reference;
+- silhouette reference;
+- movement reference;
+- timing reference;
+- VFX composition reference;
+- UI clarity reference.
+
+---
+
+# 4. PRESERVE EVERYTHING THAT WORKS
+
+Do not regress:
+
+- online co-op;
+- four-player support;
+- room codes;
+- 1v1 duels;
+- server authority;
+- projectile parrying;
+- ranged abilities;
+- relics;
+- consumables;
+- loot;
+- procedural dungeon generation;
+- Blender-authored environment assets;
+- camera modes;
+- fog;
+- boss logic;
+- character selection;
+- existing four characters;
+- server synchronization.
+
+Multiplayer must remain fully functional.
+
+---
+
+# 5. CURRENT ANIMATION PROBLEM
+
+The existing animation system has improved significantly, but characters still often feel like:
+
+> articulated figures changing poses
+
+rather than:
+
+> living characters moving through space.
+
+The largest problems are:
+
+- weak locomotion;
+- insufficient body movement;
+- overly static idle poses;
+- limited transition animation;
+- abrupt state changes;
+- weak turning response;
+- insufficient anticipation/recovery;
+- characters sometimes appearing like statues when not attacking.
+
+v0.7 must solve this.
+
+---
+
+# 6. ANIMATION SYSTEM V2
+
+Do NOT simply add more `if state === ...` pose branches.
+
+Create a proper layered animation-state system.
+
+Conceptually:
+
+```text
+AnimationStateMachine
+
+LOCOTION LAYER
+    idle
+    long-idle
+    start-run
+    run
+    turn
+    stop-run
+    combat-forward
+    combat-backward
+    combat-strafe
+
+ACTION LAYER
+    attack
+    parry
+    perfect-parry
+    dodge
+    ranged
+    item
+    finisher
+    riposte
+
+ADDITIVE LAYER
+    breathing
+    head tracking
+    cloth motion
+    recoil
+    impact
+```
+
+Exact architecture is your decision.
+
+The important result:
+
+different animation systems can blend together naturally.
+
+---
+
+# 7. TRANSITIONS ARE A CORE REQUIREMENT
+
+Characters must no longer snap directly between major states.
+
+Examples:
+
+```text
+idle
+→ run-start
+→ run
+```
+
+and:
+
+```text
+run
+→ stop
+→ idle
+```
+
+and:
+
+```text
+combat-idle
+→ attack-windup
+→ strike
+→ recovery
+→ combat-idle
+```
+
+and:
+
+```text
+parry
+→ counter
+```
+
+and:
+
+```text
+parry
+→ Shinobi riposte
+```
+
+Use short blending windows.
+
+Avoid visible pose snapping.
+
+---
+
+# 8. ANIMATION BLENDING
+
+Implement proper blend/interpolation between clips.
+
+Do not reset every joint toward zero between actions.
+
+An attack beginning from combat stance should inherit that stance.
+
+A dodge beginning while running should preserve movement direction.
+
+A character stopping should decelerate visually.
+
+Use:
+
+- blend-in;
+- blend-out;
+- transition pose;
+- additive channels where useful.
+
+---
+
+# 9. NORMAL IDLE
+
+Every playable character requires a good base idle.
+
+Idle must never look frozen.
+
+Use subtle:
+
+- breathing;
+- weight shifting;
+- head movement;
+- shoulder movement;
+- weapon stabilization;
+- cloak motion;
+- small grip adjustment.
+
+Keep it restrained.
+
+A character should look alive even if the player does nothing for one second.
+
+---
+
+# 10. LONG IDLE
+
+After several seconds of inactivity, allow character-specific flourishes.
+
+Suggested delay:
+
+approximately:
+
+```text
+4–8 seconds
+```
+
+with some variation.
+
+Do not immediately repeat the same flourish.
+
+---
+
+# 11. OATHKEEPER LONG IDLE
+
+Possible:
+
+- briefly inspect blade;
+- wipe edge;
+- rotate wrist;
+- shift sword to opposite shoulder;
+- reset stance.
+
+---
+
+# 12. MOTH LONG IDLE
+
+Possible:
+
+- rotate knife;
+- reverse grip;
+- flip blade;
+- adjust second blade;
+- briefly crouch and relax.
+
+---
+
+# 13. LANCER LONG IDLE
+
+Possible:
+
+- plant spear;
+- rest hand on shaft;
+- inspect spear tip;
+- rotate spear;
+- shift footing.
+
+---
+
+# 14. BELLBEARER LONG IDLE
+
+Possible:
+
+- rest greatblade on shoulder;
+- lower blade to floor;
+- roll shoulder;
+- adjust grip;
+- lift blade back into ready position.
+
+Heavy character motion must communicate weight.
+
+---
+
+# 15. ENEMY IDLES
+
+Enemies need idle personality too.
+
+Do not create bespoke long-idle animation for every enemy if reuse is sensible.
+
+Reuse intelligently.
+
+Examples:
+
+Warden:
+
+disciplined sword idle.
+
+Duelist:
+
+relaxed blade flourish.
+
+Archer:
+
+checks arrow / bow string.
+
+Monk:
+
+ritual hand/weapon motion.
+
+Brute:
+
+shifts great weapon.
+
+Assassin:
+
+low restless movement.
+
+Enemies waiting for an attack slot should still feel alive.
+
+---
+
+# 16. LOCOMOTION V2
+
+Movement is one of the highest-priority improvements.
+
+The player's actual movement speed should NOT change merely because running animation looks faster.
+
+The character should visually run at the existing gameplay speed.
+
+---
+
+# 17. FORWARD RUN
+
+Create believable forward locomotion.
+
+Requirements:
+
+- slight forward lean;
+- torso reacts to acceleration;
+- head stays relatively stable;
+- legs cycle naturally;
+- arms balance body;
+- weapon is stabilized appropriately;
+- cloth trails;
+- feet do not visibly slide excessively.
+
+The reference image will demonstrate desired lean.
+
+Do not exaggerate into sprinting.
+
+---
+
+# 18. MOVEMENT START
+
+When input begins from idle:
+
+do not instantly enter full run cycle.
+
+Use a short acceleration animation.
+
+Example:
+
+```text
+idle
+
+weight shift
+
+front foot step
+
+body leans
+
+full run
+```
+
+This can happen very quickly.
+
+Controls must remain responsive.
+
+Simulation movement begins immediately.
+
+Animation simply represents the acceleration visually.
+
+---
+
+# 19. MOVEMENT STOP
+
+When movement ends:
+
+run cycle should not freeze instantly.
+
+Use:
+
+- final step;
+- torso deceleration;
+- slight forward momentum;
+- stance recovery.
+
+Again:
+
+do not introduce gameplay input lag.
+
+This is visual.
+
+---
+
+# 20. TURNING
+
+Movement animations MUST understand turning.
+
+This is explicitly required.
+
+If player gradually changes direction:
+
+- hips lead rotation;
+- torso follows;
+- shoulders lag slightly;
+- legs adjust step direction;
+- cape trails behind.
+
+---
+
+# 21. SHARP TURN
+
+For strong direction change such as:
+
+```text
+forward
+→ backward
+```
+
+use a brief pivot/plant motion.
+
+Possible:
+
+- plant outside foot;
+- rotate hips;
+- lean;
+- push off.
+
+Do not make it long enough to affect movement response.
+
+---
+
+# 22. CHARACTER BANKING
+
+When running through curves:
+
+slight body banking is desirable.
+
+Keep subtle.
+
+Not racing-game levels of tilt.
+
+---
+
+# 23. STRAFE / CLOSE COMBAT LOCOMOTION
+
+During close combat camera:
+
+do NOT use normal exploration run animation.
+
+Characters should switch to combat locomotion.
+
+Forward:
+
+guarded advance.
+
+Backward:
+
+controlled backstep/backpedal.
+
+Left/right:
+
+combat sidestep.
+
+Weapon remains ready.
+
+Body faces opponent more strongly.
+
+---
+
+# 24. COMBAT STANCE
+
+When an enemy is actively focused in close encounter:
+
+character enters a ready stance.
+
+Requirements:
+
+- knees slightly bent;
+- weapon ready;
+- shoulders aligned toward threat;
+- head tracks target;
+- body weight balanced;
+- subtle movement.
+
+The stance should communicate:
+
+> ready to strike, dodge or deflect.
+
+---
+
+# 25. ENEMY COMBAT STANCES
+
+Reuse compatible stance families, but give major archetypes distinct behavior.
+
+Examples:
+
+Warden:
+
+solid defensive sword guard.
+
+Duelist:
+
+open sideways guard.
+
+Spearman:
+
+weapon extended.
+
+Assassin:
+
+low aggressive posture.
+
+Brute:
+
+weapon loaded behind shoulder.
+
+Archer:
+
+bow ready while distant.
+
+Monk:
+
+ritual upright stance.
+
+---
+
+# 26. ATTACK TRANSITIONS
+
+Attacks must begin naturally from current movement state.
+
+Example:
+
+combat sidestep
+
+→ plant foot
+
+→ windup
+
+→ attack.
+
+Not:
+
+sidestep
+
+→ teleport to generic attack pose.
+
+---
+
+# 27. RECOVERY
+
+Attack recovery must look intentional.
+
+After a slash:
+
+blade continues through arc.
+
+Torso unwinds.
+
+Feet restore balance.
+
+Character returns to stance.
+
+Heavy weapons require more visible recovery.
+
+---
+
+# 28. PARRY ANIMATION
+
+Improve defensive animation.
+
+Normal parry:
+
+- weapon intercepts;
+- wrists/arms absorb force;
+- torso reacts;
+- small step where appropriate.
+
+Perfect parry:
+
+- stronger snap;
+- more precise contact;
+- enemy recoil;
+- stronger VFX.
+
+---
+
+# 29. DODGE TRANSITIONS
+
+Dodge should transition smoothly from:
+
+- run;
+- idle;
+- combat stance;
+- attack recovery where cancel is allowed.
+
+Landing should return naturally to movement or combat stance.
+
+---
+
+# 30. HEAD / TARGET TRACKING
+
+In combat:
+
+head orientation should subtly track current enemy.
+
+Torso may rotate partially.
+
+Do not twist the character unnaturally.
+
+Use constrained tracking.
+
+---
+
+# 31. FOOT DIRECTION
+
+Feet should align approximately with movement.
+
+During combat strafing:
+
+feet may remain angled between movement direction and target direction.
+
+This will dramatically improve naturalness.
+
+---
+
+# 32. CLOTH SECONDARY MOTION
+
+Existing secondary motion should be improved to respond to:
+
+- acceleration;
+- turn direction;
+- attack acceleration;
+- dodge;
+- stop;
+- backward movement.
+
+No expensive cloth simulation required.
+
+Use procedural bones.
+
+---
+
+# 33. WEAPON SECONDARY MOTION
+
+Large weapons should show slight lag.
+
+Bellbearer greatblade especially.
+
+Spear also has inertia during turning.
+
+Do not make weapon movement floppy.
+
+---
+
+# 34. ANIMATION DEBUGGER
+
+Upgrade Combat Lab / debug tools.
+
+Allow:
+
+- choose actor;
+- choose animation;
+- pause;
+- scrub normalized time;
+- inspect current locomotion state;
+- inspect action state;
+- inspect blend weights;
+- change velocity;
+- change turn rate;
+- simulate close combat.
+
+This is extremely important.
+
+---
+
+# 35. ANIMATION REFERENCE MODE
+
+If possible, add a simple debug presentation mode:
+
+neutral background
+
+single actor
+
+controllable camera.
+
+This makes animation review much easier.
+
+---
+
+# 36. NEW PLAYABLE CHARACTER — SHINOBI
+
+Add a fifth playable character.
+
+Name may remain:
+
+# SHINOBI
+
+or choose a lore-appropriate Hollow Canticle name while keeping the archetype clear.
+
+The character must be ORIGINAL.
+
+He may evoke the fantasy of a wandering prosthetic-armed shinobi / katana duelist, but must NOT copy:
+
+- Sekiro's exact clothing;
+- exact prosthetic design;
+- exact face;
+- exact weapon design;
+- copyrighted model assets.
+
+Original Hollow Canticle design only.
+
+---
+
+# 37. SHINOBI VISUAL IDENTITY
+
+Suggested visual language:
+
+- layered worn cloth;
+- narrow armor;
+- asymmetrical shoulder protection;
+- scarf;
+- compact mechanical ranged device;
+- katana;
+- low-profile silhouette;
+- fast but controlled posture.
+
+Color palette should fit Hollow Canticle.
+
+Do not recreate Sekiro.
+
+---
+
+# 38. SHINOBI WEAPON
+
+Weapon:
+
+# Katana
+
+Characteristics:
+
+- low-to-medium raw HP damage;
+- strong guard damage through counters/deflections;
+- fast recovery;
+- moderate reach;
+- precise attacks.
+
+The character should NOT win by mindlessly attacking faster than Moth.
+
+His strength is defensive mastery.
+
+---
+
+# 39. SHINOBI CORE IDENTITY
+
+The Shinobi focuses on:
+
+```text
+DEFLECT
+DEFLECT
+DEFLECT
+RIPOSTE
+BREAK GUARD
+FINISH
+```
+
+He should be the character most rewarded for staying close to dangerous opponents.
+
+---
+
+# 40. DEFLECTION PRESSURE
+
+Shinobi successful parries should deal somewhat increased guard/posture pressure.
+
+Perfect parries significantly increase this.
+
+Do not make raw HP damage too high.
+
+The target is:
+
+enemy guard breaks earlier than enemy HP reaches zero.
+
+---
+
+# 41. EXCLUSIVE RIPOSTE
+
+Only Shinobi has the full Riposte mechanic.
+
+After successful melee deflection:
+
+open a short:
+
+```text
+RIPOSTE WINDOW
+```
+
+Attack input during this window triggers Riposte.
+
+---
+
+# 42. RIPOSTE ANIMATION
+
+This must be one of the best animations in the game.
+
+Sequence:
+
+```text
+deflect contact
+
+brief recoil
+
+Shinobi lowers stance
+
+forward burst/dash
+
+single decisive katana strike
+
+follow-through
+
+backward burst
+
+return close to original spacing
+```
+
+The character should end approximately around the original combat distance.
+
+---
+
+# 43. RIPOSTE GAMEPLAY
+
+Riposte deals:
+
+- moderate HP damage;
+- very strong guard damage.
+
+Critical rule:
+
+# RIPOSTE CANNOT KILL.
+
+If Riposte would reduce enemy below 1 HP:
+
+leave enemy at:
+
+```text
+1 HP
+```
+
+This preserves:
+
+- posture breaks;
+- finishers;
+- cinematic executions.
+
+---
+
+# 44. PERFECT DEFLECT RIPOSTE
+
+Perfect deflection may provide a stronger version.
+
+Possible:
+
+- more guard damage;
+- slightly more HP damage;
+- cleaner/longer VFX;
+- slightly wider Riposte input window.
+
+Still cannot kill.
+
+---
+
+# 45. RIPOSTE RANGE
+
+Riposte may activate from slightly beyond katana normal attack range.
+
+It includes a forward dash.
+
+This should feel generous enough to function after a projectile setup.
+
+---
+
+# 46. SHINOBI RANGED TOOL
+
+The ranged tool is:
+
+a compact original pistol-like mechanical contraption.
+
+Do not make it a modern firearm.
+
+Possible inspiration:
+
+- spring launcher;
+- hand cannon;
+- concealed projectile device;
+- compressed-fire mechanism.
+
+It should visually belong to Hollow Canticle.
+
+---
+
+# 47. RANGED TOOL GAMEPLAY
+
+Raw damage:
+
+low.
+
+Primary purpose:
+
+enable Riposte.
+
+If projectile hits enemy while Shinobi is within:
+
+```text
+RIPOSTE RANGE
+```
+
+grant a Riposte opportunity.
+
+This range should be GREATER than normal katana attack range.
+
+---
+
+# 48. RANGED RIPOSTE
+
+Sequence:
+
+```text
+shoot
+
+enemy reacts
+
+RIPOSTE READY
+
+dash forward
+
+katana cut
+
+dash backward
+```
+
+This should look extremely satisfying.
+
+---
+
+# 49. RANGED RESOURCE
+
+Give Shinobi a limited ranged capacity like other characters.
+
+Suggested starting idea:
+
+```text
+3 charges
+```
+
+with moderate recharge.
+
+Balance through playtesting.
+
+Do not let the pistol-like tool become a ranged-damage strategy.
+
+---
+
+# 50. SHINOBI BASIC ATTACKS
+
+Create a compact katana chain.
+
+Possible:
+
+1. quick diagonal cut;
+2. reverse cut;
+3. straight finishing cut;
+4. counter thrust/cut.
+
+Avoid huge anime spins.
+
+Keep movement precise.
+
+---
+
+# 51. SHINOBI IDLE
+
+Normal idle:
+
+low relaxed guard.
+
+Long idle:
+
+possible:
+
+- slightly draw blade;
+- inspect edge;
+- adjust scarf;
+- check mechanical sidearm;
+- return blade to resting position.
+
+---
+
+# 52. SHINOBI RUN
+
+Distinct but compatible with shared animation system.
+
+Slightly lower body position.
+
+Katana remains controlled.
+
+No exaggerated "ninja run."
+
+---
+
+# 53. SHINOBI COMBAT STANCE
+
+Katana held in ready position.
+
+More forward body lean than Oathkeeper.
+
+Quick directional transitions.
+
+---
+
+# 54. SHINOBI MULTIPLAYER
+
+Shinobi must work in:
+
+- single-player;
+- co-op;
+- duel.
+
+Server must authoritatively validate:
+
+- Riposte eligibility;
+- Riposte window;
+- Riposte target;
+- ranged-triggered Riposte;
+- cannot-kill rule.
+
+Never trust client to declare:
+
+```text
+riposte succeeded
+```
+
+---
+
+# 55. SHINOBI PvP
+
+Carefully balance Riposte in Duel mode.
+
+A player deflecting another player may gain Riposte.
+
+But ensure:
+
+- window is fair;
+- dash is telegraphed;
+- no unavoidable endless loop;
+- cannot-kill rule behaves sensibly.
+
+If needed, use different but equivalent PvP guard-pressure tuning.
+
+Do not remove the mechanic from PvP.
+
+---
+
+# 56. COMBAT VFX OVERHAUL
+
+Current effects are too subtle.
+
+Combat should feel:
+
+# EPIC
+
+# VIOLENT
+
+# LEGENDARY
+
+without hiding attack readability.
+
+Do not merely multiply particle count.
+
+Create layered event-specific effects.
+
+---
+
+# 57. NORMAL WEAPON HIT
+
+Add:
+
+- directional spark spray;
+- weapon trail;
+- small impact flash;
+- environment particle response;
+- tiny camera impulse;
+- subtle hit-stop.
+
+Keep restrained.
+
+---
+
+# 58. NORMAL PARRY
+
+Add:
+
+- concentrated spark fan;
+- metallic core flash;
+- small weapon recoil;
+- short camera impulse;
+- local light pulse.
+
+Clearly stronger than a hit.
+
+---
+
+# 59. PERFECT PARRY
+
+This should become one of the game's signature visuals.
+
+Layer:
+
+1. white-hot contact point;
+2. gold/orange spark burst;
+3. steel-blue secondary sparks;
+4. directional rays;
+5. brief local point light;
+6. circular distortion/ring;
+7. strong weapon recoil;
+8. short time dilation;
+9. camera impulse;
+10. environmental dust/spore/snow reaction.
+
+Do not make the screen unreadable.
+
+Energy should originate from actual weapon contact.
+
+---
+
+# 60. GUARD BREAK
+
+Create a unique visual event.
+
+Possible:
+
+- bright posture crack;
+- circular shockwave;
+- fragments/sigil particles;
+- enemy recoil;
+- temporary desaturation around character;
+- distinct audio.
+
+Player should immediately recognize:
+
+> FINISHER AVAILABLE.
+
+---
+
+# 61. FINISHER VFX
+
+Each weapon should have distinct presentation.
+
+Sword:
+
+clean bright execution arc.
+
+Twin blades:
+
+crossing trails.
+
+Spear:
+
+linear piercing burst.
+
+Greatblade:
+
+large heavy shockwave.
+
+Shinobi:
+
+precise katana flash.
+
+Do not use the same effect scaled differently.
+
+---
+
+# 62. SHINOBI RIPOSTE VFX
+
+Create a specific identity.
+
+Possible:
+
+- thin white katana trail;
+- red/gold contact sparks;
+- brief afterimage during dash;
+- strong slash flash;
+- dust at launch and return.
+
+Avoid direct Sekiro imitation.
+
+---
+
+# 63. ENVIRONMENT-SPECIFIC COMBAT PARTICLES
+
+Keep existing biome-specific logic and strengthen it.
+
+### Ruins
+
+dust;
+
+stone chips;
+
+embers.
+
+### Shrine
+
+water spray;
+
+mist;
+
+droplets.
+
+### Fungal
+
+spores;
+
+bioluminescent dust.
+
+### Frozen
+
+snow;
+
+ice fragments.
+
+### Foundry
+
+ash;
+
+embers;
+
+metal sparks.
+
+A perfect parry should look different in each biome.
+
+---
+
+# 64. GRAPHICS-SCALED PARTICLES
+
+The enhanced effects must work on all quality profiles.
+
+Create a central quality multiplier.
+
+Example conceptual density:
+
+```text
+VERY LOW   0.25
+LOW        0.45
+MEDIUM     0.7
+HIGH       1.0
+EXTREME    1.6
+```
+
+Do NOT hardcode these exact values if testing suggests better ones.
+
+---
+
+# 65. EXTREME GRAPHICS PROFILE
+
+Introduce:
+
+# EXTREME
+
+now.
+
+Do not yet implement all future weather features.
+
+But the profile must exist and the rendering architecture must support them later.
+
+---
+
+# 66. GRAPHICS OPTIONS
+
+Replace current simplified graphics logic with:
+
+```text
+VERY LOW
+LOW
+MEDIUM
+HIGH
+EXTREME
+```
+
+Use a centralized profile definition.
+
+Something conceptually like:
+
+```ts
+interface GraphicsProfile {
+  pixelRatio: number;
+  shadowSize: number;
+  decals: boolean;
+  maxLights: number;
+  particleMultiplier: number;
+  fogLayers: number;
+  textureQuality: number;
+  lodBias: number;
+  bloom: number;
+  weatherDensity: number;
+  lightShaftQuality: number;
+}
+```
+
+Future systems can query this.
+
+---
+
+# 67. EXTREME IN v0.7
+
+Extreme in this release should improve:
+
+- render scale;
+- shadow quality;
+- particle density;
+- fog quality;
+- draw distance;
+- decals;
+- LOD;
+- bloom refinement;
+- environmental particles.
+
+Future releases will add:
+
+- weather;
+- light shafts;
+- advanced biome atmosphere.
+
+Do not fake those future systems now.
+
+---
+
+# 68. VERY LOW PROFILE
+
+Add:
+
+# VERY LOW
+
+This is important.
+
+Target low-end integrated GPUs.
+
+Possible:
+
+- low internal pixel ratio;
+- early LOD;
+- minimal shadow maps;
+- minimal point lights;
+- reduced fog sprites;
+- reduced particles;
+- no decorative decals;
+- reduced background architecture;
+- lower texture resolution;
+- simplified bloom or disabled bloom.
+
+Gameplay readability must remain.
+
+---
+
+# 69. LOW-END OPTIMIZATION AUDIT
+
+Profile the current game.
+
+Measure:
+
+- draw calls;
+- triangles;
+- texture memory;
+- WebGL allocations;
+- shadow cost;
+- effects allocations;
+- CPU world update;
+- multiplayer processing;
+- fog;
+- lights;
+- imported assets.
+
+Document major bottlenecks.
+
+---
+
+# 70. PARTICLE POOLING
+
+Do not create/dispose particle meshes constantly.
+
+Use pools.
+
+VFX should reuse:
+
+- sparks;
+- rings;
+- trails;
+- flash meshes;
+- dust;
+- environmental bursts.
+
+This becomes essential with Extreme mode.
+
+---
+
+# 71. EFFECT POOLING
+
+Current dynamic VFX groups should be reviewed for unnecessary allocation/disposal.
+
+Prefer pooled reusable structures.
+
+Especially:
+
+- perfect parry;
+- hit;
+- guard break;
+- finisher;
+- Riposte.
+
+---
+
+# 72. SHADOW OPTIMIZATION
+
+Do not let every object cast shadows on lower profiles.
+
+Create categories.
+
+Example:
+
+### Extreme
+
+player;
+
+important enemies;
+
+hero architecture;
+
+nearby props.
+
+### High
+
+player;
+
+enemies;
+
+major architecture.
+
+### Medium
+
+player;
+
+primary enemies;
+
+important architecture.
+
+### Low/Very Low
+
+player;
+
+primary threat only;
+
+limited environment.
+
+---
+
+# 73. LIGHT OPTIMIZATION
+
+Dynamic point lights should be budgeted.
+
+Prioritize:
+
+- nearest torches;
+- combat impact light;
+- boss effects.
+
+Distant lights can rely on emissive materials.
+
+---
+
+# 74. ASSET INSTANCING
+
+Audit imported dungeon assets.
+
+Ensure repeated:
+
+- columns;
+- rubble;
+- floors;
+- railings;
+- arches;
+
+remain instanced where practical.
+
+Do not regress Blender visuals into hundreds of independent draw calls.
+
+---
+
+# 75. LOD REVIEW
+
+Review current LOD thresholds.
+
+Tie to graphics profile.
+
+Very Low:
+
+aggressive LOD.
+
+Extreme:
+
+later transition.
+
+Avoid visible popping if possible.
+
+---
+
+# 76. DYNAMIC RESOLUTION OPTIONAL
+
+Investigate optional dynamic resolution.
+
+If FPS falls below a target for sustained period:
+
+lower internal resolution modestly.
+
+If FPS is stable:
+
+recover gradually.
+
+Do not enable automatically if implementation harms visual stability.
+
+Make it a setting if useful.
+
+---
+
+# 77. WORLD GENERATION COLLISION BUG
+
+This MUST be fixed properly.
+
+The current system calculates walkability from abstract room formulas while visual walls are placed independently.
+
+This creates:
+
+- invisible walls;
+- visible walls with no collision;
+- corridor entrances visually obstructed.
+
+Do not patch coordinates one by one.
+
+---
+
+# 78. UNIFIED ROOM GEOMETRY
+
+Create one authoritative representation.
+
+Conceptually:
+
+```text
+RoomLayout
+    walkable regions
+    collision boundary
+    door sockets
+    corridor sockets
+    obstacle shapes
+    visual edge segments
+    decoration exclusion zones
+```
+
+Collision and renderer must consume the SAME data.
+
+---
+
+# 79. DOOR SOCKETS
+
+Each linked room must create a real opening.
+
+A doorway socket defines:
+
+- center;
+- direction;
+- width;
+- walkable corridor;
+- no-wall zone;
+- decoration exclusion zone.
+
+Renderer may place:
+
+- arch;
+- gate;
+- bridge.
+
+But it cannot place a blocking wall inside the socket.
+
+---
+
+# 80. CORRIDOR OPENINGS
+
+Every room link must have:
+
+continuous walkable path:
+
+```text
+room
+→ doorway
+→ connector
+→ next doorway
+→ next room
+```
+
+No invisible collision.
+
+No visual wall.
+
+No decoration blocking route.
+
+---
+
+# 81. GATE LOGIC
+
+Combat gates are different.
+
+Closed combat gate:
+
+visually blocks passage
+
+AND
+
+collision blocks passage.
+
+Open gate:
+
+visual opens/disappears
+
+AND
+
+collision opens.
+
+Never visual-only gate state.
+
+---
+
+# 82. COLLISION DEBUG VIEW
+
+Add debug mode to show:
+
+- walkable polygon;
+- collision edge;
+- obstacle circles/shapes;
+- doorway sockets;
+- corridor paths;
+- visual wall segments.
+
+This should make mismatches immediately obvious.
+
+---
+
+# 83. PROCEDURAL STRESS TEST
+
+Generate thousands of rooms/floors.
+
+Verify every linked room pair.
+
+For every connection:
+
+1. find door A;
+2. find door B;
+3. verify path exists;
+4. verify no obstacle intersects required route;
+5. verify no visual wall placement occupies doorway socket.
+
+Fail tests automatically when possible.
+
+---
+
+# 84. TEST RANDOM SEEDS VISUALLY
+
+Mathematical path tests are not enough.
+
+Capture or inspect many random seeds.
+
+Look for:
+
+- clipping;
+- half arches;
+- walls in bridges;
+- railings across doors;
+- rubble blocking passages;
+- visual/collision mismatch.
+
+---
+
+# 85. ITEM SWITCHING UI
+
+The inventory already supports cycling.
+
+Do NOT rewrite inventory unnecessarily.
+
+Improve discoverability.
+
+---
+
+# 86. QUICK ITEM BAR
+
+Add a visible compact quickbar.
+
+Example:
+
+```text
+[ Crimson Vial ×2 ]
+[ Bell Oil ×1 ]
+[ Quiet Water ×1 ]
+```
+
+Selected item:
+
+- larger;
+- brighter;
+- outlined.
+
+Others remain visible but subdued.
+
+---
+
+# 87. ITEM SWITCH INPUT
+
+Keep existing switching controls if good.
+
+Suggested:
+
+```text
+1 / 2
+```
+
+or:
+
+mouse wheel while modifier held if appropriate.
+
+Do not conflict with gameplay controls.
+
+---
+
+# 88. ITEM SWITCH FEEDBACK
+
+When changing selection:
+
+briefly show:
+
+```text
+BELL OIL
+
++20% posture pressure
+12 seconds
+```
+
+Then fade.
+
+No giant popup.
+
+---
+
+# 89. SATCHEL MENU
+
+Pause menu should include:
+
+# SATCHEL
+
+Show:
+
+- item icon;
+- name;
+- quantity;
+- description;
+- duration;
+- use time.
+
+This solves:
+
+> "I have no idea what I can use and what they do."
+
+---
+
+# 90. EMPTY SATCHEL
+
+If empty:
+
+clearly show:
+
+```text
+SATCHEL EMPTY
+```
+
+and perhaps:
+
+> Consumables can be found throughout the descent.
+
+---
+
+# 91. OPTIONAL TUTORIAL
+
+There is already tutorial logic.
+
+Preserve and improve it.
+
+---
+
+# 92. MAIN MENU TUTORIAL
+
+Add:
+
+```text
+TUTORIAL
+```
+
+to main menu.
+
+It can be replayed at any time.
+
+---
+
+# 93. FIRST-LAUNCH PROMPT
+
+On first run:
+
+```text
+ENTER THE PRACTICE OF STEEL?
+
+Learn movement, deflection and combat.
+
+[TUTORIAL]
+[BEGIN WITHOUT TRAINING]
+```
+
+Do not force tutorial.
+
+---
+
+# 94. TUTORIAL ENVIRONMENT
+
+Create a small dedicated training area.
+
+Reuse assets.
+
+Do not generate a full procedural dungeon.
+
+Possible:
+
+quiet ruined courtyard.
+
+---
+
+# 95. TUTORIAL STAGES
+
+Teach:
+
+1. movement;
+2. camera;
+3. attack;
+4. parry;
+5. perfect parry;
+6. dodge;
+7. guard break;
+8. finisher;
+9. ranged;
+10. projectile deflection;
+11. item switching/use.
+
+When Shinobi selected in tutorial:
+
+include Riposte section.
+
+---
+
+# 96. TUTORIAL DUMMY
+
+Use controlled enemy/dummy states.
+
+Avoid RNG disrupting teaching.
+
+Example:
+
+enemy repeats one clear slash until player parries it.
+
+---
+
+# 97. TUTORIAL SKIP
+
+Allow:
+
+```text
+SKIP TRAINING
+```
+
+at any time.
+
+Do not trap experienced players.
+
+---
+
+# 98. MULTIPLAYER REGRESSION
+
+Every animation change must be presentation-only unless gameplay explicitly changes.
+
+Remote players need correct animation states.
+
+Synchronize semantic states.
+
+Do NOT stream individual bone rotations over network.
+
+Server sends:
+
+- movement;
+- facing;
+- action;
+- attack;
+- parry;
+- Riposte state where required.
+
+Clients animate locally.
+
+---
+
+# 99. REMOTE LOCOMOTION
+
+Remote co-op players should:
+
+- run smoothly;
+- turn smoothly;
+- blend animations;
+- not snap due network interpolation.
+
+Use interpolated velocity and facing.
+
+---
+
+# 100. REMOTE ATTACKS
+
+Important combat events must remain aligned with authoritative timing.
+
+Do not let improved visual anticipation shift actual hit timing.
+
+Animation event timing must match simulation.
+
+---
+
+# 101. DUEL REGRESSION
+
+Test all five characters in Duel mode.
+
+Particularly:
+
+- parry;
+- perfect parry;
+- Shinobi Riposte;
+- ranged Riposte;
+- dodge;
+- projectile reflection.
+
+---
+
+# 102. ANIMATION PERFORMANCE
+
+Do not make imported character animation prohibitively expensive.
+
+Profile:
+
+4 players
+
++
+
+8 enemies
+
+simultaneously.
+
+Use:
+
+- shared animation data;
+- efficient bone updates;
+- simplified distant animation if necessary.
+
+---
+
+# 103. ANIMATION LOD
+
+Consider animation LOD.
+
+Far enemies:
+
+- reduced update rate;
+- simplified secondary motion.
+
+Close combat:
+
+full quality.
+
+Do not visibly degrade nearby characters.
+
+---
+
+# 104. REDUCED MOTION
+
+Existing reduced-motion accessibility must remain respected.
+
+Reduce:
+
+- camera impulse;
+- extreme cloth;
+- afterimages;
+- strong screen distortion.
+
+Do NOT remove necessary attack animation telegraphs.
+
+---
+
+# 105. VFX ACCESSIBILITY
+
+Existing flash toggle must remain.
+
+If flashes disabled:
+
+perfect parry is still readable using:
+
+- sparks;
+- sound;
+- recoil;
+- ring.
+
+Do not make mastery feedback disappear entirely.
+
+---
+
+# 106. VISUAL ACCEPTANCE — LOCOMOTION
+
+v0.7 is NOT complete if:
+
+running still looks like idle with moving legs;
+
+characters remain vertical statues while moving;
+
+turning rotates entire model rigidly;
+
+movement starts/stops instantly visually;
+
+feet visibly slide constantly.
+
+---
+
+# 107. VISUAL ACCEPTANCE — IDLE
+
+Not complete if:
+
+character can stand completely static for several seconds;
+
+every character has same idle;
+
+long-idle flourish repeats constantly;
+
+enemy idle looks identical to player idle.
+
+---
+
+# 108. VISUAL ACCEPTANCE — TRANSITIONS
+
+Not complete if:
+
+idle snaps to run;
+
+run snaps to attack;
+
+parry snaps to idle;
+
+attack resets to neutral before every next action;
+
+combat stance disappears between attacks unnecessarily.
+
+---
+
+# 109. VISUAL ACCEPTANCE — COMBAT
+
+Not complete if:
+
+close combat characters still stand stiffly between attacks;
+
+weapons do not remain ready;
+
+body does not track target;
+
+backward movement looks like forward running played backward.
+
+---
+
+# 110. VFX ACCEPTANCE
+
+Not complete if:
+
+perfect parry still feels subtle;
+
+guard break looks similar to normal hit;
+
+finisher uses generic particles;
+
+different biomes produce identical combat particles;
+
+Shinobi Riposte has no unique visual identity.
+
+---
+
+# 111. SHINOBI ACCEPTANCE
+
+Not complete if:
+
+Shinobi is merely Oathkeeper with katana skin;
+
+raw attacking is his best strategy;
+
+Riposte is generic counter attack;
+
+Riposte can kill;
+
+ranged tool is mainly damage;
+
+forward/backward Riposte dash is missing;
+
+Riposte animation is visually weak.
+
+---
+
+# 112. WORLD ACCEPTANCE
+
+Not complete if:
+
+invisible walls still occur in normal generated rooms;
+
+corridor entrance can have visible blocking wall;
+
+renderer and collision use unrelated opening logic;
+
+linked rooms can fail path validation.
+
+---
+
+# 113. UX ACCEPTANCE
+
+Not complete if:
+
+player still cannot easily tell which consumable is selected;
+
+item descriptions require remembering pickups;
+
+tutorial cannot be replayed;
+
+tutorial is mandatory.
+
+---
+
+# 114. GRAPHICS ACCEPTANCE
+
+Not complete if:
+
+only High/Medium/Low exist;
+
+Very Low is merely Low with slightly smaller resolution;
+
+Extreme provides no actual improvement;
+
+quality settings remain scattered through renderer conditionals rather than centralized.
+
+---
+
+# 115. PERFORMANCE TARGETS
+
+Do not promise exact FPS across unknown hardware.
+
+But benchmark representative scenes.
+
+Test:
+
+### Very Low
+
+4-player co-op + combat.
+
+### Low
+
+large dungeon room.
+
+### Medium
+
+normal play.
+
+### High
+
+boss combat.
+
+### Extreme
+
+maximum VFX combat.
+
+Report:
+
+- FPS;
+- draw calls;
+- triangles;
+- memory where available.
+
+---
+
+# 116. SCREENSHOT / VIDEO REVIEW
+
+This is an animation-heavy release.
+
+Static screenshots are insufficient.
+
+Capture short recordings or frame sequences demonstrating:
+
+1. idle;
+2. long idle;
+3. run start;
+4. run;
+5. turning;
+6. run stop;
+7. combat stance;
+8. attack transition;
+9. parry;
+10. perfect parry;
+11. guard break;
+12. Shinobi Riposte;
+13. Shinobi ranged Riposte.
+
+If automated video capture is unavailable, capture frame sequences and playtest manually.
+
+---
+
+# 117. REFERENCE COMPARISON
+
+Compare implementation to the three supplied v0.7 reference images.
+
+Ask:
+
+Does running body angle match intent?
+
+Do characters look alive while idle?
+
+Do turns have weight?
+
+Does combat stance look prepared?
+
+Do transitions look smooth?
+
+Does perfect parry have enough spectacle?
+
+Does Shinobi read clearly?
+
+Does the game remain readable?
+
+---
+
+# 118. TESTING
+
+Run all existing tests.
+
+Add tests for:
+
+- unified doorway geometry;
+- corridor reachability;
+- collision opening;
+- graphics profile parsing;
+- Very Low;
+- Extreme;
+- Shinobi Riposte window;
+- Riposte cannot kill;
+- ranged Riposte;
+- multiplayer Riposte authority;
+- item cycling;
+- tutorial persistence.
+
+---
+
+# 119. MULTIPLAYER TESTING
+
+Test at least:
+
+### 2-player co-op
+
+both running/turning.
+
+### 4-player co-op
+
+animation performance.
+
+### Duel
+
+Shinobi versus Oathkeeper.
+
+### Latency simulation
+
+Riposte validation.
+
+Animations should remain smooth even when server state arrives intermittently.
+
+---
+
+# 120. SAVE MIGRATION
+
+Update save version safely if needed.
+
+Existing v0.6 saves must load.
+
+Preserve:
+
+- progression;
+- unlocked characters;
+- Chronicle;
+- settings.
+
+Add:
+
+- graphics profile;
+- tutorial state;
+- Shinobi unlock if appropriate.
+
+---
+
+# 121. SHINOBI UNLOCK
+
+Decide a reasonable unlock method consistent with existing Chronicle progression.
+
+Do not make it random.
+
+Possible:
+
+unlock after first boss / specific Ember cost / progression milestone.
+
+However:
+
+in Duel mode all playable characters should remain available for fairness, just as before.
+
+Do not require single-player unlock for PvP testing.
+
+---
+
+# 122. UPDATE DOCUMENTATION
+
+Update:
+
+```text
+README.md
+CHANGELOG.md
+ROADMAP.md
+docs/QA-v0.7.md
+```
+
+Document:
+
+- animation state system;
+- locomotion;
+- long idle;
+- combat stances;
+- transitions;
+- Shinobi;
+- Riposte;
+- VFX overhaul;
+- world collision fix;
+- graphics profiles;
+- Very Low;
+- Extreme;
+- item UI;
+- tutorial.
+
+Only document implemented features.
+
+---
+
+# 123. VERSION
+
+Update package version to:
+
+```text
+0.7.0
+```
+
+only when the release is genuinely complete.
+
+---
+
+# 124. FINAL VALIDATION
+
+Run relevant commands such as:
+
+```bash
+npm install
+npm run lint
+npm run test
+npm run build
+npm run test:server
+```
+
+Use actual repository scripts.
+
+Run production client.
+
+Run multiplayer server.
+
+Check browser console.
+
+Check server console.
+
+Fix regressions.
+
+---
+
+# 125. PUSH
+
+Before final push:
+
+```bash
+git branch --show-current
+```
+
+must show:
+
+```text
+codex/v0.7.0-living-steel
+```
+
+Push completed work.
+
+Do NOT merge into `main`.
+
+Do NOT overwrite v0.6 branch.
+
+---
+
+# 126. FINAL REPORT
+
+Report:
+
+1. baseline v0.6 SHA;
+2. v0.7 branch;
+3. final SHA;
+4. animation architecture changes;
+5. locomotion states;
+6. idle animations;
+7. long-idle variants;
+8. transition/blending system;
+9. combat locomotion;
+10. turn adaptation;
+11. enemy animation improvements;
+12. VFX changes;
+13. perfect-parry VFX;
+14. guard-break VFX;
+15. finisher changes;
+16. Shinobi implementation;
+17. Shinobi stats;
+18. Riposte rules;
+19. ranged Riposte rules;
+20. multiplayer Riposte implementation;
+21. world/collision architecture fix;
+22. procedural stress-test result;
+23. graphics presets;
+24. Very Low optimization;
+25. Extreme improvements;
+26. item UI changes;
+27. tutorial changes;
+28. FPS/performance findings;
+29. tests run;
+30. remaining limitations.
+
+---
+
+# FINAL DESIGN DIRECTIVE
+
+v0.7 should change one of the most important subconscious impressions players have of Hollow Canticle.
+
+Right now a character can sometimes feel like:
+
+> a model being moved through a game.
+
+After this release, it should feel like:
+
+> a person moving through a dangerous world.
+
+When the player begins moving:
+
+their weight shifts.
+
+They lean forward.
+
+Their weapon reacts.
+
+Their cloak follows.
+
+When they turn:
+
+their hips, shoulders and feet respond.
+
+When they stop:
+
+momentum settles naturally.
+
+When they stand still:
+
+they breathe.
+
+They move.
+
+After a while they interact with their weapon.
+
+When combat starts:
+
+their entire posture changes.
+
+They become ready.
+
+When an enemy strikes:
+
+a deflection feels violent.
+
+A perfect deflection feels exceptional.
+
+When guard breaks:
+
+the whole encounter visibly changes.
+
+And when the Shinobi lands a perfect deflection:
+
+he should be able to explode forward,
+
+cut through the opening,
+
+and disappear backward into guard before the enemy can recover.
+
+At the same time:
+
+the dungeon must stop lying to the player about where walls exist.
+
+The selected item must be obvious.
+
+The tutorial must be accessible.
+
+Low-end PCs must have a real Very Low mode.
+
+High-end PCs should be able to select Extreme.
+
+Do not treat these as unrelated features.
+
+They all serve the same goal:
+
+# Hollow Canticle should feel deliberate, alive, responsive, and polished.
+
+Build **Hollow Canticle v0.7.0 — Living Steel & Foundations** now.

@@ -25,9 +25,13 @@ const result = spawnSync(
   { stdio: 'inherit' },
 );
 if (result.status !== 0) process.exit(result.status ?? 1);
-const optimization = spawnSync(process.execPath, ['tools/optimize-assets.mjs'], {
-  stdio: 'inherit',
-});
+const optimization = spawnSync(
+  process.execPath,
+  ['tools/optimize-assets.mjs', ...process.argv.slice(2)],
+  {
+    stdio: 'inherit',
+  },
+);
 if (optimization.status !== 0) process.exit(optimization.status ?? 1);
 const validation = spawnSync(process.execPath, ['tools/validate-assets.mjs'], { stdio: 'inherit' });
 process.exit(validation.status ?? 1);

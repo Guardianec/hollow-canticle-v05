@@ -3,6 +3,8 @@ import { makeFloor, obstaclesFor } from './game/dungeon';
 import { persist, defaultSave, RUN_HISTORY_KEY } from './game/save';
 import { World } from './game/world';
 import { CHARACTERS, characterFor } from './game/characters';
+import { GRAPHICS, GRAPHICS_LEVELS, graphicsLevel } from './game/graphics';
+import { LOCOMOTION_STATES } from './game/presentation/animation-state';
 import { CharacterGallery } from './game/presentation/gallery';
 import { ITEMS } from './game/items';
 import { BUFFS } from './game/buffs';
@@ -49,7 +51,7 @@ export class Interface {
   constructor(private world: World) {
     document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
       <header class="topbar">
-        <a class="brand" href="#" aria-label="Hollow Canticle main menu">${sigil}<span>HOLLOW CANTICLE</span><span class="version">v0.6.0</span></a>
+        <a class="brand" href="#" aria-label="Hollow Canticle main menu">${sigil}<span>HOLLOW CANTICLE</span><span class="version">v0.7.0</span></a>
         <span class="header-caption">A VOW IN THE DARK</span>
         <div class="utility"><button data-action="sound" aria-label="Mute audio" title="Toggle audio">${icon('sound')}</button><span></span><button data-action="fullscreen" aria-label="Fullscreen" title="Fullscreen">${icon('expand')}</button><button data-action="pause" aria-label="Pause or open settings" title="Pause · Esc">${icon('pause')}</button></div>
       </header>
@@ -61,7 +63,7 @@ export class Interface {
           <p class="menu-copy">The bells have fallen silent.<br>Let your blade be the last thing they hear.</p>
           <button class="begin-button" data-action="new"><span>Begin the descent</span>${icon('arrow', 21)}</button>
           <button class="online-menu-button" data-action="online"><span>Online</span><small>CO-OP DESCENT & DUELS</small>${icon('arrow', 18)}</button>
-          <div class="secondary-actions"><button data-action="training">${icon('sword', 17)} Learn the rhythm</button><button data-action="seeded">${icon('seed', 17)} Seeded run</button></div>
+          <div class="secondary-actions"><button data-action="training">${icon('sword', 17)} Tutorial</button><button data-action="seeded">${icon('seed', 17)} Seeded run</button></div>
           <div class="menu-line"></div>
           <nav class="menu-links"><button data-action="archive">Chronicle <span>DISCOVERIES & OATHS</span></button><button data-action="settings">Settings ${icon('gear', 15)}</button><button data-action="credits">Credits</button></nav>
           <div class="menu-note"><span class="note-mark">✧</span><p>Read the blade. Break their guard.<br><b>Keep your oath.</b></p></div>
@@ -104,7 +106,7 @@ export class Interface {
         event.preventDefault();
         const index = CHARACTERS.findIndex((c) => c.id === this.runWeapon),
           direction = event.key === 'ArrowRight' ? 1 : -1;
-        const next = CHARACTERS[(index + direction + 4) % 4];
+        const next = CHARACTERS[(index + direction + CHARACTERS.length) % CHARACTERS.length];
         this.action(`weapon:${next.id}`);
         this.dialog.querySelector<HTMLButtonElement>(`[data-action="weapon:${next.id}"]`)?.focus();
       }
@@ -133,6 +135,12 @@ export class Interface {
     });
     if (this.world.debug) this.addDebug();
     this.update();
+    if (!this.world.save.tutorialPrompted && !this.world.debug)
+      this.show(
+        'tutorial-prompt',
+        'Enter the Practice of Steel?',
+        '<p class="dialog-copy">Learn movement, deflection and combat at your own pace.</p><div class="stack-buttons"><button class="primary" data-action="training">Tutorial</button><button data-action="skip-training-prompt">Begin without training</button></div>',
+      );
   }
 
   private randomSeed(): string {
@@ -169,7 +177,7 @@ export class Interface {
     }
     if (action.startsWith('unlock:')) {
       const id = action.split(':')[1],
-        price = id === 'twins' ? 4 : id === 'spear' ? 8 : 12;
+        price = id === 'twins' ? 4 : id === 'spear' ? 8 : id === 'shinobi' ? 16 : 12;
       if (w.save.embers >= price && !w.save.unlocks.includes(id)) {
         w.save.embers -= price;
         w.save.unlocks.push(id);
@@ -186,7 +194,14 @@ export class Interface {
         break;
       case 'training':
         this.close();
-        w.start('THE-PRACTICE', 'sword', true);
+        w.save.tutorialPrompted = true;
+        persist(w.save);
+        w.start('THE-PRACTICE', this.runWeapon, true);
+        break;
+      case 'skip-training-prompt':
+        w.save.tutorialPrompted = true;
+        persist(w.save);
+        this.runSetup();
         break;
       case 'settings':
         this.settingsBack = this.screen || (w.mode === 'paused' ? 'pause' : 'menu');
@@ -344,7 +359,16 @@ export class Interface {
       `
       <p class="eyebrow">DEPTH ${String(w.floor.depth).padStart(2, '0')} · ${BIOMES[w.floor.biome].name.toUpperCase()}</p>
       <div class="run-info"><span>Seed</span><button class="seed-copy" data-action="copy">${escape(w.seed)} ${icon('seed', 13)}</button><span>Pilgrim</span><strong>${w.character.name}</strong><span>Relics</span><strong>${w.relics.length}</strong><span>Souls released</span><strong>${w.stats.kills}</strong></div>
-      <p class="hint">${w.inventory.slots.map((s) => `${ITEMS.find((i) => i.id === s.id)!.name} ×${s.count}`).join(' · ') || 'Satchel empty'}</p><p class="hint">${w.buffs.active.map((b) => `${BUFFS.find((d) => d.id === b.id)!.name}: ${Math.ceil(b.startedAt + b.duration - w.time)}s`).join(' · ')}</p><div class="stack-buttons"><button class="primary" data-action="resume">Resume the descent ${icon('arrow')}</button><button data-action="settings">Settings</button><button data-action="controls">Field guide</button><button data-action="restart">Replay this seed</button><button class="subtle" data-action="menu">End run & return to the threshold</button></div>`,
+      <section class="satchel-menu"><p class="eyebrow">SATCHEL</p>${
+        w.inventory.slots
+          .map((slot) => {
+            const item = ITEMS.find((i) => i.id === slot.id)!;
+            const buff = BUFFS.find((b) => b.id === item.buff);
+            return `<div class="satchel-row"><span style="color:${item.color}">${item.glyph}</span><div><strong>${item.name} ×${slot.count}</strong><p>${item.description}</p><small>Use time: ${item.useTime}s${buff ? ` · Duration: ${buff.duration}s` : ''}</small></div></div>`;
+          })
+          .join('') ||
+        '<p>SATCHEL EMPTY</p><p class="hint">Consumables can be found throughout the descent.</p>'
+      }</section><p class="hint">${w.buffs.active.map((b) => `${BUFFS.find((d) => d.id === b.id)!.name}: ${Math.ceil(b.startedAt + b.duration - w.time)}s`).join(' · ')}</p><div class="stack-buttons"><button class="primary" data-action="resume">Resume the descent ${icon('arrow')}</button><button data-action="settings">Settings</button><button data-action="controls">Field guide</button><button data-action="restart">Replay this seed</button><button class="subtle" data-action="menu">End run & return to the threshold</button></div>`,
     );
   }
 
@@ -355,14 +379,14 @@ export class Interface {
       'run',
       'Who will keep the oath?',
       `
-      <p class="dialog-copy">Four pilgrims. Four ways to answer the silence.</p>
-      <form id="run-form"><div id="character-gallery" role="img" aria-label="Four Pilgrims with their weapons. The selected Pilgrim is outlined in silver."></div><div class="weapon-grid character-grid">${CHARACTERS.map(
+      <p class="dialog-copy">Five pilgrims. Five ways to answer the silence.</p>
+      <form id="run-form"><div id="character-gallery" role="img" aria-label="Five Pilgrims with their weapons. The selected Pilgrim is outlined in silver."></div><div class="weapon-grid character-grid">${CHARACTERS.map(
         (character) => {
           return `<button type="button" class="weapon-choice ${this.runWeapon === character.id ? 'selected' : ''}" data-action="weapon:${character.id}" aria-pressed="${this.runWeapon === character.id}"><span class="eyebrow">${character.role}</span><strong>${character.name}</strong><span>${WEAPONS.find((w) => w.id === character.id)!.subtitle}</span><span class="selection-mark">${this.runWeapon === character.id ? 'OATH CHOSEN' : 'CHOOSE PILGRIM'}</span></button>`;
         },
       ).join(
         '',
-      )}</div><div id="character-details" aria-live="polite"></div><label class="seed-label" for="seed">RUN SEED <span>The same seed, the same descent.</span></label><div class="seed-input"><input id="seed" name="seed" value="${escape(this.randomSeed())}" maxlength="40" pattern="[a-zA-Z0-9 _-]+" title="Use letters, numbers, spaces, underscores, or hyphens" required autocomplete="off" spellcheck="false"/><button type="button" data-action="reroll" title="Generate another seed" aria-label="Generate another seed">↻</button></div><p class="hint">${w.save.tutorial ? 'Each chamber is a choice. Keep room in your satchel for what the dark gives back.' : 'New to the descent? Learn the rhythm from the main menu. Training is safe.'}</p><button type="submit" class="primary full">Light the candle ${icon('arrow')}</button></form>`,
+      )}</div><div id="character-details" aria-live="polite"></div><label class="seed-label" for="seed">RUN SEED <span>The same seed, the same descent.</span></label><div class="seed-input"><input id="seed" name="seed" value="${escape(this.randomSeed())}" maxlength="40" pattern="[a-zA-Z0-9 _-]+" title="Use letters, numbers, spaces, underscores, or hyphens" required autocomplete="off" spellcheck="false"/><button type="button" data-action="reroll" title="Generate another seed" aria-label="Generate another seed">↻</button></div><p class="hint">${w.save.tutorial ? 'Each chamber is a choice. Keep room in your satchel for what the dark gives back.' : 'New to the descent? Learn the rhythm from the main menu. Training is safe.'}</p><button type="button" class="subtle full" data-action="training">Practice with this Pilgrim</button><button type="submit" class="primary full">Light the candle ${icon('arrow')}</button></form>`,
       true,
     );
     w.selection = this.runWeapon;
@@ -382,7 +406,7 @@ export class Interface {
     submit.disabled = !unlocked;
     submit.innerHTML = unlocked
       ? `Light the candle ${icon('arrow')}`
-      : `Unlock ${c.name} in the Chronicle · ${c.id === 'twins' ? 4 : c.id === 'spear' ? 8 : 12} embers`;
+      : `Unlock ${c.name} in the Chronicle · ${c.id === 'twins' ? 4 : c.id === 'spear' ? 8 : c.id === 'shinobi' ? 16 : 12} embers`;
     this.dialog.querySelectorAll<HTMLElement>('.weapon-choice').forEach((b) => {
       b.querySelector('.selection-mark')!.textContent =
         b.dataset.action === `weapon:${c.id}` ? 'OATH CHOSEN' : 'CHOOSE PILGRIM';
@@ -399,7 +423,7 @@ export class Interface {
       help: string,
     ) =>
       key === 'quality'
-        ? `<label class="toggle-row"><span>Visual quality<small>Texture detail, shadows and atmosphere.</small></span><select data-setting="detail" aria-label="Visual quality">${['high', 'medium', 'low'].map((level) => `<option value="${level}" ${s.detail === level ? 'selected' : ''}>${level[0].toUpperCase() + level.slice(1)}</option>`).join('')}</select></label>`
+        ? `<label class="toggle-row"><span>Visual quality<small>Texture detail, shadows and atmosphere.</small></span><select data-setting="detail" aria-label="Visual quality">${GRAPHICS_LEVELS.map((level) => `<option value="${level}" ${s.detail === level ? 'selected' : ''}>${GRAPHICS[level].label}</option>`).join('')}</select></label>`
         : `<label class="toggle-row"><span>${label}<small>${help}</small></span><input data-setting="${key}" type="checkbox" ${s[key] ? 'checked' : ''}/></label>`;
     this.show(
       'settings',
@@ -414,9 +438,9 @@ export class Interface {
     if (key === 'master' || key === 'music' || key === 'sfx') {
       s[key] = Math.max(0, Math.min(1, Number(input.value) / 100));
       input.parentElement!.querySelector('output')!.value = `${input.value}%`;
-    } else if (key === 'detail' && ['high', 'medium', 'low'].includes(input.value)) {
-      s.detail = input.value as 'high' | 'medium' | 'low';
-      s.quality = s.detail !== 'low';
+    } else if (key === 'detail' && GRAPHICS_LEVELS.includes(input.value as typeof s.detail)) {
+      s.detail = graphicsLevel(input.value);
+      s.quality = !['low', 'very-low'].includes(s.detail);
     } else if (
       key === 'shake' ||
       key === 'flashes' ||
@@ -454,7 +478,7 @@ export class Interface {
         1,
       )
         .map((weapon, i) => {
-          const cost = [4, 8, 12][i],
+          const cost = [4, 8, 12, 16][i],
             unlocked = w.save.characters.includes(weapon.id) || w.save.unlocks.includes(weapon.id);
           return `<div><span>${icon('sword', 24)}</span><div><strong>${characterFor(weapon.id).name}</strong><p>${characterFor(weapon.id).role} · ${weapon.name}. ${weapon.description}</p></div><button data-action="unlock:${weapon.id}" ${unlocked || w.save.embers < cost ? 'disabled' : ''}>${unlocked ? 'UNLOCKED' : `${cost} EMBERS`}</button></div>`;
         })
@@ -475,7 +499,7 @@ export class Interface {
     this.show(
       'credits',
       'An original requiem',
-      `<p class="dialog-copy">Hollow Canticle is a small game about the moment before two blades meet.</p><div class="credits-text"><p>Architecture, characters, particles, and audio are built by the game. The original stone texture was generated with imagegen. The supplied concepts are references; none is a gameplay backdrop.</p><p>Made with TypeScript, Phaser 4, Three.js WebGL, Vite, and WebAudio. No backend. No accounts. No analytics.</p><p>Inspired by the craft of precision combat. An original world, with no affiliation to other games.</p><p class="eyebrow">VERSION 0.4.0 · CODE & ORIGINAL ASSETS: MIT</p></div><button class="primary full" data-action="back">Return to the threshold</button>`,
+      `<p class="dialog-copy">Hollow Canticle is a small game about the moment before two blades meet.</p><div class="credits-text"><p>Architecture, characters, particles, and audio are built by the game. The original stone texture was generated with imagegen. The supplied concepts are references; none is a gameplay backdrop.</p><p>Made with TypeScript, Phaser 4, Three.js WebGL, Vite, WebAudio, and Colyseus multiplayer. No accounts. No analytics.</p><p>Inspired by the craft of precision combat. An original world, with no affiliation to other games.</p><p class="eyebrow">VERSION 0.7.0 · CODE & ORIGINAL ASSETS: MIT</p></div><button class="primary full" data-action="back">Return to the threshold</button>`,
     );
   }
 
@@ -551,7 +575,7 @@ export class Interface {
     const debugState = document.querySelector('#debug-state');
     if (debugState) {
       const e = w.target;
-      debugState.textContent = `Time ${w.time.toFixed(2)} · HP ${Math.round(w.player.hp)} · ${w.player.state}\nPlayer ${w.player.x.toFixed(0)},${w.player.y.toFixed(0)} · Target ${w.focusedEnemy ?? 'free'} · Room ${w.roomId} · ${w.room.kind}\nParries ${w.stats.parries} / Perfect ${w.stats.perfects} · Empty ${w.player.emptyParries}\n${e ? `${e.def.id}: ${e.state} ${Math.max(0, w.time - e.stateAt).toFixed(2)} / ${e.strike.windup.toFixed(2)} ${e.strike.kind}` : 'No opponent'}\n${w.lab.animationName} @ ${w.lab.normalized.toFixed(2)}\nActive ${w.lab.hitWindow} · root ${w.lab.rootMotion.toFixed(2)}\nParryable ${e && ['slash', 'thrust'].includes(e.strike.kind) ? 'yes' : 'no (greatblade can perfect smash)'}\nReservations ${w.threats.reservations.map((r) => `${r.enemy}@${r.at.toFixed(2)}`).join(', ')}\nArsenal ${w.player.rangedCharges}/${w.character.ranged.charges} · ${w.projectiles.active.length} projectiles\n${w.projectiles.active.map((p) => `${p.kind} ${p.x.toFixed(0)},${p.y.toFixed(0)} v${Math.hypot(p.vx, p.vy).toFixed(0)} owner:${p.owner} parry:${p.parryable} return:${p.reflected}`).join(' / ')}\nReflections ${w.stats.reflections} · Items ${w.stats.itemsUsed} · Ranged hits ${w.stats.rangedHits}\nCamera ${w.presentation.mode} · ${w.presentation.fps} FPS\n${w.presentation.drawCalls} calls · ${Math.round(w.presentation.triangles / 1000)}k triangles`;
+      debugState.textContent = `Time ${w.time.toFixed(2)} · HP ${Math.round(w.player.hp)} · ${w.player.state}\nPlayer ${w.player.x.toFixed(0)},${w.player.y.toFixed(0)} · Target ${w.focusedEnemy ?? 'free'} · Room ${w.roomId} · ${w.room.kind}\nParries ${w.stats.parries} / Perfect ${w.stats.perfects} · Empty ${w.player.emptyParries}\n${e ? `${e.def.id}: ${e.state} ${Math.max(0, w.time - e.stateAt).toFixed(2)} / ${e.strike.windup.toFixed(2)} ${e.strike.kind}` : 'No opponent'}\n${w.lab.animationName} @ ${w.lab.normalized.toFixed(2)} · ${w.lab.locomotion} / ${w.lab.action} · ${w.lab.weights}\nActive ${w.lab.hitWindow} · root ${w.lab.rootMotion.toFixed(2)}\nParryable ${e && ['slash', 'thrust'].includes(e.strike.kind) ? 'yes' : 'no (greatblade can perfect smash)'}\nReservations ${w.threats.reservations.map((r) => `${r.enemy}@${r.at.toFixed(2)}`).join(', ')}\nArsenal ${w.player.rangedCharges}/${w.character.ranged.charges} · ${w.projectiles.active.length} projectiles\n${w.projectiles.active.map((p) => `${p.kind} ${p.x.toFixed(0)},${p.y.toFixed(0)} v${Math.hypot(p.vx, p.vy).toFixed(0)} owner:${p.owner} parry:${p.parryable} return:${p.reflected}`).join(' / ')}\nReflections ${w.stats.reflections} · Items ${w.stats.itemsUsed} · Ranged hits ${w.stats.rangedHits}\nCamera ${w.presentation.mode} · ${w.presentation.fps} FPS\n${w.presentation.drawCalls} calls · ${Math.round(w.presentation.triangles / 1000)}k triangles`;
     }
   }
   private updateSound(): void {
@@ -587,7 +611,7 @@ export class Interface {
       <label>Biome <select id="lab-biome">${BIOMES.map((b, i) => `<option value="${i}">${b.short}</option>`).join('')}</select></label>
       <label>Pattern <select id="lab-pattern"><option value="-1">Adaptive</option><option value="0">Sequence 1</option><option value="1">Sequence 2</option><option value="2">Sequence 3</option><option value="3">Sequence 4</option></select></label>
       <label>Camera <select id="lab-camera"><option value="auto">Automatic</option><option value="exploration">Exploration</option><option value="combat-wide">Combat wide</option><option value="duel">Duel</option><option value="boss">Boss</option></select></label>
-      <label>Clip <select id="lab-clip">${['live', 'slash', 'thrust', 'sweep', 'smash', 'grab', 'feint', 'finisher'].map((c) => `<option>${c}</option>`).join('')}</select></label>
+      <label>Review actor <select id="lab-actor"><option value="player">Player</option><option value="enemy">Focused enemy</option></select></label><label>Velocity <input id="lab-velocity" type="range" min="0" max="300" value="0"/></label><label>Turn rate <input id="lab-turn" type="range" min="-3" max="3" step="0.1" value="0"/></label><label>Close combat <input id="lab-close" type="checkbox"/></label><label>Room collision overlay <input id="lab-geometry" type="checkbox"/></label><label>Clip <select id="lab-clip">${['live', ...LOCOMOTION_STATES, 'slash', 'thrust', 'sweep', 'smash', 'grab', 'feint', 'finisher', 'riposte', 'parry', 'dodge'].map((c) => `<option>${c}</option>`).join('')}</select></label>
       <label>Execution <select id="lab-execution"><option value="0">I</option><option value="1">II</option><option value="2">III</option></select></label>
       <label>Freeze / scrub <input id="lab-freeze" type="checkbox"/></label><label>Clip time <input id="lab-scrub" type="range" min="0" max="1" step="0.01" value="0"/></label>
       <label>Step amount <select id="lab-step-size"><option value="0.008333333333333333">One frame</option><option value="0.05">50 ms</option><option value="0.1">100 ms</option><option value="0.5">500 ms</option></select></label>
@@ -668,6 +692,24 @@ export class Interface {
     panel
       .querySelector('#lab-camera')!
       .addEventListener('change', () => (w.lab.camera = value('lab-camera')));
+    panel
+      .querySelector('#lab-actor')!
+      .addEventListener('change', () => (w.lab.actor = value('lab-actor')));
+    panel
+      .querySelector('#lab-velocity')!
+      .addEventListener('input', () => (w.lab.velocity = Number(value('lab-velocity'))));
+    panel
+      .querySelector('#lab-turn')!
+      .addEventListener('input', () => (w.lab.turnRate = Number(value('lab-turn'))));
+    panel
+      .querySelector('#lab-close')!
+      .addEventListener(
+        'change',
+        (e) => (w.lab.closeCombat = (e.target as HTMLInputElement).checked),
+      );
+    panel
+      .querySelector('#lab-geometry')!
+      .addEventListener('change', (e) => (w.lab.geometry = (e.target as HTMLInputElement).checked));
     panel
       .querySelector('#lab-clip')!
       .addEventListener('change', () => (w.lab.clip = value('lab-clip')));

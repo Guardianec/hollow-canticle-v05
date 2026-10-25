@@ -182,6 +182,12 @@ export function attackClip(
   const poses = attackKeys[kind].map((p) => structuredClone(p));
   // Authored motion vocabulary changes the full body, not the combat clock.
   for (const [i, p] of poses.entries()) {
+    if (id === 'shinobi') {
+      p.torso = [i === 0 ? 0.2 : 0.32, i === 0 ? -0.45 : 0.55, 0];
+      p.leftArm = [-0.8, 0.35, 0.3];
+      p.lift = -0.07;
+      p.advance = (p.advance ?? 0) * 0.65;
+    }
     if (id === 'duelist') {
       p.leftArm = [0.25, 0.6, -0.65];
       p.leftLeg = [i === 0 ? -0.35 : 0.2, 0, -0.08];
@@ -273,6 +279,44 @@ export function attackClip(
 
 // Each weapon has three different body mechanics, with one shared authoritative contact.
 const executionPoses: Record<string, [KeyPose, KeyPose][]> = {
+  shinobi: [
+    [
+      {
+        torso: [0.2, -0.5, 0],
+        rightArm: [-1.5, -0.7, -0.4],
+        leftArm: [-0.7, 0.3, 0.3],
+        lift: -0.1,
+      },
+      {
+        torso: [0.35, 0.7, 0.1],
+        rightArm: [-1.1, 1.3, 0.4],
+        rightForearm: [-0.1, 0, 0],
+        advance: 0.28,
+        lift: -0.12,
+      },
+    ],
+    [
+      { torso: [0.1, -0.3, 0], rightArm: [-0.5, -0.4, 0], rightForearm: [-1.4, 0, 0], lift: -0.08 },
+      {
+        torso: [0.38, 0.2, 0],
+        rightArm: [-1.4, 0.2, 0],
+        rightForearm: [-0.08, 0, 0],
+        leftArm: [-0.5, 0.6, 0.4],
+        advance: 0.42,
+        lift: -0.15,
+      },
+    ],
+    [
+      { torso: [0.18, 0.5, 0], rightArm: [-1, 0.8, 0.4], leftArm: [-0.5, 0.3, 0.3], lift: -0.1 },
+      {
+        torso: [0.3, -0.8, -0.08],
+        rightArm: [-1.2, -1.1, -0.5],
+        rightForearm: [-0.15, 0, 0],
+        advance: 0.18,
+        lift: -0.08,
+      },
+    ],
+  ],
   sword: [
     [
       {

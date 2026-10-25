@@ -1,0 +1,27 @@
+{
+  "date": "2026-10-25",
+  "scenario": "Production browser: four Pilgrims, eight enemies, animated locomotion, one perfect-deflection effect",
+  "notes": "One-second samples after at least two seconds of profile warm-up. Single local machine, not full dungeon or online FPS guarantees. Geometry and texture figures are resource counts, not memory bytes.",
+  "samples": [
+    {
+      "profile": "very-low",
+      "observed": "Very Low · 60 FPS · 77 calls · 69 099 triangles · 124 geometries / 96 textures"
+    },
+    {
+      "profile": "low",
+      "observed": "Low · 60 FPS · 77 calls · 69 099 triangles · 124 geometries / 96 textures"
+    },
+    {
+      "profile": "medium",
+      "observed": "Medium · 60 FPS · 133 calls · 137 970 triangles · 124 geometries / 98 textures"
+    },
+    {
+      "profile": "high",
+      "observed": "High · 60 FPS · 133 calls · 250 708 triangles · 124 geometries / 98 textures"
+    },
+    {
+      "profile": "extreme",
+      "observed": "Extreme · 60 FPS · 133 calls · 250 708 triangles · 124 geometries / 98 textures"
+    }
+  ]
+}

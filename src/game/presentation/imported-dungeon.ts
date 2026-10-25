@@ -1,6 +1,6 @@
 import * as T from 'three';
-import { ROOM_PITCH, doorPosition, type Floor } from '../dungeon';
-import { geometryFor } from '../geometry';
+import { ROOM_PITCH, doorPosition, type Floor, type Room } from '../dungeon';
+import { geometryFor, insideRoom, inDoorway } from '../geometry';
 import { Random } from '../random';
 import { SCALE, type Materials } from './materials';
 import { globalPosition, type DungeonArt } from './architecture';
@@ -29,6 +29,7 @@ export function buildImportedDungeon(floor: Floor, m: Materials, assets: AssetMa
   const family = ['ruins', 'shrine', 'fungal', 'frozen', 'foundry'][floor.biome];
   const distantPlacements = new Map<string, T.Matrix4[]>();
   const dummy = new T.Object3D();
+  let currentRoom: Room;
   const place = (
     id: string,
     x: number,
@@ -39,6 +40,23 @@ export function buildImportedDungeon(floor: Floor, m: Materials, assets: AssetMa
     sz = 1,
     rotation = 0,
   ) => {
+    if (
+      currentRoom &&
+      /wall|column|rubble|tomb|pedestal|statue|growth|snowbank|furnace|arch_broken/.test(id) &&
+      y >= -0.1
+    ) {
+      const localX = x / SCALE - currentRoom.x * ROOM_PITCH.x + 560;
+      const localY = z / SCALE - currentRoom.y * ROOM_PITCH.y + 380;
+      const layout = geometryFor(currentRoom);
+      const collider = layout.obstacles.some(
+        (o) => Math.hypot(o.x - localX, o.y - localY) < o.radius,
+      );
+      if (
+        inDoorway(layout.sockets, localX, localY, 35) ||
+        (insideRoom(currentRoom, localX, localY) && !collider)
+      )
+        return;
+    }
     id = id.replace('ruins_', family + '_');
     dummy.position.set(x, y, z);
     dummy.scale.set(sx, sy, sz);
@@ -76,6 +94,7 @@ export function buildImportedDungeon(floor: Floor, m: Materials, assets: AssetMa
     });
   };
   for (const room of floor.rooms) {
+    currentRoom = room;
     art.group.add(roomDecals(room, floor.biome));
     if (floor.biome === 1) {
       const water = shrineWater(room, m);
@@ -107,9 +126,9 @@ export function buildImportedDungeon(floor: Floor, m: Materials, assets: AssetMa
       for (const edge of tile.edge) {
         const dx = [1, 0, -1, 0][edge],
           dz = [0, 1, 0, -1][edge];
-        const port =
-          ((tile.x < 110 || tile.x > 1010) && Math.abs(tile.y - 380) < 90) ||
-          ((tile.y < 110 || tile.y > 650) && Math.abs(tile.x - 560) < 80);
+        const port = !geo.walls.some(
+          (w) => w.dx === dx && w.dy === dz && w.x === tile.x + dx * 20 && w.y === tile.y + dz * 20,
+        );
         if ((tile.x + tile.y) % 120 === 0)
           place('ruins_deep_support', x + dx * 0.3, y - 0.4, z + dz * 0.3, 0.8, 1, 0.8);
         if (!port && rng.next() < 0.35)
@@ -308,8 +327,11 @@ export function buildImportedDungeon(floor: Floor, m: Materials, assets: AssetMa
       lod.addLevel(group, level === 0 ? 0 : level === 1 ? 32 : 65);
     }
     art.group.add(lod);
-    for (const [id, matrices] of distantPlacements)
-      art.group.add(...assets.instanceBatches(id, 2, matrices));
+    for (const [id, matrices] of distantPlacements) {
+      const batches = assets.instanceBatches(id, 2, matrices);
+      batches.forEach((batch) => (batch.userData.backgroundArchitecture = true));
+      art.group.add(...batches);
+    }
   }
   return art;
 }

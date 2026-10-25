@@ -42,11 +42,11 @@ export class DungeonScene extends Phaser.Scene {
       if (actions[key]) this.world.input(actions[key]);
       if (key === '1') {
         if (this.world.onlineCycle) this.world.onlineCycle(-1);
-        else this.world.inventory.cycle(-1);
+        else this.world.cycleItem(-1);
       }
       if (key === '2') {
         if (this.world.onlineCycle) this.world.onlineCycle(1);
-        else this.world.inventory.cycle(1);
+        else this.world.cycleItem(1);
       }
     };
     const up = (event: KeyboardEvent) => this.keys.delete(event.key.toLowerCase());

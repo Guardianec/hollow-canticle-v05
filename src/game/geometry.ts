@@ -22,9 +22,29 @@ export interface Geometry {
   decorations: Decoration[];
   lights: { x: number; y: number }[];
   shape: string;
+  sockets: DoorSocket[];
+  walls: WallSegment[];
+}
+export interface DoorSocket {
+  x: number;
+  y: number;
+  dx: number;
+  dy: number;
+  width: number;
+}
+export interface WallSegment {
+  x: number;
+  y: number;
+  dx: number;
+  dy: number;
+  length: number;
 }
 const cache = new WeakMap<Room, Geometry>();
-export function insideRoom(room: Room, x: number, y: number): boolean {
+const layouts = new WeakMap<
+  Room,
+  { shape: string; cells: Set<string>; tiles: Tile[]; sockets: DoorSocket[]; walls: WallSegment[] }
+>();
+function footprint(room: Room, x: number, y: number): boolean {
   if (x < 50 || x > 1070 || y < 65 || y > 700) return false;
   const rect = (cx: number, cy: number, w: number, h: number) =>
     Math.abs(x - cx) <= w / 2 && Math.abs(y - cy) <= h / 2;
@@ -61,6 +81,73 @@ export function insideRoom(room: Room, x: number, y: number): boolean {
     return arms || rect(560, 380, 510, 400) || rect(900, 200, 280, 180) || rect(225, 570, 280, 150);
   return arms || rect(575, 385, 540, 365) || rect(290, 230, 230, 180) || rect(850, 550, 220, 190);
 }
+function layoutFor(room: Room) {
+  const existing = layouts.get(room);
+  if (existing?.shape === room.template) return existing;
+  const tiles: Tile[] = [],
+    cells = new Set<string>();
+  for (let y = 80; y <= 680; y += CELL)
+    for (let x = 80; x <= 1040; x += CELL)
+      if (footprint(room, x, y)) {
+        cells.add(`${x},${y}`);
+        tiles.push({
+          x,
+          y,
+          elevation: elevationAt(room, x, y),
+          zone:
+            (Math.abs(y - 380) < 65 && (x < 320 || x > 840)) ||
+            (Math.abs(x - 560) < 65 && (y < 210 || y > 580))
+              ? 'bridge'
+              : y < 270
+                ? 'stairs'
+                : 'floor',
+          edge: [],
+        });
+      }
+  const sockets: DoorSocket[] =
+    room.template === 'duel-arena'
+      ? []
+      : [
+          { x: 80, y: 380, dx: -1, dy: 0, width: 80 },
+          { x: 1040, y: 380, dx: 1, dy: 0, width: 80 },
+          { x: 560, y: 86, dx: 0, dy: -1, width: 120 },
+          { x: 560, y: 674, dx: 0, dy: 1, width: 120 },
+        ];
+  const walls: WallSegment[] = [];
+  for (const tile of tiles)
+    [
+      [1, 0],
+      [0, 1],
+      [-1, 0],
+      [0, -1],
+    ].forEach(([dx, dy], edge) => {
+      if (cells.has(`${tile.x + dx * CELL},${tile.y + dy * CELL}`)) return;
+      tile.edge.push(edge);
+      const segment = {
+        x: tile.x + (dx * CELL) / 2,
+        y: tile.y + (dy * CELL) / 2,
+        dx,
+        dy,
+        length: CELL,
+      };
+      if (!inDoorway(sockets, segment.x, segment.y, CELL / 2)) walls.push(segment);
+    });
+  const layout = { shape: room.template, cells, tiles, sockets, walls };
+  layouts.set(room, layout);
+  return layout;
+}
+export function inDoorway(sockets: DoorSocket[], x: number, y: number, padding = 0): boolean {
+  return sockets.some((s) =>
+    s.dx
+      ? Math.abs(y - s.y) <= s.width / 2 + padding && Math.abs(x - s.x) < 130 + padding
+      : Math.abs(x - s.x) <= s.width / 2 + padding && Math.abs(y - s.y) < 130 + padding,
+  );
+}
+export function insideRoom(room: Room, x: number, y: number): boolean {
+  const cx = Math.floor((x - 60) / CELL) * CELL + 80;
+  const cy = Math.floor((y - 60) / CELL) * CELL + 80;
+  return layoutFor(room).cells.has(`${cx},${cy}`);
+}
 export function canStand(room: Room, x: number, y: number, radius = 16): boolean {
   for (const [dx, dy] of [
     [0, 0],
@@ -70,6 +157,8 @@ export function canStand(room: Room, x: number, y: number, radius = 16): boolean
     [0, -radius],
     [radius * 0.7, radius * 0.7],
     [-radius * 0.7, -radius * 0.7],
+    [-radius * 0.7, radius * 0.7],
+    [radius * 0.7, -radius * 0.7],
   ])
     if (!insideRoom(room, x + dx, y + dy)) return false;
   return true;
@@ -83,46 +172,25 @@ export function elevationAt(room: Room, _x: number, y: number): number {
 }
 export function geometryFor(room: Room): Geometry {
   const old = cache.get(room);
-  if (old) return old;
+  if (old?.shape === room.template) return old;
   const rng = new Random(room.artSeed + ':decoration'),
-    tiles: Tile[] = [],
     decorations: Decoration[] = [];
-  for (let y = 80; y <= 680; y += CELL)
-    for (let x = 80; x <= 1040; x += CELL) {
-      if (!insideRoom(room, x, y)) continue;
-      const edge: number[] = [];
-      [
-        [1, 0],
-        [0, 1],
-        [-1, 0],
-        [0, -1],
-      ].forEach(([dx, dy], i) => {
-        if (!insideRoom(room, x + dx * CELL, y + dy * CELL)) edge.push(i);
-      });
-      const bridge =
-        (Math.abs(y - 380) < 65 && (x < 320 || x > 840)) ||
-        (Math.abs(x - 560) < 65 && (y < 210 || y > 580));
-      tiles.push({
-        x,
-        y,
+  for (const tile of layoutFor(room).tiles) {
+    const { x, y, edge } = tile;
+    if (edge.length && rng.next() < 0.3 && x > 130 && x < 990 && y > 135 && y < 630) {
+      const kind = rng.weighted(['rubble', 'plant', 'urn', 'candle'] as const, (k) =>
+        k === 'plant' ? 4 : k === 'rubble' ? 3 : 1,
+      );
+      decorations.push({
+        x: x + rng.int(-10, 10),
+        y: y + rng.int(-10, 10),
         elevation: elevationAt(room, x, y),
-        zone: bridge ? 'bridge' : y < 270 ? 'stairs' : 'floor',
-        edge,
+        kind,
+        scale: rng.int(6, 14) / 10,
+        rotation: rng.next() * Math.PI * 2,
       });
-      if (edge.length && rng.next() < 0.3 && x > 130 && x < 990 && y > 135 && y < 630) {
-        const kind = rng.weighted(['rubble', 'plant', 'urn', 'candle'] as const, (k) =>
-          k === 'plant' ? 4 : k === 'rubble' ? 3 : 1,
-        );
-        decorations.push({
-          x: x + rng.int(-10, 10),
-          y: y + rng.int(-10, 10),
-          elevation: elevationAt(room, x, y),
-          kind,
-          scale: rng.int(6, 14) / 10,
-          rotation: rng.next() * Math.PI * 2,
-        });
-      }
     }
+  }
   const columns = (
     room.template === 'duel-arena'
       ? []
@@ -183,7 +251,17 @@ export function geometryFor(room: Room): Geometry {
     { x: 560, y: 130 },
     { x: 560, y: 630 },
   ].filter((p) => insideRoom(room, p.x, p.y));
-  const geometry = { tiles, obstacles, decorations, lights, shape: room.template };
+  const layout = layoutFor(room);
+  // Both collision and visible masonry use the same cell edges and socket exclusions.
+  const geometry = {
+    tiles: layout.tiles,
+    obstacles,
+    decorations: decorations.filter((d) => !inDoorway(layout.sockets, d.x, d.y, 24)),
+    lights,
+    shape: room.template,
+    sockets: layout.sockets,
+    walls: layout.walls,
+  };
   cache.set(room, geometry);
   return geometry;
 }

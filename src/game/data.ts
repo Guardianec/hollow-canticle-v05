@@ -375,6 +375,18 @@ export const WEAPONS: Weapon[] = [
     pressure: 25,
     parry: 0.2,
   },
+  {
+    id: 'shinobi',
+    name: 'Cinder Edge',
+    subtitle: 'KATANA & SPRINGLOCK',
+    description: 'Deflect, riposte, break guard. A riposte cannot kill; finish the opening.',
+    startup: 0.12,
+    recovery: 0.24,
+    reach: 118,
+    damage: 9,
+    pressure: 11,
+    parry: 0.2,
+  },
 ];
 
 export const BIOMES = [

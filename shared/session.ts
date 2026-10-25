@@ -1,4 +1,11 @@
-import { World, distance, angleDifference, type Enemy, type Player } from '../src/game/world';
+import {
+  World,
+  distance,
+  angleDifference,
+  type Enemy,
+  type Player,
+  type Effect,
+} from '../src/game/world';
 import { defaultSave } from '../src/game/save';
 import { BALANCE, ENEMIES } from '../src/game/data';
 import { doorPosition, makeFloor, type Room } from '../src/game/dungeon';
@@ -9,6 +16,7 @@ import { LootDirector } from '../src/game/loot';
 import { ACTIONS, type Input, type OnlineMode } from './protocol';
 import { encounter, eliteFor, scaling } from './scaling';
 import { configureArena } from './arena';
+import { nonlethalDamage } from '../src/game/riposte';
 
 export interface Member {
   id: string;
@@ -23,7 +31,7 @@ export interface Member {
   rescues: number;
   score: number;
 }
-export interface GameEvent {
+export interface GameEvent extends Partial<Omit<Effect, 'kind' | 'x' | 'y'>> {
   type: string;
   x: number;
   y: number;
@@ -63,7 +71,8 @@ export class Session {
   private rewarded = new Set<string>();
   private rewardDelay = new Map<string, number>();
   private fallen = new Set<string>();
-  private duelStrikes: { attacker: Member; damage: number; pressure: number }[] = [];
+  private duelStrikes: { attacker: Member; damage: number; pressure: number; riposte: boolean }[] =
+    [];
   private pendingTransition?: { world: World; at: number };
   constructor(
     readonly mode: OnlineMode,
@@ -173,7 +182,12 @@ export class Session {
       ...(this.mode === 'duel'
         ? {
             strike: (_e: Enemy, damage: number, pressure: number) => {
-              this.duelStrikes.push({ attacker: member, damage, pressure });
+              this.duelStrikes.push({
+                attacker: member,
+                damage,
+                pressure,
+                riposte: world.player.attackType === 'riposte',
+              });
               return true;
             },
             pressure: (_e: Enemy, pressure: number) => {
@@ -236,7 +250,7 @@ export class Session {
       if (this.mode === 'duel' && ['item', 'technique'].includes(action)) continue;
       if (input[action]) w.input(action);
     }
-    if (input.cycle) w.inventory.cycle(Math.sign(input.cycle));
+    if (input.cycle) w.cycleItem(Math.sign(input.cycle));
   }
   // shortcut: validates recorded contacts; upgrade to rollback after multi-hit fairness review.
   private compensate(member: Member, at: number): boolean {
@@ -326,7 +340,7 @@ export class Session {
     this.updateDeaths();
     if (this.mode === 'duel') {
       for (const hit of this.duelStrikes.splice(0))
-        this.duelStrike(hit.attacker, hit.damage, hit.pressure);
+        this.duelStrike(hit.attacker, hit.damage, hit.pressure, hit.riposte);
       this.syncDuelTargets();
       this.primary.arsenal.update(dt);
       this.updateDeaths();
@@ -348,7 +362,7 @@ export class Session {
     for (const m of this.members.values()) {
       if (m.world.player.hp <= 0) m.world.player.state = 'dead';
       for (const effect of m.world.effects.splice(0))
-        this.events.push({ type: effect.kind, x: effect.x, y: effect.y, actor: m.id });
+        this.events.push({ ...effect, type: effect.kind, actor: m.id });
     }
     if (!this.worlds.some((world) => world.player.hp > 0)) {
       this.ended = true;
@@ -538,7 +552,7 @@ export class Session {
       this.events.push({ type: 'postureBreak', x: w.player.x, y: w.player.y });
     }
   }
-  private duelStrike(attacker: Member, damage: number, pressure: number): void {
+  private duelStrike(attacker: Member, damage: number, pressure: number, riposte = false): void {
     const defender = this.opponent(attacker);
     if (!defender?.connected || defender.world.player.hp <= 0) return;
     const a = attacker.world,
@@ -577,7 +591,12 @@ export class Session {
       p.focus = Math.min(100, p.focus + (perfect ? 18 : 9));
       p.posture = Math.max(0, p.posture - (perfect ? 20 : 8));
       p.state = 'idle';
-      this.duelPressure(a, perfect ? BALANCE.perfectPressure : BALANCE.parryPressure);
+      d.offerRiposte(d.enemies[0], perfect);
+      this.duelPressure(
+        a,
+        (perfect ? BALANCE.perfectPressure : BALANCE.parryPressure) *
+          (d.weapon.id === 'shinobi' ? (perfect ? 1.4 : 1.2) : 1),
+      );
       if (perfect) {
         d.stats.perfects++;
         if (d.weapon.id === 'sword') d.rechargeRanged(1);
@@ -590,7 +609,7 @@ export class Session {
       });
     } else if (defense === 'hit') {
       const before = { ...p };
-      d.hurt(damage, 'THE OPPOSING OATH');
+      d.hurt(riposte ? nonlethalDamage(p.hp, damage) : damage, 'THE OPPOSING OATH');
       this.duelPressure(d, pressure);
       this.contacts.push({
         at: d.time,

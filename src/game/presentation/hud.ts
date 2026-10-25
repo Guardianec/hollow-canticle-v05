@@ -2,6 +2,7 @@ import { World } from '../world';
 import { BIOMES } from '../data';
 import { ITEMS } from '../items';
 import { BUFFS } from '../buffs';
+import { trainingStages } from '../training';
 const safe = (s: string) =>
   s.replace(
     /[&<>"']/g,
@@ -24,6 +25,8 @@ export class Hud {
   private lastUpdate = 0;
   private lastCharges = 0;
   private restoredUntil = 0;
+  private lastItem = '';
+  private selectedUntil = 0;
   constructor(
     parent: HTMLElement,
     private world: World,
@@ -90,26 +93,9 @@ export class Hud {
       Math.max(0, Math.min(100, value)) +
       '%"></i></div>';
     const toast = w.toast && w.toast.until > w.time ? w.toast : undefined;
-    const training = [
-      ['move', 'Find your footing', 'WASD to move through the world.'],
-      ['attack', 'Press the advantage', 'J / left mouse to strike.'],
-      ['parry', 'Meet the blade', 'K / right mouse as a normal strike lands.'],
-      ['perfect', 'Find the silver instant', 'Deflect at the last instant for a perfect parry.'],
-      ['dodge', 'Leave only a shadow', 'Space evades sweeps, grabs and heavy smashes.'],
-      ['finisher', 'Keep your oath', 'Break their guard, approach and press E.'],
-      [
-        'ranged',
-        'Offer silver to the dark',
-        'R / middle mouse spends a charge. Charges return one at a time.',
-      ],
-      ['item', 'Drink between the strikes', 'Q uses a consumable. 1 / 2 cycles your satchel.'],
-      ['projectile', 'Deflect the arrow', 'K as an arrow or orb makes contact.'],
-      [
-        'reflection',
-        'Return their oath',
-        'Deflect in the final silver instant to reflect it back.',
-      ],
-    ].find(([id]) => !w.trainingDone.has(id));
+    const training = trainingStages(w.weapon.id === 'shinobi').find(
+      ([id]) => !w.trainingDone.has(id),
+    );
     this.root.classList.toggle('duel-hud', duel > 0.5);
     this.root.classList.toggle('finisher-hud', w.player.state === 'finisher');
     this.root.dataset.camera = w.presentation.mode;
@@ -185,19 +171,11 @@ export class Hud {
         : '') +
       (w.training && training
         ? '<div class="training-note"><small>THE PRACTICE OF STEEL · ' +
-          [
-            'move',
-            'attack',
-            'parry',
-            'perfect',
-            'dodge',
-            'finisher',
-            'ranged',
-            'item',
-            'projectile',
-            'reflection',
-          ].filter((id) => w.trainingDone.has(id)).length +
-          '/10</small><strong>' +
+          trainingStages(w.weapon.id === 'shinobi').filter(([id]) => w.trainingDone.has(id))
+            .length +
+          '/' +
+          trainingStages(w.weapon.id === 'shinobi').length +
+          '</small><strong>' +
           training[1] +
           '</strong><p>' +
           training[2] +
@@ -208,6 +186,21 @@ export class Hud {
       '<small>' +
       w.relics.map((r) => '<span title="' + safe(r.name) + '">' + r.glyph + '</span>').join('') +
       '</small></div>';
+    const selected = w.inventory.item;
+    if (selected && selected.id !== this.lastItem) {
+      this.lastItem = selected.id;
+      this.selectedUntil = w.time + 2.2;
+    }
+    const slots = w.inventory.slots
+      .map((slot, i) => {
+        const item = ITEMS.find((d) => d.id === slot.id)!;
+        return `<div class="quick-item ${i === w.inventory.selected ? 'selected' : ''}" style="--item-color:${item.color}" aria-label="${item.name} ×${slot.count}${i === w.inventory.selected ? ', selected' : ''}" title="${item.description}"><span>${item.glyph}</span><small>×${slot.count}</small><b>${item.name}</b></div>`;
+      })
+      .join('');
+    this.root.insertAdjacentHTML(
+      'beforeend',
+      `<div class="quickbar"><div class="quick-items">${slots || '<span>SATCHEL EMPTY</span>'}</div><small><kbd>1</kbd> / <kbd>2</kbd> change · <kbd>Q</kbd> use</small>${selected && w.time < this.selectedUntil ? `<div class="item-selection-feedback" role="status"><strong>${selected.name}</strong><span>${selected.description}</span></div>` : ''}</div>${p.riposteUntil > w.time ? '<div class="riposte-ready">RIPOSTE READY <kbd>J</kbd></div>' : ''}${w.training ? '<button class="skip-training" data-action="menu">Skip training</button>' : ''}`,
+    );
     const ranged = w.character.ranged;
     this.root.insertAdjacentHTML(
       'beforeend',

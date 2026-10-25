@@ -54,10 +54,31 @@ describe('Blender runtime contract', () => {
           const object = gltf.scene.getObjectByName(lod.node)!;
           expect(object, id).toBeDefined();
           manager.templates.set(lod.node, object);
+          if (id === 'shinobi') {
+            expect(object.userData.design).toContain('no knight cuirass');
+            const families = new Set<string>();
+            object.traverse((child) => {
+              if (child instanceof T.Mesh)
+                for (const material of Array.isArray(child.material)
+                  ? child.material
+                  : [child.material])
+                  families.add(material.name);
+            });
+            expect(families.has('shinobi_cloth')).toBe(true);
+            expect(families.has('shinobi_lacquer')).toBe(true);
+            expect(families.has('crimson_cloth')).toBe(false);
+          }
           if (asset.kind === 'character')
-            expect(['sword', 'twins', 'spear', 'great', 'bow', 'bell', 'claw']).toContain(
-              object.userData.weapon,
-            );
+            expect([
+              'sword',
+              'twins',
+              'spear',
+              'great',
+              'shinobi',
+              'bow',
+              'bell',
+              'claw',
+            ]).toContain(object.userData.weapon);
           const box = new T.Box3().setFromObject(object);
           expect(
             [box.min.x, box.min.y, box.min.z, box.max.x, box.max.y, box.max.z].every(

@@ -1,5 +1,6 @@
 import { WEAPONS, RELICS } from './data';
 import type { RunStats } from './world';
+import { graphicsLevel, type GraphicsLevel } from './graphics';
 
 export interface Settings {
   master: number;
@@ -10,13 +11,14 @@ export interface Settings {
   assist: boolean;
   reducedMotion: boolean;
   quality: boolean;
-  detail: 'high' | 'medium' | 'low';
+  detail: GraphicsLevel;
   strongOutline: boolean;
 }
 export interface Save {
   version: 2;
   settings: Settings;
   tutorial: boolean;
+  tutorialPrompted: boolean;
   runs: number;
   bestDepth: number;
   kills: number;
@@ -70,6 +72,7 @@ export const defaultSave = (): Save => ({
     strongOutline: false,
   },
   tutorial: false,
+  tutorialPrompted: false,
   runs: 0,
   bestDepth: 0,
   kills: 0,
@@ -111,18 +114,17 @@ export function parseSave(raw: string | null): Save {
       'strongOutline',
     ] as const)
       if (typeof settings[key] === 'boolean') fallback.settings[key] = settings[key];
-    fallback.settings.detail =
-      settings.detail === 'high' || settings.detail === 'medium' || settings.detail === 'low'
-        ? settings.detail
-        : fallback.settings.quality
-          ? 'high'
-          : 'low';
-    fallback.settings.quality = fallback.settings.detail !== 'low';
+    fallback.settings.detail = graphicsLevel(settings.detail, fallback.settings.quality);
+    fallback.settings.quality = !['low', 'very-low'].includes(fallback.settings.detail);
     for (const key of ['runs', 'bestDepth', 'kills', 'embers'] as const) {
       const v = source[key];
       if (typeof v === 'number' && Number.isFinite(v)) fallback[key] = Math.max(0, Math.floor(v));
     }
     fallback.tutorial = source.tutorial === true;
+    fallback.tutorialPrompted =
+      typeof source.tutorialPrompted === 'boolean'
+        ? source.tutorialPrompted
+        : fallback.tutorial || fallback.runs > 0;
     fallback.weapons = [
       'sword',
       ...WEAPONS.filter(
@@ -132,12 +134,12 @@ export function parseSave(raw: string | null): Save {
     fallback.relics = RELICS.filter(
       (r) => Array.isArray(source.relics) && source.relics.includes(r.id),
     ).map((r) => r.id);
-    fallback.unlocks = ['twins', 'spear', 'great'].filter(
+    fallback.unlocks = ['twins', 'spear', 'great', 'shinobi'].filter(
       (id) => Array.isArray(source.unlocks) && source.unlocks.includes(id),
     );
     fallback.characters = [
       'sword',
-      ...['twins', 'spear', 'great'].filter(
+      ...['twins', 'spear', 'great', 'shinobi'].filter(
         (id) =>
           fallback.unlocks.includes(id) ||
           fallback.weapons.includes(id) ||

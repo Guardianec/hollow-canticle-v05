@@ -158,9 +158,9 @@ export function buildDungeon(floor: Floor, m: Materials, assets?: AssetManager):
         if ((tile.x + tile.y) % 120 === 0) {
           box('darkStone', x + dx * 0.36, h - 4, z + dz * 0.36, 0.95, 7, 0.95, 0, '#7b8e95');
         }
-        const port =
-          ((tile.x < 110 || tile.x > 1010) && Math.abs(tile.y - 380) < 90) ||
-          ((tile.y < 110 || tile.y > 650) && Math.abs(tile.x - 560) < 80);
+        const port = !geo.walls.some(
+          (w) => w.dx === dx && w.dy === dz && w.x === tile.x + dx * 20 && w.y === tile.y + dz * 20,
+        );
         if (!port && rng.next() > 0.32) {
           const hh = tile.zone === 'bridge' ? 0.45 : rng.next() > 0.75 ? 1.4 : 0.7;
           box(

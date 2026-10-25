@@ -38,6 +38,9 @@ const fields = [
   'dodgeReady',
   'immunity',
   'counterUntil',
+  'riposteUntil',
+  'riposteTarget',
+  'ripostePerfect',
   'attackHit',
   'dx',
   'dy',
@@ -124,14 +127,38 @@ export class OnlineConnection {
     room.onMessage('event', (event: GameEvent) => {
       if (!this.started) return;
       const perfect = ['perfectParry', 'revival', 'postureBreak', 'perfect'].includes(event.type);
+      const fracture = ['break', 'postureBreak'].includes(event.type);
       this.world.impact(
         event.x,
         event.y,
-        event.type === 'revival' ? '#f2d291' : perfect ? '#fff1c4' : '#b8d9df',
+        event.color ??
+          (event.type === 'revival'
+            ? '#f2d291'
+            : fracture
+              ? '#ff856c'
+              : perfect
+                ? '#fff1c4'
+                : '#b8d9df'),
         perfect ? 30 : 10,
-        perfect ? 'perfect' : event.type === 'slash' ? 'slash' : 'ring',
-        perfect ? 1.5 : 0.7,
+        fracture
+          ? 'break'
+          : perfect
+            ? 'perfect'
+            : event.type === 'finish'
+              ? 'finish'
+              : event.type === 'slash'
+                ? 'slash'
+                : 'ring',
+        event.scale ?? (perfect ? 1.5 : 0.7),
+        event.contact ?? perfect,
+        event.angle ?? 0,
       );
+      Object.assign(this.world.effects[this.world.effects.length - 1], {
+        weapon: event.weapon,
+        attackKind: event.attackKind,
+        projectileKind: event.projectileKind,
+      });
+      if (perfect || fracture) this.world.environmentImpact(event.x, event.y, perfect ? 0.8 : 1.2);
       if (event.type === 'revival') this.world.audio.play('clear');
       else if (event.type === 'perfectParry') this.world.audio.play('perfect');
       else if (event.type === 'parry') this.world.audio.play('parry');
@@ -290,6 +317,7 @@ export class OnlineConnection {
   }
   // shortcut: enemy separation and ice drift reconcile from authority; share full actor replay if distracting.
   private predict(p: Player, cmd: Pending): void {
+    if (p.state === 'attack' && p.attackType === 'riposte') return;
     if (p.hp <= 0) return;
     const w = this.world;
     if (p.state === 'dodge') {
@@ -379,7 +407,14 @@ export class OnlineConnection {
         b = after?.players.get(id);
       const player =
         a && b
-          ? { ...b, x: a.x + (b.x - a.x) * alpha, y: a.y + (b.y - a.y) * alpha }
+          ? {
+              ...b,
+              x: a.x + (b.x - a.x) * alpha,
+              y: a.y + (b.y - a.y) * alpha,
+              facing:
+                a.facing +
+                Math.atan2(Math.sin(b.facing - a.facing), Math.cos(b.facing - a.facing)) * alpha,
+            }
           : this.player(p);
       return { id, name: p.name, weapon: p.weapon, color: p.color, connected: p.connected, player };
     });

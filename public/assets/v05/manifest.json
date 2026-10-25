@@ -87,6 +87,34 @@
         "ao": "heavy_cloth_ao_512.webp"
       }
     },
+    "shinobi_cloth": {
+      "baseColor": "shinobi_cloth_baseColor.webp",
+      "normal": "shinobi_cloth_normal.webp",
+      "roughness": "shinobi_cloth_roughness.webp",
+      "ao": "shinobi_cloth_ao.webp",
+      "metalness": 0,
+      "resolution": 1024,
+      "low": {
+        "baseColor": "shinobi_cloth_baseColor_512.webp",
+        "normal": "shinobi_cloth_normal_512.webp",
+        "roughness": "shinobi_cloth_roughness_512.webp",
+        "ao": "shinobi_cloth_ao_512.webp"
+      }
+    },
+    "shinobi_lacquer": {
+      "baseColor": "shinobi_lacquer_baseColor.webp",
+      "normal": "shinobi_lacquer_normal.webp",
+      "roughness": "shinobi_lacquer_roughness.webp",
+      "ao": "shinobi_lacquer_ao.webp",
+      "metalness": 0.45,
+      "resolution": 1024,
+      "low": {
+        "baseColor": "shinobi_lacquer_baseColor_512.webp",
+        "normal": "shinobi_lacquer_normal_512.webp",
+        "roughness": "shinobi_lacquer_roughness_512.webp",
+        "ao": "shinobi_lacquer_ao_512.webp"
+      }
+    },
     "worn_leather": {
       "baseColor": "worn_leather_baseColor.webp",
       "normal": "worn_leather_normal.webp",
@@ -994,6 +1022,26 @@
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
+    },
+    "shinobi": {
+      "pack": "pilgrims",
+      "kind": "character",
+      "biome": 0,
+      "lods": [
+        {
+          "node": "shinobi_LOD0",
+          "triangles": 6390
+        },
+        {
+          "node": "shinobi_LOD1",
+          "triangles": 3514
+        },
+        {
+          "node": "shinobi_LOD2",
+          "triangles": 1596
+        }
+      ],
+      "reference": "v07/03-locomotion-combat-world-detail.png"
     },
     "shrine_floor_a": {
       "pack": "shrine",
@@ -3270,13 +3318,15 @@
     },
     "pilgrims": {
       "file": "pilgrims.glb",
-      "bytes": 4387984,
+      "bytes": 4658984,
       "materials": [
         "aged_bronze",
         "crimson_cloth",
         "fungal_skin",
         "heavy_cloth",
         "pilgrim_linen",
+        "shinobi_cloth",
+        "shinobi_lacquer",
         "worn_iron",
         "worn_leather"
       ]
@@ -3324,5 +3374,5 @@
       ]
     }
   },
-  "downloadBytes": 31470176
+  "downloadBytes": 33415716
 }

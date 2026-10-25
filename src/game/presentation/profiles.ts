@@ -33,6 +33,19 @@ const knight: BodyProfile = {
   offguard: [-0.4, 0.2, -0.2],
 };
 export const BODY_PROFILES: Record<string, BodyProfile> = {
+  'player-shinobi': {
+    ...knight,
+    chest: [0.83, 0.95, 0.86],
+    shoulder: 0.35,
+    lean: 0.14,
+    crouch: 0.07,
+    turn: -0.18,
+    cadence: 9,
+    stride: 0.4,
+    cape: [0.48, 0.45, 1],
+    guard: [-0.9, -0.6, -0.2],
+    offguard: [-0.65, 0.3, 0.35],
+  },
   'player-sword': {
     ...knight,
     chest: [0.94, 1.01, 0.95],

@@ -4,6 +4,11 @@ import { Random } from './random';
 export const EXECUTION_DURATION = 0.7;
 export const EXECUTION_CONTACT = 0.58;
 export const EXECUTIONS: Record<string, readonly { name: string; kind: AttackKind }[]> = {
+  shinobi: [
+    { name: 'The silent ember', kind: 'slash' },
+    { name: 'Cinder severance', kind: 'thrust' },
+    { name: 'An oath unbound', kind: 'slash' },
+  ],
   sword: [
     { name: 'The quiet point', kind: 'thrust' },
     { name: 'Rising absolution', kind: 'slash' },

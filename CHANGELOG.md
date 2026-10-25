@@ -1,3 +1,25 @@
+# v0.7.0 — Living Steel & Foundations (review candidate)
+
+- Add per-actor locomotion, action and additive animation layers shared by
+  imported and procedural rigs, with start/stop blends, directional combat steps,
+  turn banking, constrained tracking and alternating long-idle flourishes.
+- Add the original black-clad Ashen Shinobi with a separate cloth/lacquer model,
+  angular travelling hat, short split scarf, curved katana and springlock sidearm;
+  add a four-hit chain, three executions and authoritative melee/ranged ripostes.
+- Validate riposte target, range and expiry on the server; leave at least 1 HP.
+  Replicate semantic state and interpolate remote facing locally.
+- Fix historical deflections being occluded by the same enemy's current body.
+- Derive collision, floor cells, exposed wall edges and door sockets from one
+  layout. Exclude imported scenery from walkable routes, synchronize combat
+  gates with movement blocking and add a collision overlay.
+- Centralize Very Low, Low, Medium, High and Extreme rendering budgets. Reuse
+  bounded effect groups; add profile-scaled particles, blue/gold perfect
+  deflections, red guard fractures and weapon-specific execution effects.
+- Add an item quickbar, switch descriptions, full pause satchel, first-launch
+  training choice, single-room training and Shinobi's riposte lesson.
+- Expand actor/animation inspection, neutral reference mode, crowd benchmark
+  and 16-frame capture. Preserve references and record local load measurements.
+
 # v0.6.0 — Online Co-op & Duels (review candidate)
 
 - Add authoritative Colyseus 0.18 friend rooms: 2–4 co-op and normalized 1v1.

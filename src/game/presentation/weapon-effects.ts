@@ -38,7 +38,7 @@ export function bladeRibbon(effect: Effect): T.BufferGeometry {
   return geometry;
 }
 
-export function createWeaponEffect(effect: Effect, glow: T.Texture): T.Group {
+export function createWeaponEffect(effect: Effect, glow: T.Texture, density = 1): T.Group {
   const root = new T.Group();
   const strike = effect.kind === 'slash' || effect.kind === 'finish';
   if (strike) {
@@ -67,7 +67,18 @@ export function createWeaponEffect(effect: Effect, glow: T.Texture): T.Group {
     }
   } else if (effect.contact || effect.kind === 'perfect' || effect.kind === 'hurt') {
     const rng = new Random(`${effect.x}:${effect.y}:${effect.angle}:${effect.kind}`);
-    const count = effect.kind === 'perfect' ? 32 : effect.kind === 'hurt' ? 9 : 18;
+    const count = Math.max(
+      6,
+      Math.ceil(
+        (effect.kind === 'perfect'
+          ? 40
+          : effect.kind === 'break'
+            ? 30
+            : effect.kind === 'hurt'
+              ? 9
+              : 18) * density,
+      ),
+    );
     const velocities = Array.from({ length: count }, (_, i) => {
       const angle = (rng.next() - 0.5) * (i % 5 === 0 ? Math.PI * 2 : 1.8);
       const speed = 1.8 + rng.next() * Math.min(7, 4 * effect.scale);
@@ -87,7 +98,11 @@ export function createWeaponEffect(effect: Effect, glow: T.Texture): T.Group {
       colors.push(
         ...(effect.projectileKind === 'orb'
           ? [0.55, 1.05, 0.85, 0.09, 0.35, 0.25]
-          : [1.1, 0.74, 0.32, 0.4, 0.16, 0.045]),
+          : effect.kind === 'break'
+            ? [1.2, 0.18, 0.12, 0.5, 0.04, 0.02]
+            : effect.kind === 'perfect' && i % 3 === 0
+              ? [0.6, 0.85, 1.2, 0.1, 0.25, 0.5]
+              : [1.1, 0.74, 0.32, 0.4, 0.16, 0.045]),
       );
     geometry.setAttribute('color', new T.Float32BufferAttribute(colors, 3));
     const sparks = new T.LineSegments(
@@ -137,6 +152,38 @@ export function createWeaponEffect(effect: Effect, glow: T.Texture): T.Group {
     );
     ring.rotation.x = -Math.PI / 2;
     root.add(ring);
+  }
+  if (
+    effect.kind === 'perfect' ||
+    effect.kind === 'break' ||
+    (effect.kind === 'finish' && effect.weapon === 'great')
+  ) {
+    const ring = new T.Mesh(
+      new T.RingGeometry(0.75, effect.kind === 'break' ? 0.84 : 0.78, 48),
+      new T.MeshBasicMaterial({
+        color: effect.kind === 'break' ? '#f4644a' : '#d8e8f5',
+        transparent: true,
+        side: T.DoubleSide,
+        depthWrite: false,
+        blending: T.AdditiveBlending,
+      }),
+    );
+    ring.rotation.x = -Math.PI / 2;
+    root.add(ring);
+  }
+  if (effect.weapon === 'shinobi' && strike) {
+    const line = new T.Mesh(
+      new T.PlaneGeometry(2.5, 0.035),
+      new T.MeshBasicMaterial({
+        color: '#fff1d5',
+        transparent: true,
+        side: T.DoubleSide,
+        depthWrite: false,
+        blending: T.AdditiveBlending,
+      }),
+    );
+    line.rotation.x = -Math.PI / 2;
+    root.add(line);
   }
   return root;
 }

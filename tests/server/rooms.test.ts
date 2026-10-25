@@ -219,4 +219,44 @@ describe('Colyseus friend rooms over WebSocket', () => {
       }
     },
   );
+  it('selects Shinobi and replicates authoritative riposte eligibility to four clients', async () => {
+    const room = await server.createRoom<CoopRoom>('coop');
+    const clients: SDKRoom<SessionState>[] = [];
+    for (let i = 0; i < 4; i++) {
+      const client = await server.connectTo(room, { name: `Living ${i}` });
+      client.onMessage('ping', (token) => client.send('pong', token));
+      client.onMessage('event', () => undefined);
+      clients.push(client);
+    }
+    clients[0].send('select', 'shinobi');
+    await waitFor(() => room.state.players.get(clients[0].sessionId)?.weapon === 'shinobi');
+    for (const client of clients) client.send('ready', true);
+    await waitFor(() => [...room.state.players.values()].every((player) => player.ready));
+    clients[0].send('start');
+    await waitFor(() => Boolean(room.game));
+    const game = room.game!;
+    game.enter(game.primary.floor.rooms.find((room) => room.kind === 'combat')!.id);
+    const member = game.members.get(clients[0].sessionId)!,
+      world = member.world,
+      enemy = world.enemies[0];
+    Object.assign(enemy, {
+      x: world.player.x + 80,
+      y: world.player.y,
+      hp: 100,
+      maxPosture: 1000,
+      readyAt: Infinity,
+    });
+    world.offerRiposte(enemy, true);
+    await waitFor(() =>
+      clients.every(
+        (client) => client.state.players.get(clients[0].sessionId)?.ripostePerfect === true,
+      ),
+    );
+    for (const client of clients) {
+      const player = client.state.players.get(clients[0].sessionId)!;
+      expect(player.riposteTarget).toBe(enemy.id);
+      expect(player.riposteUntil).toBeGreaterThan(0);
+      expect(player.weapon).toBe('shinobi');
+    }
+  }, 12000);
 });

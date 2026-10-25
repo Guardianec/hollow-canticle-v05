@@ -4,6 +4,7 @@ import { globalPosition } from './architecture';
 import { Materials, SCALE } from './materials';
 import { createWeaponEffect, updateWeaponEffect } from './weapon-effects';
 import { EXECUTION_CONTACT, EXECUTION_DURATION } from '../executions';
+import { GRAPHICS } from '../graphics';
 
 export class Effects {
   readonly root = new T.Group();
@@ -12,6 +13,7 @@ export class Effects {
   private positions = new Float32Array(260 * 6);
   private colors = new Float32Array(260 * 6);
   private active = new Map<Effect, T.Group>();
+  private pool = new Map<string, T.Group[]>();
   private rings: T.Mesh[] = [];
   private materialsGlow: T.CanvasTexture;
   private flashSprite: T.Sprite;
@@ -151,13 +153,24 @@ export class Effects {
     this.particles.geometry.attributes.color.needsUpdate = true;
     for (const [e, mesh] of this.active)
       if (!w.effects.includes(e)) {
-        this.root.remove(mesh);
-        mesh.traverse((o) => {
-          if (o instanceof T.Mesh || o instanceof T.LineSegments) {
-            o.geometry.dispose();
-            (o.material as T.Material).dispose();
-          } else if (o instanceof T.Sprite) o.material.dispose();
-        });
+        const key = mesh.userData.poolKey as string;
+        const free = this.pool.get(key) ?? [];
+        if (
+          free.length < 3 &&
+          [...this.pool.values()].reduce((sum, groups) => sum + groups.length, 0) < 64
+        ) {
+          mesh.visible = false;
+          free.push(mesh);
+          this.pool.set(key, free);
+        } else {
+          this.root.remove(mesh);
+          mesh.traverse((o) => {
+            if (o instanceof T.Mesh || o instanceof T.LineSegments) {
+              o.geometry.dispose();
+              (o.material as T.Material).dispose();
+            } else if (o instanceof T.Sprite) o.material.dispose();
+          });
+        }
         this.active.delete(e);
       }
     let flash = 0;
@@ -168,8 +181,20 @@ export class Effects {
       const t =
         e.kind === 'finish' ? Math.max(0, (rawTime - contactAt) / (1 - contactAt)) : rawTime;
       if (!mesh) {
-        mesh = createWeaponEffect(e, this.materialsGlow);
-        this.root.add(mesh);
+        const density = GRAPHICS[w.save.settings.detail].particles;
+        const key = [
+          e.kind,
+          e.weapon,
+          e.attackKind,
+          e.projectileKind,
+          e.contact,
+          e.scale.toFixed(2),
+          e.color,
+          density,
+        ].join(':');
+        mesh = this.pool.get(key)?.pop() ?? createWeaponEffect(e, this.materialsGlow, density);
+        mesh.userData.poolKey = key;
+        if (!mesh.parent) this.root.add(mesh);
         this.active.set(e, mesh);
       }
       const ground = e.kind === 'ring' && !e.contact;

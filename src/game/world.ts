@@ -32,6 +32,10 @@ import { Inventory, ITEMS, type ItemDef } from './items';
 import { LootDirector, type LootKind } from './loot';
 import { EXECUTIONS, EXECUTION_CONTACT, EXECUTION_DURATION, executionVariant } from './executions';
 import type { Projectile } from './projectiles';
+import { lineOfSight } from './projectiles';
+import { RIPOSTE, nonlethalDamage, riposteTravel } from './riposte';
+import { GRAPHICS } from './graphics';
+import { trainingFloor, trainingStages } from './training';
 
 export type Mode = 'menu' | 'playing' | 'paused' | 'reward' | 'dead' | 'trained';
 export type PlayerState =
@@ -59,6 +63,9 @@ export interface Player {
   dodgeReady: number;
   immunity: number;
   counterUntil: number;
+  riposteUntil: number;
+  riposteTarget: number;
+  ripostePerfect: boolean;
   attackHit: boolean;
   dx: number;
   dy: number;
@@ -123,7 +130,7 @@ export interface Effect {
   angle: number;
   life: number;
   maxLife: number;
-  kind: 'slash' | 'ring' | 'perfect' | 'finish' | 'hurt';
+  kind: 'slash' | 'ring' | 'perfect' | 'finish' | 'hurt' | 'break';
   color: string;
   scale: number;
   weapon?: string;
@@ -271,6 +278,14 @@ export class World {
     return characterFor(this.weapon.id);
   }
   lab = {
+    actor: 'player',
+    velocity: 0,
+    turnRate: 0,
+    closeCombat: false,
+    geometry: false,
+    locomotion: '',
+    action: '',
+    weights: '',
     pattern: -1,
     camera: 'auto',
     clip: 'live',
@@ -291,6 +306,7 @@ export class World {
   private iceDrift = { x: 0, y: 0 };
   echoes: { enemy: number; x: number; y: number; at: number; radius: number }[] = [];
   private execution?: { at: number; x: number; y: number; force: number };
+  private ripostePath?: { x: number; y: number; dx: number; dy: number };
 
   constructor(public save: Save) {
     this.audio = new Audio(save.settings);
@@ -315,6 +331,7 @@ export class World {
     if (this.focusedEnemy !== undefined) this.mouseAim = undefined;
   }
   cycleFocus(direction: number): void {
+    if (this.training) this.trainingDone.add('camera');
     const enemies = this.alive.sort((a, b) => a.id - b.id);
     if (!enemies.length) {
       this.focusedEnemy = undefined;
@@ -407,6 +424,9 @@ export class World {
       dodgeReady: 0,
       immunity: 0,
       counterUntil: 0,
+      riposteUntil: 0,
+      riposteTarget: -1,
+      ripostePerfect: false,
       attackHit: false,
       dx: 1,
       dy: 0,
@@ -453,7 +473,7 @@ export class World {
     this.laboratory = false;
     this.seed = normalizeSeed(seed);
     this.weapon = WEAPONS.find((w) => w.id === weaponId) || WEAPONS[0];
-    this.floor = makeFloor(this.seed, 1);
+    this.floor = training ? trainingFloor(this.seed) : makeFloor(this.seed, 1);
     this.time = 0;
     this.relics = [];
     this.ward = 0;
@@ -470,6 +490,10 @@ export class World {
     this.buffs.clear();
     this.inventory.clear();
     this.inventory.add('crimson');
+    if (training) {
+      this.inventory.add('oil');
+      this.inventory.add('oil');
+    }
     this.pickups = [];
     this.pendingItem = undefined;
     this.resetPlayer();
@@ -506,6 +530,9 @@ export class World {
     this.threats.clear();
     this.echoes = [];
     this.execution = undefined;
+    this.ripostePath = undefined;
+    this.player.riposteUntil = 0;
+    this.player.riposteTarget = -1;
     this.iceDrift = { x: 0, y: 0 };
     this.buffer.clear();
     this.clearAt = 0;
@@ -668,7 +695,9 @@ export class World {
       particle.vy += 90 * realDt;
       particle.vx *= Math.exp(-realDt * 2);
     }
-    this.particles = this.particles.filter((p) => p.life > 0).slice(-260);
+    this.particles = this.particles
+      .filter((p) => p.life > 0)
+      .slice(-Math.ceil(320 * GRAPHICS[this.save.settings.detail].particles));
     for (const effect of this.effects) effect.life -= realDt;
     this.effects = this.effects.filter((e) => e.life > 0);
     this.shake = Math.max(0, this.shake - realDt * 25);
@@ -740,20 +769,7 @@ export class World {
           5,
         );
       }
-      if (
-        [
-          'move',
-          'attack',
-          'parry',
-          'perfect',
-          'dodge',
-          'finisher',
-          'ranged',
-          'item',
-          'projectile',
-          'reflection',
-        ].every((id) => this.trainingDone.has(id))
-      ) {
+      if (trainingStages(this.weapon.id === 'shinobi').every(([id]) => this.trainingDone.has(id))) {
         this.mode = 'trained';
         this.save.tutorial = true;
         this.save.arsenalTutorial = true;
@@ -773,6 +789,7 @@ export class World {
 
   private updatePlayer(dt: number): void {
     const p = this.player;
+    if (this.training && this.mouseAim) this.trainingDone.add('camera');
     if (p.state === 'dead' || p.hp <= 0) return;
     const age = this.time - p.stateAt;
     this.buffs.expire(this.time);
@@ -787,7 +804,16 @@ export class World {
     );
     if (p.state === 'attack' && !p.attackHit && age >= p.attackStartup) {
       p.attackHit = true;
-      this.attack();
+      if (p.attackType === 'riposte') this.riposteHit();
+      else this.attack();
+    }
+    if (p.state === 'attack' && p.attackType === 'riposte' && this.ripostePath) {
+      const path = this.ripostePath,
+        travel = riposteTravel(age);
+      const dx = path.x + path.dx * travel - p.x,
+        dy = path.y + path.dy * travel - p.y;
+      const steps = Math.max(1, Math.ceil(Math.hypot(dx, dy) / 8));
+      for (let i = 0; i < steps; i++) this.move(p, dx / steps, dy / steps);
     }
     if (p.state === 'ranged' && !p.attackHit && age >= this.character.ranged.startup) {
       p.attackHit = true;
@@ -847,7 +873,10 @@ export class World {
     });
     if (action) this.perform(action);
     if (p.state === 'dodge') this.move(p, p.dx * 610 * dt, p.dy * 610 * dt);
-    else if (['idle', 'parry', 'attack'].includes(p.state)) {
+    else if (
+      ['idle', 'parry', 'attack'].includes(p.state) &&
+      !(p.state === 'attack' && p.attackType === 'riposte')
+    ) {
       let { x, y } = this.movement;
       const len = Math.hypot(x, y);
       if (len) {
@@ -886,6 +915,7 @@ export class World {
 
   private perform(action: Action): void {
     const p = this.player;
+    if (action === 'attack' && this.beginRiposte()) return;
     if (action === 'ranged') {
       if (p.rangedCharges <= 0 && !(this.debug && this.lab.infiniteCharges)) return;
       if (!(this.debug && this.lab.infiniteCharges)) p.rangedCharges--;
@@ -988,6 +1018,91 @@ export class World {
     }
   }
 
+  offerRiposte(target: Enemy, perfect = false): void {
+    const p = this.player;
+    if (
+      this.weapon.id !== 'shinobi' ||
+      target.hp <= 0 ||
+      ['broken', 'dead'].includes(target.state) ||
+      distance(p, target) > RIPOSTE.range
+    )
+      return;
+    p.riposteTarget = target.id;
+    p.ripostePerfect = perfect;
+    p.riposteUntil = this.time + (perfect ? RIPOSTE.perfectWindow : RIPOSTE.window);
+    this.announce('RIPOSTE READY', 'Strike to dash in, cut and return.', '#edb38a', 0.7);
+  }
+  private beginRiposte(): boolean {
+    const p = this.player,
+      target = this.alive.find((e) => e.id === p.riposteTarget);
+    if (
+      this.weapon.id !== 'shinobi' ||
+      this.time >= p.riposteUntil ||
+      !target ||
+      target.state === 'broken' ||
+      distance(p, target) > RIPOSTE.range ||
+      !lineOfSight(this.room, this.obstacles, p, target)
+    )
+      return false;
+    p.riposteUntil = 0;
+    p.counterUntil = 0;
+    p.counter = false;
+    p.attackType = 'riposte';
+    p.state = 'attack';
+    p.stateAt = this.time;
+    p.attackStartup = RIPOSTE.contact;
+    p.attackRecovery = RIPOSTE.duration - RIPOSTE.contact;
+    p.attackHit = false;
+    p.move = {
+      name: 'Cinder return',
+      kind: 'slash',
+      startup: 1,
+      recovery: 1,
+      damage: 1,
+      pressure: 1,
+      reach: 1,
+      step: 0,
+    };
+    p.facing = Math.atan2(target.y - p.y, target.x - p.x);
+    const travel = Math.max(0, distance(p, target) - 68);
+    this.ripostePath = {
+      x: p.x,
+      y: p.y,
+      dx: Math.cos(p.facing) * travel,
+      dy: Math.sin(p.facing) * travel,
+    };
+    this.environmentImpact(p.x, p.y, 0.6);
+    this.stats.attacks++;
+    return true;
+  }
+  private riposteHit(): void {
+    const p = this.player,
+      target = this.alive.find((e) => e.id === p.riposteTarget);
+    if (!target || target.state === 'broken' || distance(p, target) > this.weapon.reach + 22)
+      return;
+    const damage = p.ripostePerfect ? RIPOSTE.perfectDamage : RIPOSTE.damage;
+    const pressure =
+      (p.ripostePerfect ? RIPOSTE.perfectPressure : RIPOSTE.pressure) *
+      this.buffs.modifier('pressure');
+    if (this.network?.strike) this.network.strike(target, damage, pressure);
+    else {
+      const dealt = nonlethalDamage(target.hp, damage);
+      target.hp -= dealt;
+      this.pressure(target, pressure);
+      target.recoilAt = this.time;
+      this.network?.hit?.(target, dealt, pressure);
+    }
+    this.trainingDone.add('riposte');
+    this.impact(target.x, target.y, '#ffe5c2', 32, 'perfect', 1.2, true, p.facing);
+    this.effect(p.x, p.y, 'slash', '#fff4df', 0.28, 1.4, p.facing);
+    Object.assign(this.effects[this.effects.length - 1], {
+      weapon: 'shinobi',
+      attackKind: 'slash',
+    });
+    this.environmentImpact(target.x, target.y, 0.8);
+    this.audio.play('perfect');
+    this.hitStop = this.save.settings.reducedMotion ? 0.015 : 0.045;
+  }
   private chooseTarget(): Enemy | undefined {
     const p = this.player;
     if (this.focusedEnemy !== undefined) return this.target;
@@ -1106,6 +1221,11 @@ export class World {
     }
   }
 
+  cycleItem(direction: number): void {
+    const previous = this.inventory.item?.id;
+    this.inventory.cycle(direction);
+    if (previous !== this.inventory.item?.id) this.trainingDone.add('switch');
+  }
   hasRelic(id: string): boolean {
     return this.relics.some((r) => r.id === id);
   }
@@ -1353,7 +1473,9 @@ export class World {
       }
       if (this.debug && this.lab.pattern >= 0) e.pattern = this.lab.pattern;
       const pattern = patterns[e.pattern % patterns.length];
-      const next = pattern[e.index % pattern.length];
+      const next = this.training
+        ? { kind: 'slash' as const, windup: 0.95, recovery: 1.2, damage: 8, reach: 110 }
+        : pattern[e.index % pattern.length];
       const haste = Math.max(0.82, 1 - (this.floor.depth - 1) * 0.012) * (e.phase === 2 ? 0.82 : 1);
       const patience = this.room.kind === 'elite' && this.room.elite === 'Patient' ? 1.22 : 1;
       const strike = {
@@ -1465,7 +1587,7 @@ export class World {
     if (
       this.alive.some(
         (other) =>
-          other !== e &&
+          other.id !== e.id &&
           other.state !== 'broken' &&
           distance(e, other) < dist &&
           distance(p, other) < dist &&
@@ -1501,6 +1623,7 @@ export class World {
       p.posture = Math.max(0, p.posture - (perfect ? 20 : 8));
       p.counterUntil = this.time + 0.8;
       p.state = 'idle';
+      this.offerRiposte(e, perfect);
       if (perfect) {
         this.network?.perfect?.(e);
         if (this.weapon.id === 'sword') this.rechargeRanged(1);
@@ -1533,6 +1656,7 @@ export class World {
       this.pressure(
         e,
         posturePressure(perfect ? BALANCE.perfectPressure : BALANCE.parryPressure, p.focus, false) *
+          (this.weapon.id === 'shinobi' ? (perfect ? 1.4 : 1.2) : 1) *
           (perfect && this.room.kind === 'elite' && this.room.elite === 'Armored' ? 1.2 : 1),
       );
       this.emit('parry', e);
@@ -1605,9 +1729,11 @@ export class World {
     e.state = 'broken';
     e.stateAt = this.time;
     this.threats.release(e.id);
-    this.impact(e.x, e.y - 20, '#f5cd86', 35, 'perfect', 1.6, true, this.player.facing);
+    this.impact(e.x, e.y - 20, '#ff856c', 35, 'break', 1.6, true, this.player.facing);
+    this.environmentImpact(e.x, e.y, 1.2);
+    this.trainingDone.add('guard');
     this.audio.play('break');
-    this.hitStop = 0.08;
+    this.hitStop = this.save.settings.reducedMotion ? 0.025 : 0.08;
     this.announce(
       'GUARD BROKEN',
       'Close the distance. E to deliver the final toll.',
@@ -2023,6 +2149,7 @@ export class World {
   ): void {
     this.effect(x, y, kind, color, 0.45, scale, angle);
     this.effects[this.effects.length - 1].contact = contact;
+    count = Math.ceil(count * GRAPHICS[this.save.settings.detail].particles);
     for (let i = 0; i < count; i++) {
       const angle = this.rng.next() * Math.PI * 2,
         speed = this.rng.int(70, 360) * scale;
@@ -2046,7 +2173,7 @@ export class World {
   environmentImpact(x: number, y: number, force: number): void {
     const biome = this.floor.biome;
     const color = ['#a99d84', '#9bdbec', '#c6a2ef', '#d6edf7', '#ffb15f'][biome];
-    const count = Math.ceil(12 * force);
+    const count = Math.ceil(12 * force * GRAPHICS[this.save.settings.detail].particles);
     for (let i = 0; i < count; i++) {
       const a = i * 2.399963,
         life = 0.3 + this.rng.next() * 0.4;

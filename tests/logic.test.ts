@@ -157,10 +157,10 @@ describe('persistence and content validation', () => {
     save.tutorial = true;
     expect(parseSave(JSON.stringify(save))).toEqual(save);
   });
-  it('has unique content IDs, four distinct weapons, and twenty-two relic hooks', () => {
+  it('has unique content IDs, five distinct weapons, and twenty-two relic hooks', () => {
     expect(new Set(ENEMIES.map((e) => e.id)).size).toBe(11);
     expect(new Set(RELICS.map((e) => e.id)).size).toBe(22);
-    expect(new Set(WEAPONS.map((e) => e.reach)).size).toBe(4);
+    expect(new Set(WEAPONS.map((e) => e.reach)).size).toBe(5);
     for (const e of ENEMIES) {
       expect(e.patterns.length).toBeGreaterThan(0);
       for (const pattern of e.patterns)

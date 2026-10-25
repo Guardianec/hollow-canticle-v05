@@ -177,6 +177,41 @@ export const CHARACTERS: CharacterDef[] = [
       description: 'A narrow ground-travelling resonance. Modest wounds, crushing pressure.',
     },
   },
+  {
+    id: 'shinobi',
+    name: 'The Ashen Shinobi',
+    role: 'Deflection specialist',
+    description:
+      'A black-clad wanderer beneath a low travelling hat. Asymmetric lacquer plates, a precise katana and a springlock sidearm answer every opening.',
+    color: '#dc9278',
+    speed: 1.02,
+    difficulty: 'Exacting',
+    ratings: ['Precise', 'Moderate', 'Counter pressure', 'Exact'],
+    passive:
+      'Deflections build extra guard pressure. Strike after a deflection or a close springlock hit to dash in, cut, and retreat. Riposte leaves at least 1 HP.',
+    chain: [
+      move('Cinder draw', 'slash', 1, 1, 1, 1, 1, 8),
+      move('Returning ember', 'slash', 1.1, 1, 0.95, 1.05, 1, 6),
+      move('Quiet severance', 'thrust', 1.25, 1.15, 1.1, 1.2, 1.05, 12),
+      move('Last cinder', 'slash', 1.4, 1.2, 1.15, 1.35, 1, 10),
+    ],
+    ranged: {
+      name: 'Cinder Springlock',
+      kind: 'needle',
+      charges: 3,
+      recharge: 9,
+      startup: 0.18,
+      recovery: 0.24,
+      damage: 3,
+      pressure: 10,
+      speed: 670,
+      radius: 5,
+      lifetime: 0.95,
+      pierce: 0,
+      description:
+        'A bronze spring-driven sidearm. Hits within 245 units open a katana riposte; distant hits do little damage.',
+    },
+  },
 ];
 export const characterFor = (id: string): CharacterDef =>
   CHARACTERS.find((c) => c.id === id) ?? CHARACTERS[0];
