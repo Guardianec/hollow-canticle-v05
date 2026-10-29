@@ -18,7 +18,7 @@ export const ITEMS: ItemDef[] = [
     glyph: '†',
     color: '#e99085',
     model: 'vial',
-    useTime: 0.6,
+    useTime: 0.8,
     heal: 30,
     description: 'Restore 30 vitality after drinking. Find a safe opening.',
   },

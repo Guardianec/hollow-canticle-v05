@@ -4,6 +4,8 @@ import { ArraySchema } from '@colyseus/schema';
 import { CHARACTERS } from '../../src/game/characters';
 import {
   Input,
+  AreaState,
+  PROTOCOL_VERSION,
   SessionState,
   PlayerState,
   EnemyState,
@@ -19,6 +21,7 @@ import {
   type OnlineMode,
 } from '../../shared/protocol';
 import { Session } from '../../shared/session';
+import { makeFloor } from '../../src/game/dungeon';
 import { normalizeSeed } from '../../src/game/random';
 
 const codes = new Set<string>();
@@ -58,6 +61,8 @@ const fields = [
   'counter',
   'attackStartup',
   'attackRecovery',
+  'poisonUntil',
+  'frostUntil',
   'emptyParries',
   'parryLanded',
   'finisherTarget',
@@ -85,6 +90,22 @@ export abstract class FriendRoom extends Room<{ state: SessionState; input: Inpu
     sanitize: { moveX: [-1, 1], moveY: [-1, 1], aimX: [0, 1120], aimY: [0, 760], cycle: [-1, 1] },
   });
   commonMessages = {
+    labBoss: (client: Client, biome: unknown) => {
+      if (
+        process.env.CANTICLE_LAB !== '1' ||
+        this.mode !== 'coop' ||
+        client.sessionId !== this.state.host ||
+        !this.game ||
+        !Number.isInteger(biome) ||
+        Number(biome) < 0 ||
+        Number(biome) > 4
+      )
+        return;
+      for (const world of this.game.worlds)
+        world.floor = makeFloor(this.game.seed, Number(biome) + 1);
+      this.game.enter(this.game.primary.floor.rooms.find((r) => r.kind === 'boss')!.id);
+      this.sync();
+    },
     select: (client: Client, value: unknown) => {
       if (
         this.state.phase !== 'lobby' ||
@@ -165,9 +186,11 @@ export abstract class FriendRoom extends Room<{ state: SessionState; input: Inpu
       }
     }, 2000);
   }
-  onAuth(_client: Client, options: { name?: unknown }): { name: string } {
+  onAuth(_client: Client, options: { name?: unknown; protocol?: unknown }): { name: string } {
     if (this.state.phase !== 'lobby')
       throw new Error('The descent has begun. Reconnect to your reserved seat.');
+    if (options?.protocol !== PROTOCOL_VERSION)
+      throw new Error('MULTIPLAYER CLIENT UPDATE REQUIRED');
     return { name: displayName(options?.name) };
   }
   onJoin(client: Client, _options: unknown, auth: { name: string }): void {
@@ -313,6 +336,7 @@ export abstract class FriendRoom extends Room<{ state: SessionState; input: Inpu
       target.strike ??= new StrikeState();
       Object.assign(target.strike, {
         kind: e.strike.kind,
+        area: e.strike.area ?? false,
         windup: e.strike.windup,
         recovery: e.strike.recovery,
         damage: e.strike.damage,
@@ -322,6 +346,15 @@ export abstract class FriendRoom extends Room<{ state: SessionState; input: Inpu
         projectileRadius: e.strike.projectileRadius ?? 0,
       });
       if (!this.state.enemies.has(id)) this.state.enemies.set(id, target);
+    }
+    const areas = this.mode === 'coop' ? world.areas.active : [];
+    const areaIds = new Set(areas.map((a) => String(a.id)));
+    for (const key of this.state.areas.keys()) if (!areaIds.has(key)) this.state.areas.delete(key);
+    for (const area of areas) {
+      const key = String(area.id),
+        target = this.state.areas.get(key) ?? new AreaState();
+      Object.assign(target, area);
+      if (!this.state.areas.has(key)) this.state.areas.set(key, target);
     }
     const shotIds = new Set(game.projectiles.active.map((p) => String(p.id)));
     for (const key of this.state.shots.keys()) if (!shotIds.has(key)) this.state.shots.delete(key);

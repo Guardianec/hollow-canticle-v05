@@ -1,0 +1,19 @@
+{
+  "scenario": "5 rooms × 4 players × 8 enemies including realm guardians, ground areas and projectiles",
+  "seconds": 15.0091744,
+  "tickRates": [
+    29.98166241575553,
+    30.048288332234986,
+    29.98166241575553,
+    30.048288332234986,
+    29.91503649927607
+  ],
+  "cpuOneCorePercent": 38.103361634601306,
+  "rssMiB": 159.8828125,
+  "heapMiB": 54.144737243652344,
+  "eventLoopP95Ms": 27.361279,
+  "eventLoopMaxMs": 45.973503,
+  "downstreamBytesPerClientSecond": 4586.341537879659,
+  "upstreamBytesPerClientSecond": 589.3195564440907,
+  "notes": "Combined server and 20 SDK clients in one Node process. WebSocket payload bytes; excludes framing/TLS. Invincible clients keep workload active. Local hardware, not Render measurement."
+}

@@ -3,6 +3,7 @@ import { Session } from '../../shared/session';
 import { Input, displayName } from '../../shared/protocol';
 import { encounter, eliteFor, ELITE_CHANCE, scaling } from '../../shared/scaling';
 import { BALANCE } from '../../src/game/data';
+import { depthScaling } from '../../src/game/realms';
 import { makeFloor, doorPosition } from '../../src/game/dungeon';
 import type { World } from '../../src/game/world';
 
@@ -109,7 +110,7 @@ describe('authoritative multiplayer rules', () => {
     s.enter(w.floor.rooms.find((r) => r.kind === 'boss')!.id);
     const boss = w.enemies.find((e) => e.def.id === 'boss')!;
     expect(w.enemies.filter((e) => e.def.id === 'boss')).toHaveLength(1);
-    expect(boss.maxHp / boss.def.hp).toBeCloseTo(2.75);
+    expect(boss.maxHp / boss.def.hp).toBeCloseTo(scaling(4).bossHp * depthScaling(3));
     s.worlds[2].player.hp = 0;
     clear(s);
     expect(s.worlds[2].player.hp).toBe(20);

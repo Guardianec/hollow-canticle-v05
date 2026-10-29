@@ -1,0 +1,42 @@
+{
+  "captureDate": "2026-10-28",
+  "scene": "Ruins, Ashen Marshal practice, frozen simulation time 1.61",
+  "viewport": "1254x884",
+  "fpsStatus": "BLOCKED: browser throttling; user requested recording FPS as blocked",
+  "notes": "Live renderer counters read alongside saved screenshots after the varied-volume shaft rewrite. Triangles rounded to thousands in the debug UI. Extreme selection was rejected by automatic browser approval review after the fourth capture because its usage limit was reached.",
+  "presets": [
+    {
+      "quality": "very-low",
+      "drawCalls": 74,
+      "trianglesApprox": 67000,
+      "weather": 9,
+      "geometries": 119,
+      "textures": 38
+    },
+    {
+      "quality": "low",
+      "drawCalls": 120,
+      "trianglesApprox": 288000,
+      "weather": 32,
+      "geometries": 130,
+      "textures": 38
+    },
+    {
+      "quality": "medium",
+      "drawCalls": 287,
+      "trianglesApprox": 1141000,
+      "weather": 90,
+      "geometries": 134,
+      "textures": 52
+    },
+    {
+      "quality": "high",
+      "drawCalls": 292,
+      "trianglesApprox": 1698000,
+      "weather": 260,
+      "geometries": 134,
+      "textures": 53
+    }
+  ],
+  "extreme": { "status": "BLOCKED", "reason": "Automatic browser approval review usage limit" }
+}

@@ -1,6 +1,7 @@
 import { Client, CloseCode, type Room as ClientRoom, type InputHandle } from '@colyseus/sdk';
 import {
   ACTIONS,
+  PROTOCOL_VERSION,
   Input,
   TICK_RATE,
   INTERPOLATION_MS,
@@ -16,6 +17,8 @@ import type { Action } from '../game/combat';
 import type { GameEvent } from '../../shared/session';
 import type { ActiveBuff } from '../game/buffs';
 import { configureArena } from '../../shared/arena';
+import { guardianFor } from '../game/realms';
+import type { AreaEffect } from '../game/areas';
 
 type Room = ClientRoom<SessionState, SessionState>;
 type Pending = { sequence: number; x: number; y: number; dt: number };
@@ -48,6 +51,8 @@ const fields = [
   'counter',
   'attackStartup',
   'attackRecovery',
+  'poisonUntil',
+  'frostUntil',
   'emptyParries',
   'parryLanded',
   'finisherTarget',
@@ -95,10 +100,12 @@ export class OnlineConnection {
     this.client = new Client(endpoint);
   }
   async create(mode: 'coop' | 'duel', name: string): Promise<void> {
-    await this.attach(await this.client.create(mode, { name }));
+    await this.attach(await this.client.create(mode, { name, protocol: PROTOCOL_VERSION }));
   }
   async join(code: string, name: string): Promise<void> {
-    await this.attach(await this.client.joinById(code.trim().toUpperCase(), { name }));
+    await this.attach(
+      await this.client.joinById(code.trim().toUpperCase(), { name, protocol: PROTOCOL_VERSION }),
+    );
   }
   async reconnect(): Promise<void> {
     const token = sessionStorage.getItem('hollow-canticle:reconnect');
@@ -122,7 +129,9 @@ export class OnlineConnection {
     });
     this.input = room.input<Input>({ type: Input, renderDelay: INTERPOLATION_MS });
     sessionStorage.setItem('hollow-canticle:reconnect', room.reconnectionToken);
-    room.onStateChange(() => this.snapshot());
+    room.onStateChange(() => {
+      if (room.state.protocol === PROTOCOL_VERSION) this.snapshot();
+    });
     room.onMessage('ping', (token: string) => room.send('pong', token));
     room.onMessage('event', (event: GameEvent) => {
       if (!this.started) return;
@@ -191,8 +200,12 @@ export class OnlineConnection {
       this.lost = true;
       this.changed?.();
     });
-    if (!room.state?.players)
+    if (!room.state?.players || room.state.protocol !== PROTOCOL_VERSION)
       await new Promise<void>((resolve) => room.onStateChange.once(() => resolve()));
+    if (room.state.protocol !== PROTOCOL_VERSION) {
+      await room.leave();
+      throw new Error('MULTIPLAYER SERVER UPDATE REQUIRED');
+    }
     this.changed?.();
   }
   get active(): boolean {
@@ -228,6 +241,7 @@ export class OnlineConnection {
       if (state.mode === 'duel')
         w.announce('THE OPPOSING OATH', 'First to three rounds.', '#dec38a', 3);
       w.onlineMode = state.mode === 'duel' ? 'duel' : 'coop';
+      w.onlinePractice = (biome) => this.room?.send('labBoss', biome);
       w.onlineFrame = (dt) => this.frame(dt);
       w.onlineInput = (action) => {
         if (this.paused || this.self?.hp === 0) return;
@@ -278,11 +292,14 @@ export class OnlineConnection {
               ...ENEMIES.find((def) => def.id === e.def)!,
               name: `${ENEMIES.find((def) => def.id === e.def)!.name} · Elite`,
             }
-          : ENEMIES.find((def) => def.id === e.def)!,
+          : e.def === 'boss'
+            ? guardianFor(w.floor.biome, w.floor.depth)
+            : ENEMIES.find((def) => def.id === e.def)!,
         strike: { ...e.strike.toJSON(), projectile: e.strike.projectile || undefined } as Strike,
       });
       return enemy;
     });
+    w.areas.active = [...state.areas.values()].map((a) => a.toJSON() as unknown as AreaEffect);
     this.snapshots.push({
       at: this.receivedAt,
       players: new Map([...state.players].map(([id, p]) => [id, this.player(p)])),
@@ -331,6 +348,7 @@ export class OnlineConnection {
       BALANCE.speed *
       characterFor(this.own?.weapon ?? w.weapon.id).speed *
       (p.state === 'attack' ? 0.34 : p.state === 'parry' ? 0.55 : 1);
+    if (w.time < p.frostUntil) speed *= 0.88;
     if ((w.floor.biome === 1 || w.floor.hybrid === 1) && w.inZone(p, 'water')) speed *= 0.65;
     moveBody(
       p,
@@ -484,6 +502,7 @@ export class OnlineConnection {
     this.world.onlineFrame = undefined;
     this.world.onlinePause = undefined;
     this.world.onlineCycle = undefined;
+    this.world.onlinePractice = undefined;
     this.world.onlineMode = undefined;
     this.world.pickupOwner = undefined;
     this.world.remotePlayers = [];

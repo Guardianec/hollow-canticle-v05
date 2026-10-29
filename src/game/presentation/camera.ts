@@ -53,6 +53,7 @@ export class CameraDirector {
     const group =
       w.alive.length > 1 ||
       incoming.length > 0 ||
+      w.areas.active.length > 0 ||
       w.alive.some((e) => ['archer', 'hexer'].includes(e.def.id)) ||
       w.lab.camera === 'combat-wide';
     const bossMode = target?.def.id === 'boss' || w.lab.camera === 'boss';
@@ -85,13 +86,17 @@ export class CameraDirector {
     const duelPosition = focus
       .clone()
       .addScaledVector(dir, -(boss ? 4.4 : 1.7))
-      .addScaledVector(side, boss ? 7.6 : 4.8)
-      .add(new T.Vector3(0, boss ? 1.4 : 1, 0));
+      .addScaledVector(side, boss ? 10 : 4.8)
+      .add(new T.Vector3(0, boss ? 4.2 : 1, 0));
     if (group && !finishing) {
       const points = [
         playerPosition,
         ...w.alive.map((e) => globalPosition(w.room, e.x, e.y)),
         ...incoming.map((p) => globalPosition(w.room, p.x, p.y)),
+        ...w.areas.active.flatMap((a) => [
+          globalPosition(w.room, a.x - a.radius, a.y),
+          globalPosition(w.room, a.x + a.radius, a.y),
+        ]),
       ];
       focus.set(0, 0, 0);
       points.forEach((p) => focus.add(p));

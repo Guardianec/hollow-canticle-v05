@@ -1,6 +1,6 @@
 import * as T from 'three';
 import { ROOM_PITCH, doorPosition, type Floor, type Room } from '../dungeon';
-import { geometryFor, insideRoom, inDoorway } from '../geometry';
+import { geometryFor, insideRoom, inDoorway, canStand } from '../geometry';
 import { Random } from '../random';
 import { SCALE, type Materials } from './materials';
 import { globalPosition, type DungeonArt } from './architecture';
@@ -39,6 +39,7 @@ export function buildImportedDungeon(floor: Floor, m: Materials, assets: AssetMa
     sy = 1,
     sz = 1,
     rotation = 0,
+    pitch = 0,
   ) => {
     if (
       currentRoom &&
@@ -60,7 +61,7 @@ export function buildImportedDungeon(floor: Floor, m: Materials, assets: AssetMa
     id = id.replace('ruins_', family + '_');
     dummy.position.set(x, y, z);
     dummy.scale.set(sx, sy, sz);
-    dummy.rotation.set(0, rotation, 0);
+    dummy.rotation.set(pitch, rotation, 0);
     dummy.updateMatrix();
     const target = y < -5 && !id.endsWith('_deep_support') ? distantPlacements : placements;
     const list = target.get(id) ?? [];
@@ -95,10 +96,13 @@ export function buildImportedDungeon(floor: Floor, m: Materials, assets: AssetMa
   };
   for (const room of floor.rooms) {
     currentRoom = room;
-    art.group.add(roomDecals(room, floor.biome));
+    const roomArt = new T.Group();
+    roomArt.userData.realmRoom = room.id;
+    art.group.add(roomArt);
+    roomArt.add(roomDecals(room, floor.biome));
     if (floor.biome === 1) {
       const water = shrineWater(room, m);
-      art.group.add(water);
+      roomArt.add(water);
       art.waters.push(water);
     }
     placements.clear();
@@ -210,7 +214,7 @@ export function buildImportedDungeon(floor: Floor, m: Materials, assets: AssetMa
       const holder = art.gates.get(room.id) ?? new T.Group();
       if (!art.gates.has(room.id)) {
         art.gates.set(room.id, holder);
-        art.group.add(holder);
+        roomArt.add(holder);
       }
       holder.add(gate);
       for (let x = -0.95; x <= 1; x += 0.32) {
@@ -240,8 +244,38 @@ export function buildImportedDungeon(floor: Floor, m: Materials, assets: AssetMa
       }
     }
     const back = globalPosition(room, 560, 155);
-    if (floor.biome === 2)
-      for (const side of [-1, 1]) place('fungal_growth', back.x + side * 5, back.y, back.z + 2);
+    if (floor.biome === 2) {
+      const rng = new Random(room.artSeed + ':living-fungi');
+      const small = ['tiny_cluster', 'thin_cluster', 'cup', 'infestation'];
+      for (let i = 0; i < 22; i++) {
+        const lx = 130 + rng.next() * 850,
+          ly = 125 + rng.next() * 505;
+        if (!canStand(room, lx, ly, 28)) continue;
+        const p = globalPosition(room, lx, ly),
+          scale = 0.45 + rng.next() * 0.5;
+        place(
+          'fungal_' + small[i % small.length],
+          p.x,
+          p.y + 0.015,
+          p.z,
+          scale,
+          scale,
+          scale,
+          rng.next() * Math.PI * 2,
+        );
+      }
+      for (const side of [-1, 1]) {
+        const p = globalPosition(room, 560 + side * 455, 260);
+        place('fungal_wide_cap', p.x, p.y, p.z, 1, 1, 1, side * 0.5);
+        place('fungal_lantern', back.x + side * 5, back.y, back.z + 2, 0.8, 1.1, 0.8, side);
+        place('fungal_shelf', p.x, p.y + 1.5, p.z + 0.6, 0.9, 0.9, 0.9, side);
+        place('fungal_infestation', p.x, p.y + 1.6, p.z + 0.8, 1.8, 1.8, 1.8, side, Math.PI / 2);
+        place('fungal_hanging', p.x, p.y + 3, p.z, 1.2, 1.2, 1.2);
+        place('fungal_spore_sac', back.x + side * 4, back.y, back.z + 1, 0.7, 0.7, 0.7, side);
+      }
+      if (room.id % 4 === 0)
+        place('fungal_landmark', back.x - 10, back.y - 4, back.z - 11, 1.7, 1.7, 1.7, 0.8);
+    }
     if (floor.biome === 3)
       for (const side of [-1, 1]) place('frozen_snowbank', back.x + side * 5, back.y, back.z + 2);
     if (floor.biome === 4) {
@@ -256,11 +290,11 @@ export function buildImportedDungeon(floor: Floor, m: Materials, assets: AssetMa
         });
         mechanism.add(gear);
       }
-      art.group.add(mechanism);
+      roomArt.add(mechanism);
       art.mechanisms.push(mechanism);
       const fire = new T.Mesh(new T.PlaneGeometry(2, 0.9), m.items.lava);
       fire.position.set(back.x + 4, back.y + 0.8, back.z + 0.35);
-      art.group.add(fire);
+      roomArt.add(fire);
     }
     if (floor.biome === 1) {
       place('shrine_lantern', back.x - 4, back.y, back.z + 1);
@@ -311,7 +345,7 @@ export function buildImportedDungeon(floor: Floor, m: Materials, assets: AssetMa
       place('ruins_tomb', ip.x, ip.y, ip.z, 0.8, 0.7, 0.8);
     if (room.kind === 'exit') {
       place('ruins_stairs', ip.x, ip.y - 1.6, ip.z);
-      art.group.add(descentSeal(ip));
+      roomArt.add(descentSeal(ip));
       for (const side of [-1, 1])
         torch(ip.clone().add(new T.Vector3(side * 2, 0, -1.8)), room.id + side);
     }
@@ -326,11 +360,11 @@ export function buildImportedDungeon(floor: Floor, m: Materials, assets: AssetMa
       }
       lod.addLevel(group, level === 0 ? 0 : level === 1 ? 32 : 65);
     }
-    art.group.add(lod);
+    roomArt.add(lod);
     for (const [id, matrices] of distantPlacements) {
       const batches = assets.instanceBatches(id, 2, matrices);
       batches.forEach((batch) => (batch.userData.backgroundArchitecture = true));
-      art.group.add(...batches);
+      roomArt.add(...batches);
     }
   }
   return art;

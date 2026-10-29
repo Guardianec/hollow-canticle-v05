@@ -2,12 +2,12 @@
 import math
 from common import loft, stone, tube, mesh, join
 import ruins
+import fungi
 
 NAMES=['ruins','shrine','fungal','frozen','foundry']
 
 def mushroom(m,height=3,radius=1.4):
-    return [loft('curved fungal stem',[(0,.2,.19,0,0),(.5,.16,.18,.1,0),(height*.65,.13,.16,.23,.05),(height,.22,.2,.1,0)],m['moss_stone'],24,.12),
-            loft('sculpted mushroom cap',[(height-.25,radius,.8*radius,.1,0),(height-.1,radius*1.05,radius*.86,.1,0),(height+.15,radius*.8,radius*.65,.12,0),(height+.45,radius*.45,radius*.4,.16,0),(height+.52,.02,.02,.16,0)],m['fungal_skin'],48,.035)]
+    return fungi.mushroom(m,height,radius,3)
 
 def roots(m,spread=1.7):
     pieces=[]

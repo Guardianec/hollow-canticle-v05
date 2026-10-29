@@ -131,13 +131,27 @@ describe('v0.5 polish regressions', () => {
     const gltf = await new GLTFLoader()
       .setMeshoptDecoder(MeshoptDecoder)
       .parseAsync(bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength), '');
+    const packs = new Map([[manifest.packs.pilgrims.file, gltf]]);
     const assets = new AssetManager('imported');
     const world = new World(defaultSave());
     for (const [id, record] of Object.entries(manifest.assets).filter(
       ([, r]) => r.kind === 'character',
     )) {
+      const file = manifest.packs[record.pack].file;
+      if (!packs.has(file)) {
+        const bytes = readFileSync(new URL(file, base));
+        packs.set(
+          file,
+          await new GLTFLoader()
+            .setMeshoptDecoder(MeshoptDecoder)
+            .parseAsync(
+              bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength),
+              '',
+            ),
+        );
+      }
       for (const lod of record.lods)
-        assets.templates.set(lod.node, gltf.scene.getObjectByName(lod.node)!);
+        assets.templates.set(lod.node, packs.get(file)!.scene.getObjectByName(lod.node)!);
       for (let level = 0; level < 3; level++) {
         const actor = new ImportedActor(assets, id, level),
           bones = new Map<string, T.Bone>();

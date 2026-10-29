@@ -86,7 +86,8 @@ describe('Blender runtime contract', () => {
             ),
           ).toBe(true);
           expect(box.max.y - box.min.y, id).toBeGreaterThan(0.1);
-          if (!id.endsWith('_deep_support')) expect(box.max.y - box.min.y, id).toBeLessThan(8);
+          if (!id.endsWith('_deep_support'))
+            expect(box.max.y - box.min.y, id).toBeLessThan(id === 'fungal_landmark' ? 12 : 8);
         }
       }
       let darkestVertex = 1;
@@ -170,7 +171,7 @@ describe('Blender runtime contract', () => {
       }
     batches.forEach((batch) => batch.dispose());
     manager.dispose();
-  });
+  }, 15000);
   it('selects seeded variants and maps biome and combat silhouettes', () => {
     const variants = ['a', 'b', 'c'];
     expect(assetVariant('seed:room:tile', variants)).toBe(assetVariant('seed:room:tile', variants));

@@ -230,8 +230,10 @@ export class AssetManager {
           if (id.includes('stone')) mat.color.set('#858e91');
           if (id === 'heavy_cloth') mat.color.set('#2b3441');
           if (id === 'worn_leather') mat.color.set('#837568');
-          if (id === 'fungal_skin') {
-            mat.emissive.set('#8d46cc');
+          if (['fungal_skin', 'fungal_teal', 'fungal_gills'].includes(id)) {
+            mat.emissive.set(
+              id === 'fungal_teal' ? '#50c7ad' : id === 'fungal_gills' ? '#a17fe6' : '#8d46cc',
+            );
             mat.emissiveIntensity = 0.7;
             mat.onBeforeCompile = (shader) => {
               shader.fragmentShader = shader.fragmentShader.replace(
@@ -240,7 +242,8 @@ export class AssetManager {
               vec2 cell=floor(vMapUv*90.); vec2 pore=fract(vMapUv*90.)-.5;
               float seed=fract(sin(dot(cell,vec2(127.1,311.7)))*43758.5453);
               float speck=(1.-smoothstep(.045,.16,length(pore)))*step(.64,seed);
-              totalEmissiveRadiance*=.06+speck;`,
+              float vein=pow(max(0.,sin(vMapUv.x*140.+sin(vMapUv.y*55.)*2.)),16.);
+              totalEmissiveRadiance*=.015+speck*.75+vein*.18;`,
               );
             };
           }
@@ -269,6 +272,39 @@ export class AssetManager {
           this.textures.delete(file);
         }
     }
+  }
+  trimBiome(biome: number): void {
+    if (!this.manifest) return;
+    const keep = new Set(['pilgrims', packForBiome(biome)]);
+    for (const [id, record] of Object.entries(this.manifest.assets)) {
+      if (keep.has(record.pack) || !this.settled.has(record.pack)) continue;
+      for (const lod of record.lods) {
+        const root = this.templates.get(lod.node);
+        if (root) this.release(root);
+        this.templates.delete(lod.node);
+      }
+      this.missing.delete(id);
+    }
+    for (const pack of [...this.settled])
+      if (!keep.has(pack)) {
+        this.settled.delete(pack);
+        this.pending.delete(pack);
+      }
+    const families = new Set([...keep].flatMap((p) => this.manifest!.packs[p]?.materials ?? []));
+    for (const [id, material] of this.materials)
+      if (!families.has(id)) {
+        material.dispose();
+        this.materials.delete(id);
+        this.requestedMaterials.delete(id);
+      }
+    const used = new Set(
+      [...this.materials.values()].flatMap((m) => [m.map, m.normalMap, m.roughnessMap, m.aoMap]),
+    );
+    for (const [id, texture] of this.textures)
+      if (!used.has(texture)) {
+        texture.dispose();
+        this.textures.delete(id);
+      }
   }
   has(id: string) {
     return this.templates.has(id + '_LOD0');
@@ -301,6 +337,10 @@ export class AssetManager {
         }
       });
       batch.castShadow = !id.endsWith('_deep_support');
+      if (/^fungal_(tiny_cluster|thin_cluster|cup|infestation|hanging|shelf)/.test(id))
+        batch.castShadow = false;
+      batch.userData.fungalSmall = /^fungal_(tiny_cluster|thin_cluster|cup|infestation)/.test(id);
+      batch.userData.instanceCapacity = matrices.length;
       batch.receiveShadow = true;
       batch.userData.imported = true;
       batches.push(batch);

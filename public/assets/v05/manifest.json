@@ -171,6 +171,48 @@
         "ao": "wet_stone_ao_512.webp"
       }
     },
+    "fungal_teal": {
+      "baseColor": "fungal_teal_baseColor.webp",
+      "normal": "fungal_teal_normal.webp",
+      "roughness": "fungal_teal_roughness.webp",
+      "ao": "fungal_teal_ao.webp",
+      "metalness": 0,
+      "resolution": 1024,
+      "low": {
+        "baseColor": "fungal_teal_baseColor_512.webp",
+        "normal": "fungal_teal_normal_512.webp",
+        "roughness": "fungal_teal_roughness_512.webp",
+        "ao": "fungal_teal_ao_512.webp"
+      }
+    },
+    "fungal_gills": {
+      "baseColor": "fungal_gills_baseColor.webp",
+      "normal": "fungal_gills_normal.webp",
+      "roughness": "fungal_gills_roughness.webp",
+      "ao": "fungal_gills_ao.webp",
+      "metalness": 0,
+      "resolution": 1024,
+      "low": {
+        "baseColor": "fungal_gills_baseColor_512.webp",
+        "normal": "fungal_gills_normal_512.webp",
+        "roughness": "fungal_gills_roughness_512.webp",
+        "ao": "fungal_gills_ao_512.webp"
+      }
+    },
+    "fungal_ochre": {
+      "baseColor": "fungal_ochre_baseColor.webp",
+      "normal": "fungal_ochre_normal.webp",
+      "roughness": "fungal_ochre_roughness.webp",
+      "ao": "fungal_ochre_ao.webp",
+      "metalness": 0,
+      "resolution": 1024,
+      "low": {
+        "baseColor": "fungal_ochre_baseColor_512.webp",
+        "normal": "fungal_ochre_normal_512.webp",
+        "roughness": "fungal_ochre_roughness_512.webp",
+        "ao": "fungal_ochre_ao_512.webp"
+      }
+    },
     "fungal_skin": {
       "baseColor": "fungal_skin_baseColor.webp",
       "normal": "fungal_skin_normal.webp",
@@ -759,6 +801,26 @@
         {
           "node": "ruins_deep_support_LOD2",
           "triangles": 30
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "ashen_marshal": {
+      "pack": "ruins",
+      "kind": "character",
+      "biome": 0,
+      "lods": [
+        {
+          "node": "ashen_marshal_LOD0",
+          "triangles": 2619
+        },
+        {
+          "node": "ashen_marshal_LOD1",
+          "triangles": 1439
+        },
+        {
+          "node": "ashen_marshal_LOD2",
+          "triangles": 653
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -1603,6 +1665,26 @@
       ],
       "reference": "01-ruins-materials-and-characters.png"
     },
+    "drowned_prelate": {
+      "pack": "shrine",
+      "kind": "character",
+      "biome": 1,
+      "lods": [
+        {
+          "node": "drowned_prelate_LOD0",
+          "triangles": 2820
+        },
+        {
+          "node": "drowned_prelate_LOD1",
+          "triangles": 1550
+        },
+        {
+          "node": "drowned_prelate_LOD2",
+          "triangles": 704
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
     "fungal_floor_a": {
       "pack": "fungal",
       "kind": "environment",
@@ -1750,15 +1832,15 @@
       "lods": [
         {
           "node": "fungal_column_a_LOD0",
-          "triangles": 3616
+          "triangles": 6160
         },
         {
           "node": "fungal_column_a_LOD1",
-          "triangles": 1988
+          "triangles": 3387
         },
         {
           "node": "fungal_column_a_LOD2",
-          "triangles": 904
+          "triangles": 1539
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -1770,15 +1852,15 @@
       "lods": [
         {
           "node": "fungal_column_b_LOD0",
-          "triangles": 3616
+          "triangles": 6160
         },
         {
           "node": "fungal_column_b_LOD1",
-          "triangles": 1988
+          "triangles": 3387
         },
         {
           "node": "fungal_column_b_LOD2",
-          "triangles": 904
+          "triangles": 1539
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -1790,15 +1872,15 @@
       "lods": [
         {
           "node": "fungal_column_broken_LOD0",
-          "triangles": 1612
+          "triangles": 4156
         },
         {
           "node": "fungal_column_broken_LOD1",
-          "triangles": 886
+          "triangles": 2284
         },
         {
           "node": "fungal_column_broken_LOD2",
-          "triangles": 400
+          "triangles": 1039
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -2010,15 +2092,15 @@
       "lods": [
         {
           "node": "fungal_statue_LOD0",
-          "triangles": 1708
+          "triangles": 4252
         },
         {
           "node": "fungal_statue_LOD1",
-          "triangles": 938
+          "triangles": 2338
         },
         {
           "node": "fungal_statue_LOD2",
-          "triangles": 426
+          "triangles": 1063
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -2130,15 +2212,15 @@
       "lods": [
         {
           "node": "fungal_growth_LOD0",
-          "triangles": 2456
+          "triangles": 5000
         },
         {
           "node": "fungal_growth_LOD1",
-          "triangles": 1349
+          "triangles": 2749
         },
         {
           "node": "fungal_growth_LOD2",
-          "triangles": 613
+          "triangles": 1250
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -2159,6 +2241,226 @@
         {
           "node": "fungal_root_cluster_LOD2",
           "triangles": 447
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "fungal_tiny_cluster": {
+      "pack": "fungal",
+      "kind": "environment",
+      "biome": 2,
+      "lods": [
+        {
+          "node": "fungal_tiny_cluster_LOD0",
+          "triangles": 16040
+        },
+        {
+          "node": "fungal_tiny_cluster_LOD1",
+          "triangles": 8822
+        },
+        {
+          "node": "fungal_tiny_cluster_LOD2",
+          "triangles": 4010
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "fungal_thin_cluster": {
+      "pack": "fungal",
+      "kind": "environment",
+      "biome": 2,
+      "lods": [
+        {
+          "node": "fungal_thin_cluster_LOD0",
+          "triangles": 12832
+        },
+        {
+          "node": "fungal_thin_cluster_LOD1",
+          "triangles": 7056
+        },
+        {
+          "node": "fungal_thin_cluster_LOD2",
+          "triangles": 3208
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "fungal_wide_cap": {
+      "pack": "fungal",
+      "kind": "environment",
+      "biome": 2,
+      "lods": [
+        {
+          "node": "fungal_wide_cap_LOD0",
+          "triangles": 4792
+        },
+        {
+          "node": "fungal_wide_cap_LOD1",
+          "triangles": 2635
+        },
+        {
+          "node": "fungal_wide_cap_LOD2",
+          "triangles": 1197
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "fungal_shelf": {
+      "pack": "fungal",
+      "kind": "environment",
+      "biome": 2,
+      "lods": [
+        {
+          "node": "fungal_shelf_LOD0",
+          "triangles": 8916
+        },
+        {
+          "node": "fungal_shelf_LOD1",
+          "triangles": 4903
+        },
+        {
+          "node": "fungal_shelf_LOD2",
+          "triangles": 2229
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "fungal_cup": {
+      "pack": "fungal",
+      "kind": "environment",
+      "biome": 2,
+      "lods": [
+        {
+          "node": "fungal_cup_LOD0",
+          "triangles": 3208
+        },
+        {
+          "node": "fungal_cup_LOD1",
+          "triangles": 1763
+        },
+        {
+          "node": "fungal_cup_LOD2",
+          "triangles": 802
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "fungal_lantern": {
+      "pack": "fungal",
+      "kind": "environment",
+      "biome": 2,
+      "lods": [
+        {
+          "node": "fungal_lantern_LOD0",
+          "triangles": 4792
+        },
+        {
+          "node": "fungal_lantern_LOD1",
+          "triangles": 2635
+        },
+        {
+          "node": "fungal_lantern_LOD2",
+          "triangles": 1198
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "fungal_spore_sac": {
+      "pack": "fungal",
+      "kind": "environment",
+      "biome": 2,
+      "lods": [
+        {
+          "node": "fungal_spore_sac_LOD0",
+          "triangles": 2492
+        },
+        {
+          "node": "fungal_spore_sac_LOD1",
+          "triangles": 1370
+        },
+        {
+          "node": "fungal_spore_sac_LOD2",
+          "triangles": 622
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "fungal_landmark": {
+      "pack": "fungal",
+      "kind": "environment",
+      "biome": 2,
+      "lods": [
+        {
+          "node": "fungal_landmark_LOD0",
+          "triangles": 4792
+        },
+        {
+          "node": "fungal_landmark_LOD1",
+          "triangles": 2634
+        },
+        {
+          "node": "fungal_landmark_LOD2",
+          "triangles": 1197
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "fungal_hanging": {
+      "pack": "fungal",
+      "kind": "environment",
+      "biome": 2,
+      "lods": [
+        {
+          "node": "fungal_hanging_LOD0",
+          "triangles": 21028
+        },
+        {
+          "node": "fungal_hanging_LOD1",
+          "triangles": 11565
+        },
+        {
+          "node": "fungal_hanging_LOD2",
+          "triangles": 5257
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "fungal_infestation": {
+      "pack": "fungal",
+      "kind": "environment",
+      "biome": 2,
+      "lods": [
+        {
+          "node": "fungal_infestation_LOD0",
+          "triangles": 19416
+        },
+        {
+          "node": "fungal_infestation_LOD1",
+          "triangles": 10678
+        },
+        {
+          "node": "fungal_infestation_LOD2",
+          "triangles": 4853
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "spore_crown": {
+      "pack": "fungal",
+      "kind": "character",
+      "biome": 2,
+      "lods": [
+        {
+          "node": "spore_crown_LOD0",
+          "triangles": 23924
+        },
+        {
+          "node": "spore_crown_LOD1",
+          "triangles": 13157
+        },
+        {
+          "node": "spore_crown_LOD2",
+          "triangles": 5980
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -2719,6 +3021,26 @@
         {
           "node": "frozen_ice_shards_LOD2",
           "triangles": 32
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
+    },
+    "pale_sentinel": {
+      "pack": "frozen",
+      "kind": "character",
+      "biome": 3,
+      "lods": [
+        {
+          "node": "pale_sentinel_LOD0",
+          "triangles": 2524
+        },
+        {
+          "node": "pale_sentinel_LOD1",
+          "triangles": 1388
+        },
+        {
+          "node": "pale_sentinel_LOD2",
+          "triangles": 630
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
@@ -3302,12 +3624,32 @@
         }
       ],
       "reference": "01-ruins-materials-and-characters.png"
+    },
+    "forge_tyrant": {
+      "pack": "foundry",
+      "kind": "character",
+      "biome": 4,
+      "lods": [
+        {
+          "node": "forge_tyrant_LOD0",
+          "triangles": 5248
+        },
+        {
+          "node": "forge_tyrant_LOD1",
+          "triangles": 2886
+        },
+        {
+          "node": "forge_tyrant_LOD2",
+          "triangles": 1312
+        }
+      ],
+      "reference": "01-ruins-materials-and-characters.png"
     }
   },
   "packs": {
     "ruins": {
       "file": "ruins.glb",
-      "bytes": 3066760,
+      "bytes": 3172600,
       "materials": [
         "aged_bronze",
         "ancient_stone",
@@ -3333,27 +3675,31 @@
     },
     "shrine": {
       "file": "shrine.glb",
-      "bytes": 3075280,
+      "bytes": 3195444,
       "materials": [
         "aged_bronze",
         "moss_stone",
+        "pilgrim_linen",
         "wet_stone",
         "worn_iron"
       ]
     },
     "fungal": {
       "file": "fungal.glb",
-      "bytes": 3325352,
+      "bytes": 7568892,
       "materials": [
         "aged_bronze",
+        "fungal_gills",
+        "fungal_ochre",
         "fungal_skin",
+        "fungal_teal",
         "moss_stone",
         "worn_iron"
       ]
     },
     "frozen": {
       "file": "frozen.glb",
-      "bytes": 3205380,
+      "bytes": 3317948,
       "materials": [
         "aged_bronze",
         "frozen_stone",
@@ -3364,7 +3710,7 @@
     },
     "foundry": {
       "file": "foundry.glb",
-      "bytes": 3313716,
+      "bytes": 3525664,
       "materials": [
         "aged_bronze",
         "burnt_stone",
@@ -3374,5 +3720,5 @@
       ]
     }
   },
-  "downloadBytes": 33415716
+  "downloadBytes": 40331710
 }

@@ -360,6 +360,8 @@ describe('offerings and timed effects', () => {
     tick(w, 0.4);
     expect(w.player.hp).toBe(30);
     tick(w, 0.3);
+    expect(w.player.hp).toBe(30);
+    tick(w, 0.12);
     expect(w.player.hp).toBe(60);
     expect(w.stats.healing).toBeCloseTo(30);
     w.inventory.add('crimson');

@@ -183,17 +183,17 @@ describe('combat behavior', () => {
     expect(w.player.emptyParries).toBe(0);
     expect(w.weapon.parry).toBe(0.22);
   });
-  it('uses a new delayed floor echo in boss phase two without changing phase-one health', () => {
+  it('uses a warned realm hazard in boss phase two without changing phase-one health', () => {
     const w = arena('boss'),
       e = w.enemies[0];
     e.hp = e.maxHp * 0.47;
     tick(w, 0.02);
     expect(e.phase).toBe(2);
-    expect(e.def.phaseTwo?.flat().some((s) => s.echo)).toBe(true);
+    expect(e.def.phaseTwo?.flat().some((s) => s.area)).toBe(true);
     w.invincible = true;
-    tick(w, 3);
-    expect(e.strike.echo).toBe(true);
-    expect(w.echoes.length).toBe(1);
+    tick(w, 5);
+    expect(w.areas.active.length).toBeGreaterThan(0);
+    expect(w.areas.active[0].armAt).toBeGreaterThan(w.areas.active[0].createdAt);
     w.invincible = false;
     w.player.immunity = 0;
     const hp = w.player.hp;
@@ -205,14 +205,16 @@ describe('combat behavior', () => {
     const hit = arena('boss');
     hit.invincible = true;
     hit.enemies[0].hp = hit.enemies[0].maxHp * 0.47;
-    tick(hit, 3.02);
-    expect(hit.echoes).toHaveLength(1);
-    Object.assign(hit.player, { x: hit.echoes[0].x, y: hit.echoes[0].y, immunity: 0 });
+    tick(hit, 5);
+    expect(hit.areas.active.length).toBeGreaterThan(0);
+    const area = hit.areas.active[0];
+    Object.assign(hit.player, { x: area.x, y: area.y, immunity: 0 });
     hit.invincible = false;
     hit.enemies[0].state = 'idle';
     hit.enemies[0].readyAt = 999;
-    tick(hit, 1.2);
-    expect(hit.stats.damage).toBe(16);
+    hit.time = area.armAt;
+    hit.stepAreas();
+    expect(hit.stats.damage).toBe(area.damage);
   });
   it('selects delayed mixups between actions and keeps a committed strike immutable', () => {
     const w = arena('duelist'),

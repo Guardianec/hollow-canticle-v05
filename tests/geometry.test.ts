@@ -30,7 +30,9 @@ describe('v0.2 spatial grammar', () => {
     for (let i = 0; i < 100; i++) {
       const f = makeFloor('TOPOLOGY-' + i, 1);
       topologies.add(JSON.stringify(f.rooms.map((r) => [r.x, r.y, r.links])));
-      expect(f.rooms[4].links).toEqual([3]);
+      expect(f.rooms.find((r) => r.kind === 'exit')!.links).toEqual([
+        f.rooms.find((r) => r.kind === 'boss')!.id,
+      ]);
     }
     expect(topologies.size).toBeGreaterThan(90);
   });

@@ -47,6 +47,7 @@ export class Actor {
     readonly id: string,
     readonly player: boolean,
     private assets?: AssetManager,
+    private model?: string,
   ) {
     const m = materials;
     const profile = (this.profile = BODY_PROFILES[id] ?? BODY_PROFILES.warden);
@@ -705,6 +706,7 @@ export class Actor {
       clipTime: number;
       freeze: boolean;
       reducedMotion?: boolean;
+      wind?: number;
       executionVariant?: number;
       velocity?: number;
       turnRate?: number;
@@ -770,14 +772,16 @@ export class Actor {
         u = (0.66 - y) / 1.32;
       positions.setZ(
         i,
-        Math.sin(clock * 3 + positions.getX(i) * 5 + u * 3) * u * 0.07 +
+        Math.sin(clock * 3 + positions.getX(i) * 5 + u * 3) *
+          u *
+          (0.07 + Math.abs(options?.wind ?? 0) * 0.035) +
           u * u * (0.16 + (walking ? 0.16 : 0) + Math.min(0.3, acceleration * 2)),
       );
     }
     this.cape.rotation.z = Math.max(-0.25, Math.min(0.25, -this.turning * 1.2));
     positions.needsUpdate = true;
     if (duel > 0.1) this.cape.geometry.computeVertexNormals();
-    const asset = characterAsset(this.id);
+    const asset = this.model ?? characterAsset(this.id);
     if (asset && this.assets?.has(asset)) {
       const level = duel > 0.45 && this.assets.highDetail ? 0 : 1;
       if (!this.imported || this.importedLevel !== level) {
@@ -796,7 +800,8 @@ export class Actor {
         this.weaponId === 'spear' || sample.name.includes('/thrust/'),
         phase,
         this.animation.hips,
-        this.animation.cloth,
+        this.animation.cloth +
+          (options?.reducedMotion ? 0 : (options?.wind ?? 0) * 0.06 * Math.sin(clock * 1.5)),
       );
     }
     return sample;

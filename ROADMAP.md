@@ -1,5 +1,28 @@
 # Next releases
 
+## v0.8 Trials of the Five Realms: acceptance work
+
+Implemented on `codex/v0.8.0-five-realms`: guardian every floor, five realm bosses,
+phase-II regional patterns, harder guard-focused combat, contextual punishes,
+five authoritative hazards/statuses, ten-category fungal rebuild, regional GPU
+atmosphere, varied shafts and expanded graphics/optimization budgets. These are
+implemented features, not future promises.
+
+The [eleven-request audit](docs/ORIGINAL-REQUEST-AUDIT-v0.8.md) and
+[QA record](docs/QA-v0.8.md) retain these release gates:
+
+- Complete solo/two-player floors, four-player boss and Duel playtests; exercise
+  every boss/hazard/Pilgrim, deeper-cycle balance and healing windows.
+- Finish visual/motion evidence and artistic review of fungi, boss tells,
+  weather/ground readability and Extreme presentation.
+- Obtain valid FPS, client/GPU profiles, integrated-GPU measurements and a
+  sustained multi-floor memory/network soak.
+- Resolve every PARTIAL original requirement before setting package version 0.8.0.
+
+FPS is blocked by browser throttling, as directed by the user. Browser automatic
+approval review also reached its usage limit during capture work. Missing checks
+are not represented as passing; no merge or public deployment is automatic.
+
 ## v0.7 Living Steel review
 
 Implemented: animation layers and transitions; five Pilgrims including Shinobi;
@@ -13,8 +36,8 @@ rendered samples and local load measurements from remaining acceptance work.
 Before wider release, run sustained human PvP balance sessions, integrated-GPU
 playtests, complete multi-floor journeys and artistic review against the three
 reference boards. Dynamic resolution and animation update-rate LOD remain
-optional future optimizations. Advanced weather/light shafts and difficulty/boss
-overhauls belong to later releases.
+optional future optimizations. Weather/light shafts and difficulty/boss systems
+are implemented in the v0.8 candidate; their remaining acceptance work is above.
 
 ## v0.5 visual review
 
@@ -51,5 +74,5 @@ Before full release sign-off:
 - Optional Chain Hunter, more biome variants and reflected-fragment interactions.
 - Controller support, rebinding and a separately designed active-run resume system.
 
-The game remains local, static and melee/parry focused. No remote analytics, accounts,
+The game supports local play and authoritative co-op/Duels. No remote analytics, accounts,
 microtransactions, gacha, energy timers or touch gameplay have been added.

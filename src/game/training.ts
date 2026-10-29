@@ -6,6 +6,11 @@ export const TRAINING_STAGES = [
   ['parry', 'Meet the blade', 'K / right mouse as the training slash lands.'],
   ['perfect', 'Find the silver instant', 'Deflect at the last instant for a perfect parry.'],
   ['dodge', 'Leave only a shadow', 'Space evades. You can dodge during attack recovery.'],
+  [
+    'area',
+    'Area attacks',
+    'Leave marked ground before it becomes dangerous. Dodge through a wave; leave a persistent field.',
+  ],
   ['guard', 'Fracture the guard', 'Deflect and counter until the gold guard bar breaks.'],
   ['finisher', 'Keep your oath', 'Approach a broken guard and press E.'],
   ['ranged', 'Offer silver', 'R / middle mouse spends a rechargeable ranged charge.'],

@@ -204,7 +204,11 @@ export class Session {
     };
     // Rendering, audio, saves and DOM are never initialized by the authority.
     world.laboratory = true;
-    Object.assign(world, { threats: this.threats, projectiles: this.projectiles });
+    Object.assign(world, {
+      threats: this.threats,
+      projectiles: this.projectiles,
+      areas: this.members.size ? this.primary.areas : world.areas,
+    });
     world.loot = new LootDirector(`${this.seed}:personal:${index}`);
     if (this.mode === 'duel') world.inventory.clear();
     this.members.set(id, member);
@@ -353,11 +357,13 @@ export class Session {
       return;
     }
     if (!living.length) return;
+    w.updateAreaPressure();
     for (const e of w.enemies) {
       const target = this.target(e, living);
       if (target) target.world.updateEnemy(e, dt);
     }
     living[0].world.arsenal.update(dt);
+    w.stepAreas();
     this.updateDeaths();
     for (const m of this.members.values()) {
       if (m.world.player.hp <= 0) m.world.player.state = 'dead';
@@ -386,6 +392,7 @@ export class Session {
         if (this.fallen.has(m.id)) continue;
         this.fallen.add(m.id);
         m.deaths++;
+        m.world.telemetry.deaths = m.deaths;
         this.events.push({ type: 'death', x: m.world.player.x, y: m.world.player.y, actor: m.id });
       }
   }
@@ -403,7 +410,7 @@ export class Session {
         assigned * 110 -
         Math.min(200, threat * 2) -
         (m.world.player.state === 'item' ? 45 : m.world.player.state === 'ranged' ? 20 : 0) +
-        (m === existing ? -65 : 0)
+        (m === existing ? (e.def.id === 'boss' && living.length >= 3 ? 160 : -65) : 0)
       );
     };
     const next = [...living].sort((a, b) => score(a) - score(b))[0];
@@ -417,7 +424,7 @@ export class Session {
     const size = Math.max(1, [...this.members.values()].filter((m) => m.connected).length),
       scale = scaling(size);
     this.budget = scale.budget;
-    const ids = encounter(room, size, this.seed);
+    const ids = encounter(room, size, this.seed, first.floor.biome);
     for (const world of this.worlds) {
       world.floor = first.floor;
       world.enterRoom(id, previous);
@@ -426,6 +433,7 @@ export class Session {
     const elite = eliteFor(room, size, this.seed, ids);
     for (const [index, e] of first.enemies.entries()) {
       const boss = e.def.id === 'boss';
+      if (boss) e.readyAt = first.time + 3;
       e.hp = e.maxHp *= boss ? scale.bossHp : scale.hp;
       e.maxPosture *= boss ? scale.bossPosture : scale.posture;
       if (index === elite) {
@@ -453,6 +461,7 @@ export class Session {
   private clear(): void {
     const w = this.primary;
     this.projectiles.clear();
+    w.areas.clear();
     this.threats.clear();
     this.contacts = [];
     w.room.cleared = true;
@@ -526,6 +535,7 @@ export class Session {
     }
     if (active.every((m) => distance(m.world.player, { x: 560, y: 365 }) < 120)) {
       if (w.room.kind === 'exit') {
+        if (!w.floor.rooms.some((r) => r.kind === 'boss' && r.cleared)) return;
         const floor = makeFloor(this.seed, w.floor.depth + 1);
         for (const world of this.worlds) world.floor = floor;
         this.enter(0);

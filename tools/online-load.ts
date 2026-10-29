@@ -3,7 +3,7 @@ import { monitorEventLoopDelay } from 'node:perf_hooks';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { createServer } from '../server/app';
 import { CoopRoom } from '../server/rooms/CoopRoom';
-import { Input } from '../shared/protocol';
+import { Input, PROTOCOL_VERSION } from '../shared/protocol';
 import { makeFloor } from '../src/game/dungeon';
 
 const seconds = Math.max(5, Math.min(120, Number(process.argv[2] ?? 20)));
@@ -17,7 +17,10 @@ try {
     const room = await test.createRoom<CoopRoom>('coop');
     rooms.push(room);
     for (let j = 0; j < 4; j++) {
-      const client = await test.connectTo(room, { name: `Load ${i} ${j}` });
+      const client = await test.connectTo(room, {
+        name: `Load ${i} ${j}`,
+        protocol: PROTOCOL_VERSION,
+      });
       client.onMessage('event', () => undefined);
       client.onMessage('ping', (token) => client.send('pong', token));
       room.state.players.get(client.sessionId)!.weapon = ['shinobi', 'twins', 'spear', 'great'][j];
@@ -86,7 +89,7 @@ try {
     used = process.cpuUsage(cpu);
   const result = {
     scenario:
-      '5 rooms × 4 players × 8 enemies including Saint, ranged enemies and player projectiles',
+      '5 rooms × 4 players × 8 enemies including realm guardians, ground areas and projectiles',
     seconds: elapsed,
     tickRates: rooms.map((r, i) => (r.state.tick - ticks[i]) / elapsed),
     cpuOneCorePercent: ((used.user + used.system) / (elapsed * 1000000)) * 100,
@@ -100,7 +103,7 @@ try {
       'Combined server and 20 SDK clients in one Node process. WebSocket payload bytes; excludes framing/TLS. Invincible clients keep workload active. Local hardware, not Render measurement.',
   };
   await mkdir('docs/metrics', { recursive: true });
-  await writeFile('docs/metrics/v07-load.json', JSON.stringify(result, null, 2) + '\n');
+  await writeFile('docs/metrics/v08-load.json', JSON.stringify(result, null, 2) + '\n');
   console.log(JSON.stringify(result, null, 2));
 } finally {
   await test.cleanup();

@@ -575,7 +575,7 @@ export class Interface {
     const debugState = document.querySelector('#debug-state');
     if (debugState) {
       const e = w.target;
-      debugState.textContent = `Time ${w.time.toFixed(2)} · HP ${Math.round(w.player.hp)} · ${w.player.state}\nPlayer ${w.player.x.toFixed(0)},${w.player.y.toFixed(0)} · Target ${w.focusedEnemy ?? 'free'} · Room ${w.roomId} · ${w.room.kind}\nParries ${w.stats.parries} / Perfect ${w.stats.perfects} · Empty ${w.player.emptyParries}\n${e ? `${e.def.id}: ${e.state} ${Math.max(0, w.time - e.stateAt).toFixed(2)} / ${e.strike.windup.toFixed(2)} ${e.strike.kind}` : 'No opponent'}\n${w.lab.animationName} @ ${w.lab.normalized.toFixed(2)} · ${w.lab.locomotion} / ${w.lab.action} · ${w.lab.weights}\nActive ${w.lab.hitWindow} · root ${w.lab.rootMotion.toFixed(2)}\nParryable ${e && ['slash', 'thrust'].includes(e.strike.kind) ? 'yes' : 'no (greatblade can perfect smash)'}\nReservations ${w.threats.reservations.map((r) => `${r.enemy}@${r.at.toFixed(2)}`).join(', ')}\nArsenal ${w.player.rangedCharges}/${w.character.ranged.charges} · ${w.projectiles.active.length} projectiles\n${w.projectiles.active.map((p) => `${p.kind} ${p.x.toFixed(0)},${p.y.toFixed(0)} v${Math.hypot(p.vx, p.vy).toFixed(0)} owner:${p.owner} parry:${p.parryable} return:${p.reflected}`).join(' / ')}\nReflections ${w.stats.reflections} · Items ${w.stats.itemsUsed} · Ranged hits ${w.stats.rangedHits}\nCamera ${w.presentation.mode} · ${w.presentation.fps} FPS\n${w.presentation.drawCalls} calls · ${Math.round(w.presentation.triangles / 1000)}k triangles`;
+      debugState.textContent = `Time ${w.time.toFixed(2)} · HP ${Math.round(w.player.hp)} · ${w.player.state}\nPlayer ${w.player.x.toFixed(0)},${w.player.y.toFixed(0)} · Target ${w.focusedEnemy ?? 'free'} · Room ${w.roomId} · ${w.room.kind}\nParries ${w.stats.parries} / Perfect ${w.stats.perfects} · Empty ${w.player.emptyParries}\n${e ? `${e.def.id}: ${e.state} ${Math.max(0, w.time - e.stateAt).toFixed(2)} / ${e.strike.windup.toFixed(2)} ${e.strike.kind}` : 'No opponent'}\n${w.lab.animationName} @ ${w.lab.normalized.toFixed(2)} · ${w.lab.locomotion} / ${w.lab.action} · ${w.lab.weights}\nActive ${w.lab.hitWindow} · root ${w.lab.rootMotion.toFixed(2)}\nParryable ${e && ['slash', 'thrust'].includes(e.strike.kind) ? 'yes' : 'no (greatblade can perfect smash)'}\nReservations ${w.threats.reservations.map((r) => `${r.enemy}@${r.at.toFixed(2)}`).join(', ')}\nArsenal ${w.player.rangedCharges}/${w.character.ranged.charges} · ${w.projectiles.active.length} projectiles\n${w.projectiles.active.map((p) => `${p.kind} ${p.x.toFixed(0)},${p.y.toFixed(0)} v${Math.hypot(p.vx, p.vy).toFixed(0)} owner:${p.owner} parry:${p.parryable} return:${p.reflected}`).join(' / ')}\nReflections ${w.stats.reflections} · Items ${w.stats.itemsUsed} · Ranged hits ${w.stats.rangedHits}\nCamera ${w.presentation.mode} · ${w.presentation.fps} FPS\n${w.presentation.drawCalls} calls · ${Math.round(w.presentation.triangles / 1000)}k triangles\n${w.presentation.weatherParticles} weather · ${w.presentation.geometries} geometries · ${w.presentation.textures} textures\n${w.presentation.gpu}\nAreas ${w.areas.active.map((a) => `${a.kind} ${a.x.toFixed(0)},${a.y.toFixed(0)} arm:${a.armAt.toFixed(2)} end:${a.expireAt.toFixed(2)}`).join(' / ')}`;
     }
   }
   private updateSound(): void {
@@ -601,7 +601,7 @@ export class Interface {
     panel.querySelector('summary')!.textContent = 'Combat laboratory';
     panel.insertAdjacentHTML(
       'beforeend',
-      `<label>Enemy count <input id="lab-count" type="number" min="1" max="3" value="1"/></label>
+      `<label>Enemy count <input id="lab-count" type="number" min="1" max="8" value="1"/></label>
       <label>Support <select id="lab-support"><option value="same">Same archetype</option>${ENEMIES.filter(
         (e) => e.id !== 'boss',
       )
@@ -616,6 +616,19 @@ export class Interface {
       <label>Freeze / scrub <input id="lab-freeze" type="checkbox"/></label><label>Clip time <input id="lab-scrub" type="range" min="0" max="1" step="0.01" value="0"/></label>
       <label>Step amount <select id="lab-step-size"><option value="0.008333333333333333">One frame</option><option value="0.05">50 ms</option><option value="0.1">100 ms</option><option value="0.5">500 ms</option></select></label>
       <button id="lab-step">Advance simulation</button><button id="lab-phase">Reveal boss phase II</button>`,
+    );
+    panel.insertAdjacentHTML(
+      'beforeend',
+      `<label>Weather intensity <input id="realm-weather" type="range" min="-1" max="1.3" step=".1" value="-1"></label>
+      <label>Wind <input id="realm-wind" type="range" min="0" max="2" step=".1" value="1"></label>
+      <label>Weather density <input id="realm-density" type="range" min="0" max="1.25" step=".05" value="1"></label>
+      <label>Light shafts <input id="realm-shafts" type="checkbox" checked></label>
+      <label>Realm quality <select id="realm-quality">${GRAPHICS_LEVELS.map((q) => `<option value="${q}">${GRAPHICS[q].label}</option>`).join('')}</select></label>
+      <button id="realm-boss">Practice realm guardian</button><button id="realm-online-boss">Shared guardian practice (local lab server)</button><button id="realm-area">Spawn realm hazard</button>
+      <label>Boss vitality % <input id="realm-hp" type="number" min="1" max="100" value="100"></label>
+      <label>Boss guard % <input id="realm-guard" type="number" min="0" max="100" value="0"></label>
+      <button id="realm-set">Set boss vitality / guard</button><button id="realm-attack">Commit selected sequence</button>
+      <button id="realm-capture">Save frame</button><button id="realm-telemetry">Save local telemetry</button>`,
     );
     panel.title = 'F2 toggles QA tools';
     document.addEventListener('keydown', (event) => {
@@ -683,8 +696,107 @@ export class Interface {
         2,
       );
     });
+    panel
+      .querySelector('#realm-online-boss')!
+      .addEventListener('click', () => w.onlinePractice?.(Number(value('lab-biome'))));
+    for (const [id, key] of [
+      ['realm-weather', 'intensity'],
+      ['realm-wind', 'wind'],
+      ['realm-density', 'density'],
+    ] as const)
+      panel
+        .querySelector('#' + id)!
+        .addEventListener('input', () => (w.weather[key] = Number(value(id))));
+    panel
+      .querySelector('#realm-shafts')!
+      .addEventListener(
+        'change',
+        (e) => (w.weather.shafts = (e.target as HTMLInputElement).checked),
+      );
+    (panel.querySelector('#realm-quality') as HTMLSelectElement).value = w.save.settings.detail;
+    panel
+      .querySelector('#realm-quality')!
+      .addEventListener(
+        'change',
+        () => (w.save.settings.detail = value('realm-quality') as typeof w.save.settings.detail),
+      );
+    panel.querySelector('#realm-boss')!.addEventListener('click', () =>
+      w.configureLab({
+        enemy: 'boss',
+        support: 'same',
+        count: 1,
+        elite: 'none',
+        depth: Number(value('debug-depth')),
+        biome: Number(value('lab-biome')),
+        pattern: -1,
+      }),
+    );
+    panel.querySelector('#realm-area')!.addEventListener('click', () => {
+      if (w.floor.biome !== Number(value('lab-biome')))
+        w.floor = { ...w.floor, biome: Number(value('lab-biome')) };
+      w.spawnArea(w.enemies[0]);
+    });
+    panel.querySelector('#realm-set')!.addEventListener('click', () => {
+      const e = w.alive.find((e) => e.def.id === 'boss');
+      if (!e) return;
+      e.hp = e.maxHp * Math.max(0.01, Math.min(1, Number(value('realm-hp')) / 100));
+      e.posture = e.maxPosture * Math.max(0, Math.min(1, Number(value('realm-guard')) / 100));
+      if (e.posture >= e.maxPosture) w.pressure(e, 1);
+    });
+    panel.querySelector('#realm-attack')!.addEventListener('click', () => {
+      const e = w.alive.find((e) => e.def.id === 'boss');
+      if (!e) return;
+      e.pattern = Math.max(0, Number(value('lab-pattern')));
+      e.index = 0;
+      e.state = 'idle';
+      e.readyAt = w.time;
+      e.areaReady = w.time;
+      e.punishReady = w.time + 2;
+      w.updateEnemy(e, 1 / 120);
+    });
+    const download = (name: string, body: Blob) => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(body);
+      a.download = name;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    };
+    panel.querySelector('#realm-telemetry')!.addEventListener('click', () =>
+      download(
+        'canticle-local-telemetry.json',
+        new Blob(
+          [
+            JSON.stringify(
+              {
+                stats: w.stats,
+                combat: w.telemetry,
+                render: w.presentation,
+                biome: w.floor.biome,
+                quality: w.save.settings.detail,
+              },
+              null,
+              2,
+            ),
+          ],
+          { type: 'application/json' },
+        ),
+      ),
+    );
+    panel.querySelector('#realm-capture')!.addEventListener('click', () => {
+      // Capture the composed game surface on the next animation frame.
+      requestAnimationFrame(() => {
+        const canvas = document.querySelector<HTMLCanvasElement>('.dungeon-webgl');
+        canvas?.toBlob((blob) => {
+          if (blob) download('canticle-realm-frame.png', blob);
+        });
+      });
+    });
     panel.querySelector('#lab-run-stats')!.addEventListener('click', () => {
-      panel.querySelector('#lab-arsenal-stats')!.textContent = JSON.stringify(w.stats, null, 2);
+      panel.querySelector('#lab-arsenal-stats')!.textContent = JSON.stringify(
+        { stats: w.stats, combat: w.telemetry, render: w.presentation },
+        null,
+        2,
+      );
     });
     panel
       .querySelector('#lab-hitboxes')!

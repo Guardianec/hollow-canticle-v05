@@ -10,8 +10,8 @@ export class Effects {
   readonly root = new T.Group();
   readonly light = new T.PointLight('#ffd18a', 0, 12, 1.5);
   private particles: T.LineSegments;
-  private positions = new Float32Array(260 * 6);
-  private colors = new Float32Array(260 * 6);
+  private positions = new Float32Array(520 * 6);
+  private colors = new Float32Array(520 * 6);
   private active = new Map<Effect, T.Group>();
   private pool = new Map<string, T.Group[]>();
   private rings: T.Mesh[] = [];
@@ -121,7 +121,7 @@ export class Effects {
     this.spikes.position.copy(
       globalPosition(w.room, 560, 380, active ? 0.12 : warning ? -0.13 : -0.4),
     );
-    const particles = w.particles.filter((p) => !p.contact).slice(0, 260);
+    const particles = w.particles.filter((p) => !p.contact).slice(0, 520);
     particles.forEach((p, i) => {
       const life = p.life / p.maxLife,
         t = 1 - life,

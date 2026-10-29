@@ -144,15 +144,23 @@ describe('live simulation flows', () => {
   it('has two guardian phases and requires a final execution', () => {
     const w = arena('boss');
     const e = w.enemies[0];
-    w.pressure(e, 1000);
-    w.input('interact');
-    tick(w, 0.15);
+    w.invincible = true;
+    for (let i = 0; i < 2; i++) {
+      w.pressure(e, 1000);
+      w.player.state = 'idle';
+      w.input('interact');
+      tick(w, 0.15);
+      tick(w, 1.5);
+    }
     expect(e.phase).toBe(2);
     expect(e.state).not.toBe('dead');
-    tick(w, 1);
-    w.pressure(e, 1000);
-    w.input('interact');
-    tick(w, 0.2);
+    for (let i = 0; i < 2; i++) {
+      w.pressure(e, 1000);
+      w.player.state = 'idle';
+      w.input('interact');
+      tick(w, 0.2);
+      tick(w, 1.5);
+    }
     expect(e.state).toBe('dead');
     expect(w.stats.bosses).toBe(1);
   });
@@ -227,7 +235,8 @@ describe('live simulation flows', () => {
     w.input('interact');
     tick(w, 0.02);
     expect(w.roomId).toBe(0);
-    w.enterRoom(4);
+    w.floor.rooms.find((r) => r.kind === 'boss')!.cleared = true;
+    w.enterRoom(w.floor.rooms.find((r) => r.kind === 'exit')!.id);
     w.player.x = 560;
     w.player.y = 365;
     w.input('interact');

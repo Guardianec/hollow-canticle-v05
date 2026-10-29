@@ -1,3 +1,24 @@
+# v0.8.0 — Trials of the Five Realms (implementation candidate)
+
+Package remains 0.7.0 until [acceptance](docs/QA-v0.8.md).
+
+- Require a guardian before descent every floor. Add five distinct Blender bosses,
+  regional patterns, phase-II mechanics, bounded cycles, titles and co-op targeting.
+- Raise enemy HP above guard, reduce guard recovery and add physical contextual
+  punishes. Preserve Shinobi's low raw damage and authoritative nonlethal Riposte.
+- Add five server-owned warned hazards/statuses under protocol 8; keep Duel areas off.
+- Rebuild Fungal dressing with ten organic Blender categories, three LODs and
+  localized emissive PBR, wall/hanging growth and landmarks.
+- Add regional GPU weather, wind/mist and varied overhead volumes; retain atmosphere
+  on lower profiles and richer weather/fog/shafts/shadows on Extreme.
+- Optimize instances, small-fungus shadows, visible rooms, buffers, actor scratch
+  rotations and biome resources. Record CPU/network/render counters; FPS is blocked.
+- Extend Lab and optional AoE tutorial. Preserve saves, inventory, exact 20-HP co-op
+  revival, animation and prior multiplayer systems.
+- Validate 10,000 floors and authority/status/profile/save/resource regressions.
+  Manual playthroughs, remaining captures, art/balance and hardware/memory sign-off
+  are still required; see the audit for honest acceptance status.
+
 # v0.7.0 — Living Steel & Foundations (review candidate)
 
 - Add per-actor locomotion, action and additive animation layers shared by

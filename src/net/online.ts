@@ -1,3 +1,4 @@
+import { PROTOCOL_VERSION } from '../../shared/protocol';
 import { OnlineConnection } from './connection';
 import { CHARACTERS, characterFor } from '../game/characters';
 import { RELICS } from '../game/data';
@@ -99,7 +100,14 @@ export class Online {
           signal: AbortSignal.any([signal, AbortSignal.timeout(8000)]),
           cache: 'no-store',
         });
-        if (response.ok && (await response.json()).ok === true) {
+        const serverHealth = response.ok ? await response.json() : undefined;
+        if (serverHealth?.ok === true && serverHealth.protocol !== PROTOCOL_VERSION) {
+          this.server = 'unavailable';
+          this.error = 'MULTIPLAYER SERVER UPDATE REQUIRED';
+          this.render();
+          return;
+        }
+        if (serverHealth?.ok === true) {
           this.server = 'awake';
           this.render();
           return;

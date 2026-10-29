@@ -77,7 +77,7 @@ export const GRAPHICS: Record<GraphicsLevel, GraphicsProfile> = {
     shadowSize: 4096,
     maxLights: 6,
     particles: 1.6,
-    fogLayers: 3,
+    fogLayers: 4,
     highTextures: true,
     lod: [48, 95],
     bloom: 0.22,

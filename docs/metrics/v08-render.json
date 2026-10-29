@@ -1,0 +1,30 @@
+{
+  "note": "Same fixed scene, 1280×720 IAB viewport; background browser frame rate is throttled and is not a valid hardware FPS benchmark.",
+  "presets": [
+    {
+      "quality": "very-low",
+      "scene": "Fungal guardian",
+      "text": "Time 0.36 · HP 100 · idle\nPlayer 535,400 · Target 0 · Room 0 · boss\nParries 0 / Perfect 0 · Empty 0\nboss: idle 0.33 / 1.05 grab\nplayer-sword/combat-idle @ 0.04 · combat-idle / idle · {\"locomotion\":1,\"action\":0,\"transition\":0}\nActive  · root 0.00\nParryable no (greatblade can perfect smash)\nReservations \nArsenal 3/3 · 0 projectiles\n\nReflections 0 · Items 0 · Ranged hits 0\nCamera boss · 1 FPS\n181 calls · 251k triangles\n12 weather · 221 geometries · 50 textures\nANGLE (NVIDIA, NVIDIA GeForce RTX 4070 SUPER (0x00002783) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+    },
+    {
+      "quality": "low",
+      "scene": "Fungal guardian",
+      "text": "Time 0.36 · HP 100 · idle\nPlayer 535,400 · Target 0 · Room 0 · boss\nParries 0 / Perfect 0 · Empty 0\nboss: idle 0.33 / 1.05 grab\nplayer-sword/combat-idle @ 0.04 · combat-idle / idle · {\"locomotion\":1,\"action\":0,\"transition\":0}\nActive  · root 0.00\nParryable no (greatblade can perfect smash)\nReservations \nArsenal 3/3 · 0 projectiles\n\nReflections 0 · Items 0 · Ranged hits 0\nCamera boss · 1 FPS\n299 calls · 946k triangles\n42 weather · 230 geometries · 50 textures\nANGLE (NVIDIA, NVIDIA GeForce RTX 4070 SUPER (0x00002783) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+    },
+    {
+      "quality": "medium",
+      "scene": "Fungal guardian",
+      "text": "Time 0.36 · HP 100 · idle\nPlayer 535,400 · Target 0 · Room 0 · boss\nParries 0 / Perfect 0 · Empty 0\nboss: idle 0.33 / 1.05 grab\nplayer-sword/combat-idle @ 0.04 · combat-idle / idle · {\"locomotion\":1,\"action\":0,\"transition\":0}\nActive  · root 0.00\nParryable no (greatblade can perfect smash)\nReservations \nArsenal 3/3 · 0 projectiles\n\nReflections 0 · Items 0 · Ranged hits 0\nCamera boss · 1 FPS\n625 calls · 2636k triangles\n119 weather · 231 geometries · 65 textures\nANGLE (NVIDIA, NVIDIA GeForce RTX 4070 SUPER (0x00002783) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+    },
+    {
+      "quality": "high",
+      "scene": "Fungal guardian",
+      "text": "Time 0.36 · HP 100 · idle\nPlayer 535,400 · Target 0 · Room 0 · boss\nParries 0 / Perfect 0 · Empty 0\nboss: idle 0.33 / 1.05 grab\nplayer-sword/combat-idle @ 0.04 · combat-idle / idle · {\"locomotion\":1,\"action\":0,\"transition\":0}\nActive  · root 0.00\nParryable no (greatblade can perfect smash)\nReservations \nArsenal 3/3 · 0 projectiles\n\nReflections 0 · Items 0 · Ranged hits 0\nCamera boss · 1 FPS\n629 calls · 2845k triangles\n345 weather · 231 geometries · 65 textures\nANGLE (NVIDIA, NVIDIA GeForce RTX 4070 SUPER (0x00002783) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+    },
+    {
+      "quality": "extreme",
+      "scene": "Fungal guardian",
+      "text": "Time 0.36 · HP 100 · idle\nPlayer 535,400 · Target 0 · Room 0 · boss\nParries 0 / Perfect 0 · Empty 0\nboss: idle 0.33 / 1.05 grab\nplayer-sword/combat-idle @ 0.04 · combat-idle / idle · {\"locomotion\":1,\"action\":0,\"transition\":0}\nActive  · root 0.00\nParryable no (greatblade can perfect smash)\nReservations \nArsenal 3/3 · 0 projectiles\n\nReflections 0 · Items 0 · Ranged hits 0\nCamera boss · 1 FPS\n1001 calls · 6155k triangles\n915 weather · 239 geometries · 65 textures\nANGLE (NVIDIA, NVIDIA GeForce RTX 4070 SUPER (0x00002783) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+    }
+  ]
+}

@@ -11,9 +11,11 @@ export interface Reservation {
 /** Committed impact times never move in response to player input. */
 export class ThreatDirector {
   capacity = 2;
+  readonly zoneTargets = new Set<number>();
   readonly reservations: Reservation[] = [];
   clear(): void {
     this.reservations.length = 0;
+    this.zoneTargets.clear();
   }
   release(enemy: number): void {
     for (let i = this.reservations.length - 1; i >= 0; i--)
@@ -33,7 +35,12 @@ export class ThreatDirector {
   ): boolean {
     this.prune(time);
     if (this.reservations.some((r) => r.enemy === enemy)) return false;
-    const special = ['smash', 'sweep', 'grab'].includes(strike.kind);
+    const special = Boolean(strike.area) || ['smash', 'sweep', 'grab'].includes(strike.kind);
+    if (
+      this.zoneTargets.has(target ?? 0) &&
+      this.reservations.some((r) => (r.target ?? 0) === (target ?? 0) && r.at > time)
+    )
+      return false;
     const at = time + strike.windup + travel;
     // Even mixed dodge/parry sequences leave a full evade cooldown between threats.
     if (

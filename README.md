@@ -1,11 +1,34 @@
-# Hollow Canticle — v0.7.0 Living Steel & Foundations
+# Hollow Canticle — Trials of the Five Realms candidate
+
+The `codex/v0.8.0-five-realms` branch adds a guardian at the end of every floor,
+five distinct Blender realm guardians, tougher HP/guard balance, contextual enemy
+counters and server-owned fire, resonance, spores, frost and molten hazards.
+Fungal Depths gains ten new organic asset categories. Regional weather, varied
+shafts from unseen openings and expanded Extreme presentation retain reduced
+forms on Very Low through High.
+
+**Implementation candidate, not accepted v0.8.** Package remains 0.7.0 until
+acceptance. Full solo/co-op/Duel playtests, remaining captures and valid hardware
+FPS are outstanding; approval limits and throttling are recorded explicitly.
+See [QA](docs/QA-v0.8.md), [the eleven-request audit](docs/ORIGINAL-REQUEST-AUDIT-v0.8.md)
+and [implementation report](docs/RELEASE-v0.8.md). No automatic merge is performed.
+
+![Varied light through unseen fractures](docs/screenshots/v08/shafts-high.jpg)
+
+Use `?debug` for realm guardian/hazard practice, weather/wind/density/shafts/quality,
+boss phase/HP/guard/attack controls, pause/step and local frame/telemetry exports.
+Shared online practice requires a local server with `CANTICLE_LAB=1`; normal
+multiplayer does not enable it. Client and authority require matching protocol 8.
+The public play link below does not imply this candidate has been deployed.
+
+## Preserved v0.7 Living Steel & Foundations
 
 Living Steel adds layered character animation, the Ashen Shinobi, authoritative
 nonlethal ripostes, shared visual/collision room geometry, five graphics profiles,
 a visible offering quickbar, a detailed satchel, and replayable optional training.
 
-Start from `codex/v0.7.0-living-steel`. This branch is a review candidate; the
-public play link below still points to the accepted multiplayer deployment.
+The accepted base is `adb533e96da2565925a05ee3c58bc256733c4775` from
+`codex/v0.7.0-living-steel`. The public play link below points to the multiplayer deployment.
 See [v0.7 QA and implementation report](docs/QA-v0.7.md) for rules, measurements,
 motion studies and acceptance limits.
 

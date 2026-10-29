@@ -122,7 +122,13 @@ export function makeFloor(seed: string, depth: number): Floor {
           : kind === 'exit'
             ? 'The Stairs Beneath'
             : kind === 'boss'
-              ? 'The Unrung Belfry'
+              ? [
+                  'The Marshal’s Tribunal',
+                  'The Submerged Bell',
+                  'The Living Cathedral',
+                  'The Last Watch',
+                  'The Furnace Heart',
+                ][biome]
               : kind === 'healing'
                 ? 'The Quiet Cistern'
                 : NAMES[ARCHETYPES.indexOf(template)],
@@ -169,13 +175,15 @@ export function makeFloor(seed: string, depth: number): Floor {
   add(1, 0, 'combat');
   link(0, 1);
   let previous = 1;
-  for (const kind of ['combat', depth % 3 === 0 ? 'boss' : 'elite', 'exit'] as RoomKind[]) {
+  for (const kind of ['combat', 'elite', 'boss', 'exit'] as RoomKind[]) {
     const base = rooms[previous],
       d = rng.pick(DIRS.filter((d) => !occupied(base.x + d.x, base.y + d.y) && base.x + d.x >= 1));
     const id = add(base.x + d.x, base.y + d.y, kind);
     link(previous, id);
     previous = id;
   }
+  const exitId = rooms.length - 1,
+    bossId = exitId - 1;
   const a = rooms[1],
     b = rooms[2],
     dx = b.x - a.x,
@@ -194,8 +202,8 @@ export function makeFloor(seed: string, depth: number): Floor {
       break;
     }
   }
-  if (rooms.length === 5)
-    for (const anchor of [...rooms].filter((r) => r.id > 0 && r.id < 4)) {
+  if (rooms.length === 6)
+    for (const anchor of [...rooms].filter((r) => r.id > 0 && r.id < bossId)) {
       let done = false;
       for (const d of DIRS) {
         const e = { x: -d.y, y: d.x },
@@ -221,7 +229,7 @@ export function makeFloor(seed: string, depth: number): Floor {
   const desired = rng.int(13, 18),
     kinds: RoomKind[] = ['treasure', 'healing', 'shrine', 'hazard', 'combat', 'elite'];
   for (let tries = 0; rooms.length < desired && tries < 400; tries++) {
-    const base = rng.pick(rooms.filter((r) => r.id !== 0 && r.id !== 4)),
+    const base = rng.pick(rooms.filter((r) => r.id !== 0 && r.id !== exitId && r.id !== bossId)),
       d = rng.pick(DIRS),
       x = base.x + d.x,
       y = base.y + d.y;
@@ -232,13 +240,16 @@ export function makeFloor(seed: string, depth: number): Floor {
       if (
         r.id !== id &&
         r.id !== 0 &&
-        r.id !== 4 &&
+        r.id !== exitId &&
+        r.id !== bossId &&
         Math.abs(r.x - x) + Math.abs(r.y - y) === 1 &&
         rng.next() < 0.42
       )
         link(id, r.id);
   }
-  for (const r of rng.shuffle(rooms.filter((r) => r.id > 4))) {
+  for (const r of rng.shuffle(
+    rooms.filter((r) => r.id > 0 && r.id !== bossId && r.id !== exitId),
+  )) {
     const d = DIRS.find((d) => !occupied(r.x + d.x, r.y + d.y));
     if (d) {
       link(r.id, add(r.x + d.x, r.y + d.y, 'secret'));
@@ -256,10 +267,21 @@ export function encounter(
   depth: number,
 ): string[] {
   if (kind === 'boss') return ['boss'];
-  const ranged = ENEMIES.filter(e => ['archer', 'hexer'].includes(e.id) && e.affinity.includes(biome));
-  if ((kind === 'combat' || kind === 'elite') && depth >= 2 && rng.next() < (depth < 4 ? 0.27 : 0.38)) {
+  const ranged = ENEMIES.filter(
+    (e) => ['archer', 'hexer'].includes(e.id) && e.affinity.includes(biome),
+  );
+  if (
+    (kind === 'combat' || kind === 'elite') &&
+    depth >= 2 &&
+    rng.next() < (depth < 4 ? 0.27 : 0.38)
+  ) {
     const support = rng.pick(ranged);
-    const front = ENEMIES.filter(e => !['boss', 'archer', 'hexer'].includes(e.id) && e.affinity.includes(biome) && e.cost + support.cost <= budget);
+    const front = ENEMIES.filter(
+      (e) =>
+        !['boss', 'archer', 'hexer'].includes(e.id) &&
+        e.affinity.includes(biome) &&
+        e.cost + support.cost <= budget,
+    );
     if (front.length) return [rng.pick(front).id, support.id];
   }
   if (kind === 'elite')
@@ -286,7 +308,10 @@ export function encounter(
   });
   if (pairs.length && rng.next() < 0.7) return [...rng.pick(pairs)];
   const pool = ENEMIES.filter(
-      (e) => !['boss', 'archer', 'hexer'].includes(e.id) && e.cost <= budget && e.affinity.includes(biome),
+      (e) =>
+        !['boss', 'archer', 'hexer'].includes(e.id) &&
+        e.cost <= budget &&
+        e.affinity.includes(biome),
     ),
     first = rng.pick(pool),
     result = [first.id],

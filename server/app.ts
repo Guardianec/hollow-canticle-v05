@@ -1,3 +1,4 @@
+import { PROTOCOL_VERSION, BUILD_VERSION } from '../shared/protocol';
 import { defineServer, defineRoom } from 'colyseus';
 import { WebSocketTransport } from '@colyseus/ws-transport';
 import { CoopRoom } from './rooms/CoopRoom';
@@ -55,7 +56,7 @@ export function createServer() {
       });
       app.get('/healthz', (_req: Request, res: Response) => {
         res.setHeader('Cache-Control', 'no-store');
-        res.json({ ok: true });
+        res.json({ ok: true, protocol: PROTOCOL_VERSION, build: BUILD_VERSION });
       });
     },
   });

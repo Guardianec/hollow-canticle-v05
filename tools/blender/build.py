@@ -9,6 +9,8 @@ import materials
 import ruins
 import characters
 import biomes
+import fungi
+import guardians
 
 ROOT=Path(__file__).resolve().parents[2]
 OUT=ROOT/'public/assets/v05'
@@ -63,9 +65,13 @@ def export_pack(name,assets):
     manifest['packs'][name]={'file':path.name,'bytes':path.stat().st_size,'materials':families}
     for obj in keep: bpy.data.objects.remove(obj,do_unlink=True)
 
-if not characters_only: export_pack('ruins',ruins.build(m))
+if not characters_only: export_pack('ruins',{**ruins.build(m),**guardians.build(m,0)})
 export_pack('pilgrims',characters.build(m))
 if not characters_only:
-    for biome in range(1,5): export_pack(biomes.NAMES[biome],biomes.build(m,biome))
+    for biome in range(1,5):
+        environment=biomes.build(m,biome)
+        if biome==2: environment.update(fungi.build(m))
+        environment.update(guardians.build(m,biome))
+        export_pack(biomes.NAMES[biome],environment)
 (OUT/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
 print('HOLLOW CANTICLE ASSET BUILD:',len(manifest['assets']),'assets; Blender',bpy.app.version_string)

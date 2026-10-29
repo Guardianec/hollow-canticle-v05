@@ -1,6 +1,7 @@
 import * as T from 'three';
 import { AssetManager } from './assets';
 import { JOINTS, type Pose } from './animation';
+import { GUARDIANS } from '../realms';
 
 /** Bind semantic v0.4 rotations to Blender bone rest frames; simulation owns timing. */
 export class ImportedActor {
@@ -26,6 +27,8 @@ export class ImportedActor {
   });
   private shells: T.SkinnedMesh[] = [];
   private revelation = { value: 0 };
+  private rotation = new T.Quaternion();
+  private euler = new T.Euler();
   private bossMaterials = new Map<T.Material, T.Material>();
   private bones = new Map<
     string,
@@ -33,7 +36,8 @@ export class ImportedActor {
   >();
   constructor(assets: AssetManager, id: string, level: number) {
     this.root = assets.instantiate(id, level)!;
-    if (id === 'saint') {
+    const realm = GUARDIANS.find((g) => g.key === id);
+    if (id === 'saint' || realm) {
       const copies = new Map<T.Material, T.Material>();
       this.root.traverse((obj) => {
         if (!(obj instanceof T.Mesh)) return;
@@ -44,14 +48,16 @@ export class ImportedActor {
           material.onBeforeCompile = (shader, renderer) => {
             compile(shader, renderer);
             shader.uniforms.uRevelation = this.revelation;
-            shader.fragmentShader = 'uniform float uRevelation;\n' + shader.fragmentShader;
+            shader.uniforms.uRealmTint = { value: new T.Color(realm?.color ?? '#d08a51') };
+            shader.fragmentShader =
+              'uniform float uRevelation;uniform vec3 uRealmTint;\n' + shader.fragmentShader;
             shader.fragmentShader = shader.fragmentShader.replace(
               '#include <emissivemap_fragment>',
-              '#include <emissivemap_fragment>\ntotalEmissiveRadiance+=vec3(.45,.055,.008)*uRevelation*pow(1.-abs(dot(normal,normalize(vViewPosition))),2.);',
+              '#include <emissivemap_fragment>\ntotalEmissiveRadiance+=uRealmTint*uRevelation*pow(1.-abs(dot(normal,normalize(vViewPosition))),2.);',
             );
           };
           material.customProgramCacheKey = () =>
-            source.customProgramCacheKey() + ':saint-revelation';
+            source.customProgramCacheKey() + ':guardian-revelation:' + id;
           copies.set(source, material);
           this.bossMaterials.set(source, material);
           return material;
@@ -113,7 +119,7 @@ export class ImportedActor {
     for (const joint of JOINTS) {
       const data = this.bones.get(joint);
       if (!data) continue;
-      const q = new T.Quaternion().setFromEuler(new T.Euler(...pose[joint]));
+      const q = this.rotation.setFromEuler(this.euler.set(...pose[joint]));
       if (joint === 'rightArm' && ['spear', 'great'].includes(this.root.userData.weapon))
         q.multiply(new T.Quaternion().setFromAxisAngle(new T.Vector3(0, 0, 1), 0.5));
       if (joint === 'blade' && !['bow', 'bell'].includes(this.root.userData.weapon))

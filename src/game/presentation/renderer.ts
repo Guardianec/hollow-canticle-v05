@@ -20,6 +20,9 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { BIOME_LIGHTING } from './lighting';
 import { GRAPHICS } from '../graphics';
 import { GeometryOverlay } from './geometry-overlay';
+import { RegionalAtmosphere } from './regional-atmosphere';
+import { AreaArt } from './areas';
+import { ATMOSPHERES } from '../atmosphere';
 
 export class Renderer {
   readonly webgl: T.WebGLRenderer;
@@ -45,6 +48,8 @@ export class Renderer {
   private hud: Hud;
   private effects: Effects;
   private geometryOverlay = new GeometryOverlay();
+  private weather = new RegionalAtmosphere();
+  private areaArt = new AreaArt();
   private lights: T.PointLight[] = [];
   private sun = new T.DirectionalLight('#b3d0ed', 1.6);
   private ambient = new T.HemisphereLight();
@@ -78,6 +83,7 @@ export class Renderer {
     );
     this.webgl = new T.WebGLRenderer({
       antialias: true,
+      preserveDrawingBuffer: world.debug,
       alpha: false,
       powerPreference: 'high-performance',
     });
@@ -89,6 +95,13 @@ export class Renderer {
     this.webgl.toneMapping = T.ACESFilmicToneMapping;
     this.webgl.toneMappingExposure = 1.25;
     this.webgl.outputColorSpace = T.SRGBColorSpace;
+    if (world.debug) {
+      const gl = this.webgl.getContext(),
+        info = gl.getExtension('WEBGL_debug_renderer_info');
+      world.presentation.gpu = info
+        ? String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL))
+        : 'unavailable';
+    }
     this.webgl.domElement.className = 'dungeon-webgl';
     parent.append(this.webgl.domElement);
     this.scene.background = this.backgrounds[0];
@@ -136,7 +149,7 @@ export class Renderer {
     this.webgl.info.autoReset = false;
     this.effects = new Effects(world, this.materials);
     this.scene.add(this.effects.root);
-    this.scene.add(this.geometryOverlay.root);
+    this.scene.add(this.geometryOverlay.root, this.weather.root, this.areaArt.root);
     this.hud = new Hud(parent, world);
     this.veil.className = 'descent-veil';
     parent.append(this.veil);
@@ -164,7 +177,7 @@ export class Renderer {
     );
     this.dust.frustumCulled = false;
     this.scene.add(this.dust);
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 4; i++) {
       const plane = new T.Mesh(
         new T.PlaneGeometry(130, 130),
         chasmMist(this.materials.time, this.assets.fogColor.value),
@@ -173,7 +186,7 @@ export class Renderer {
       this.scene.add(plane);
       this.mist.push(plane);
     }
-    for (let i = 0; i < 9; i++) {
+    for (let i = 0; i < 12; i++) {
       const sprite = new T.Sprite(
         new T.SpriteMaterial({
           map: this.materials.glow,
@@ -227,7 +240,9 @@ export class Renderer {
     this.scene.environmentIntensity = lighting.environment;
     this.webgl.toneMappingExposure = lighting.exposure;
     this.rim.color.set(lighting.rim);
-    (this.scene.fog as T.FogExp2).density = lighting.fog;
+    (this.scene.fog as T.FogExp2).density =
+      lighting.fog *
+      (w.onlineMode === 'duel' ? 0.8 : 1 + ATMOSPHERES[w.floor.biome].fog * this.weather.intensity);
     void this.assets
       .setTextureQuality(profile.highTextures)
       .catch((error) => console.warn('Texture quality change failed', error));
@@ -294,6 +309,18 @@ export class Renderer {
         if (obj.userData.backgroundArchitecture) obj.visible = profile.background;
         if (obj instanceof T.Mesh && obj.userData.imported)
           obj.castShadow = profile.shadowSize > 0 && !obj.userData.backgroundArchitecture;
+        if (obj instanceof T.InstancedMesh && obj.userData.fungalSmall) {
+          obj.castShadow = false;
+          obj.count = Math.max(
+            1,
+            Math.round(
+              Number(obj.userData.instanceCapacity) *
+                { 'very-low': 0.2, low: 0.4, medium: 0.65, high: 1, extreme: 1 }[
+                  w.save.settings.detail
+                ],
+            ),
+          );
+        }
         if (obj instanceof T.LOD && obj.levels.length === 3) {
           obj.levels[1].distance = profile.lod[0];
           obj.levels[2].distance = profile.lod[1];
@@ -316,13 +343,23 @@ export class Renderer {
         actor.dispose();
       }
       this.actors.clear();
+      this.assets.trimBiome(w.floor.biome);
       for (const e of w.enemies) {
-        const actor = new Actor(this.materials, e.def.id, false, this.assets);
+        const actor = new Actor(this.materials, e.def.id, false, this.assets, e.def.key);
         actor.root.scale.setScalar(e.def.scale);
         this.actors.set(e.id, actor);
         this.scene.add(actor.root);
       }
       this.webgl.shadowMap.needsUpdate = true;
+    }
+    const roomReach = { 'very-low': 0, low: 1.1, medium: 1.6, high: 1.6, extreme: 4.5 }[
+      w.save.settings.detail
+    ];
+    for (const group of this.art?.group.children ?? []) {
+      const id = group.userData.realmRoom as number | undefined;
+      if (id === undefined) continue;
+      const room = w.floor.rooms[id];
+      group.visible = Math.hypot(room.x - w.room.x, room.y - w.room.y) <= roomReach;
     }
     const playerPosition = globalPosition(w.room, w.player.x, w.player.y);
     this.travel = Math.min(1, this.travel + dt * 1.7);
@@ -362,6 +399,7 @@ export class Renderer {
     const animationOptions = {
       ...w.lab,
       freeze: w.lab.freeze && w.lab.actor === 'player',
+      wind: profile.highTextures ? this.weather.wind.x : 0,
       reducedMotion: w.save.settings.reducedMotion,
       targetFacing: w.target
         ? Math.atan2(w.target.y - w.player.y, w.target.x - w.player.x)
@@ -383,7 +421,7 @@ export class Renderer {
           this.scene.remove(actor.root);
           actor.dispose();
         }
-        actor = new Actor(this.materials, e.def.id, false, this.assets);
+        actor = new Actor(this.materials, e.def.id, false, this.assets, e.def.key);
         actor.root.scale.setScalar(e.def.scale);
         this.actors.set(e.id, actor);
         this.scene.add(actor.root);
@@ -512,7 +550,11 @@ export class Renderer {
         const y = positions.getY(k);
         positions.setZ(
           k,
-          Math.sin(w.visualTime * 1.8 + i + positions.getX(k) * 3) * (0.5 - y / 2.2) * 0.08,
+          Math.sin(
+            (w.save.settings.reducedMotion ? 0 : w.visualTime) * 1.8 + i + positions.getX(k) * 3,
+          ) *
+            (0.5 - y / 2.2) *
+            (0.06 + this.weather.wind.length() * 0.06),
         );
       }
       positions.needsUpdate = true;
@@ -531,6 +573,13 @@ export class Renderer {
           ripples.value[i + 1].set(p.x, p.z, effect.maxLife - effect.life, 1);
         });
         for (let i = w.effects.slice(-7).length + 1; i < 8; i++) ripples.value[i].w = 0;
+        if (profile.highTextures && !w.save.settings.reducedMotion)
+          ripples.value[7].set(
+            playerPosition.x + Math.sin(w.visualTime * 2.1) * 4,
+            playerPosition.z + Math.cos(w.visualTime * 1.7) * 3,
+            (w.visualTime * 0.8) % 1,
+            this.weather.intensity * 0.3,
+          );
         continue;
       }
       const positions = water.geometry.attributes.position,
@@ -565,23 +614,13 @@ export class Renderer {
     dustMat.size = w.floor.biome === 3 ? 0.15 : 0.09;
     this.dust.visible = profile.particles > 0;
 
-    for (let i = 0; i < 180; i++) {
-      const speed = w.floor.biome === 4 ? -0.65 : w.floor.biome === 3 ? 0.6 : 0.05;
-      this.dustPositions.set(
-        [
-          playerPosition.x + Math.sin(i * 17.2) * 20 + Math.sin(w.visualTime * 0.15 + i) * 0.7,
-          (((i * 0.731 - w.visualTime * speed) % 8) + 8) % 8,
-          playerPosition.z + Math.cos(i * 9.7) * 20,
-        ],
-        i * 3,
-      );
-    }
-    this.dust.geometry.attributes.position.needsUpdate = true;
+    this.weather.update(w, this.director.camera.position);
+    this.areaArt.update(w);
     this.effects.update(this.director.camera, duel);
     this.arsenal.update(this.director.camera);
     this.hud.update(duel);
     this.mist.forEach((mesh, i) => (mesh.visible = i < profile.fogLayers));
-    this.dust.geometry.setDrawRange(0, Math.min(180, Math.round(110 * profile.particles)));
+    this.dust.visible = false;
     this.webgl.shadowMap.enabled = profile.shadowSize > 0;
     this.webgl.info.reset();
     if (profile.bloom > 0) this.composer.render(dt);
@@ -596,6 +635,9 @@ export class Renderer {
     w.presentation.duel = duel;
     w.presentation.drawCalls = this.webgl.info.render.calls;
     w.presentation.triangles = this.webgl.info.render.triangles;
+    w.presentation.weatherParticles = this.weather.particleCount;
+    w.presentation.geometries = this.webgl.info.memory.geometries;
+    w.presentation.textures = this.webgl.info.memory.textures;
     this.fade = Math.max(0, this.fade - dt * 1.6);
     this.webgl.domElement.style.visibility = 'visible';
     this.veil.style.opacity = String(this.fade);
@@ -613,6 +655,8 @@ export class Renderer {
     w.focusEnemy(directionalFocus(points, target.id, dx, dy) ?? target.id);
   }
   destroy(): void {
+    this.weather.dispose();
+    this.areaArt.dispose();
     this.geometryOverlay.dispose();
     this.observer.disconnect();
     this.composer.dispose();

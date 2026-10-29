@@ -1,5 +1,7 @@
 import { schema, t, type SchemaType } from '@colyseus/schema';
 
+export const PROTOCOL_VERSION = 8;
+export const BUILD_VERSION = '0.8.0-candidate';
 export const TICK_RATE = 30;
 export const PATCH_MS = 50;
 export const RECONNECT_SECONDS = 30;
@@ -74,6 +76,8 @@ export const PlayerState = schema(
     counter: t.boolean(),
     attackStartup: t.float32(),
     attackRecovery: t.float32(),
+    poisonUntil: t.float32(),
+    frostUntil: t.float32(),
     emptyParries: t.uint8(),
     parryLanded: t.boolean(),
     finisherTarget: t.string(),
@@ -101,6 +105,7 @@ export type PlayerState = SchemaType<typeof PlayerState>;
 export const StrikeState = schema(
   {
     kind: t.string(),
+    area: t.boolean(),
     windup: t.float32(),
     recovery: t.float32(),
     damage: t.float32(),
@@ -150,8 +155,34 @@ export const ShotState = schema(
   'CanticleShot',
 );
 export type ShotState = SchemaType<typeof ShotState>;
+export const AreaState = schema(
+  {
+    id: t.uint32(),
+    source: t.int32(),
+    biome: t.uint8(),
+    kind: t.string(),
+    team: t.string(),
+    x: t.float32(),
+    y: t.float32(),
+    fromX: t.float32(),
+    fromY: t.float32(),
+    radius: t.float32(),
+    warningRadius: t.float32(),
+    createdAt: t.float32(),
+    armAt: t.float32(),
+    expireAt: t.float32(),
+    damage: t.float32(),
+    postureDamage: t.float32(),
+    tickRate: t.float32(),
+    status: t.string(),
+  },
+  'CanticleArea',
+);
 export const SessionState = schema(
   {
+    protocol: t.uint8().default(PROTOCOL_VERSION),
+    build: t.string().default(BUILD_VERSION),
+    areas: t.map(AreaState),
     code: t.string(),
     mode: t.string(),
     phase: t.string().default('lobby'),

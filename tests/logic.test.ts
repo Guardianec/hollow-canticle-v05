@@ -46,7 +46,9 @@ describe('seeded content', () => {
       expect(floor.rooms.reduce((n, r) => n + r.links.length, 0) / 2).toBeGreaterThanOrEqual(
         floor.rooms.length,
       );
-      expect(floor.rooms[4].kind).toBe('exit');
+      expect(floor.rooms.find((r) => r.kind === 'exit')!.id).toBeGreaterThan(
+        floor.rooms.find((r) => r.kind === 'boss')!.id,
+      );
       expect(floor.rooms[1].kind).toBe('combat');
       expect(floor.rooms.some((r) => r.kind === 'healing')).toBe(true);
       expect(floor.rooms.some((r) => r.kind === 'treasure')).toBe(true);

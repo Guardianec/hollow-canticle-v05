@@ -114,6 +114,8 @@ export class Hud {
       '<small>FOCUS ' +
       Math.floor(p.focus) +
       (p.focus >= 100 ? ' · F RESONANCE' : '') +
+      (p.poisonUntil > w.time ? ' · SPORES: SLOW GUARD RECOVERY' : '') +
+      (p.frostUntil > w.time ? ' · FROST: HEAVY FOOTING' : '') +
       '</small></div></div>' +
       '<div class="floor-map"><div>DEPTH ' +
       String(w.floor.depth).padStart(2, '0') +
