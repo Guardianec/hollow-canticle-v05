@@ -48,7 +48,7 @@ describe('Colyseus friend rooms over WebSocket', () => {
       client.send('ready', true);
     }
     await waitFor(() => [...room.state.players.values()].every((p) => p.ready));
-    clients[0].send('start');
+    clients.find((client) => client.sessionId === room.state.host)!.send('start');
     await waitFor(() => Boolean(room.game));
     const game = room.game!;
     for (const world of game.worlds) world.floor = makeFloor(game.seed, 3);

@@ -3,7 +3,7 @@ services:
     name: hollow-canticle-online
     runtime: node
     plan: free
-    branch: codex/v0.6.0-online-multiplayer
+    branch: main
     buildCommand: npm ci --include=dev && npm run build:server
     startCommand: npm run start:server
     healthCheckPath: /healthz

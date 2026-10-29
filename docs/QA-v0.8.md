@@ -188,3 +188,17 @@ varied count/range but did not consume the layer parameter. This final visual
 correction requires browser confirmation alongside the latest frost fix; saved
 screenshots/counters predate it. The focused atmosphere/shaft rerun passed 23/23
 tests, and lint and the production client build passed after that correction.
+
+## Publication follow-up — 2026-10-29
+
+The user explicitly authorized pushing main and deploying this candidate after
+receiving the acceptance limitations. That authorization supersedes the earlier
+no-merge instruction; it does not establish the missing playtests as PASS.
+
+GitHub's first Linux CI run of `2b88998` exposed a test harness race: two parallel
+client connections do not guarantee that array element zero becomes room host.
+The area replication test sent Start from element zero and sometimes waited for
+a game that the non-host was correctly forbidden to start. It now selects the
+server-declared host before sending Start. Production host authorization is unchanged.
+The local server suite passed 45/45 after this correction. Render's deployment
+branch is being aligned to main, retaining its existing Free plan and manual deploys.
