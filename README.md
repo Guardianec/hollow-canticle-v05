@@ -19,7 +19,8 @@ Use `?debug` for realm guardian/hazard practice, weather/wind/density/shafts/qua
 boss phase/HP/guard/attack controls, pause/step and local frame/telemetry exports.
 Shared online practice requires a local server with `CANTICLE_LAB=1`; normal
 multiplayer does not enable it. Client and authority require matching protocol 8.
-The public play link below does not imply this candidate has been deployed.
+The public play link now serves the user-authorized candidate; see the
+[verified deployment record](docs/DEPLOYMENT-v0.8.md). Acceptance limits remain open.
 
 ## Preserved v0.7 Living Steel & Foundations
 

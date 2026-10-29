@@ -11,7 +11,8 @@ The configured `origin` points at the older `Guardianec/hollow-canticle` reposit
 fetching and fast-forwarding its main did not provide v0.7. The requested repository
 was fetched as `v05` (`Guardianec/hollow-canticle-v05`), whose main matched the
 accepted commit. Work uses `codex/v0.8.0-five-realms`, pushed there immediately.
-No v0.7 history was overwritten and no merge is authorized or performed.
+No v0.7 history was overwritten. Main/deployment were not authorized at initial
+candidate preparation; the later publication authorization and checks are below.
 
 Baseline install, lint, build, 176 tests and the separate 43-test server invocation
 passed. The latter tests overlap the full suite. Living Steel layers, Shinobi,
@@ -200,5 +201,14 @@ client connections do not guarantee that array element zero becomes room host.
 The area replication test sent Start from element zero and sometimes waited for
 a game that the non-host was correctly forbidden to start. It now selects the
 server-declared host before sending Start. Production host authorization is unchanged.
-The local server suite passed 45/45 after this correction. Render's deployment
-branch is being aligned to main, retaining its existing Free plan and manual deploys.
+The local server suite passed 45/45 after this correction. Feature/main CI and Pages
+passed for `526fd4a8649ee8203092077c9bf34280e01d368a`. Render successfully deployed
+that commit from main, retaining its Free plan and manual deploys. Public health
+confirms protocol 8 / `0.8.0-candidate`.
+
+All 187 published files match the production build. Four-client hosted co-op
+startup/movement/reconnection/leave/host transfer and Duel startup/ranged checks
+passed. The published browser client reports Awake with no observed warnings/errors.
+These are smoke checks, not the missing complete floor/boss playtests. Browser
+access became available during publication; FPS remains blocked by throttling as
+directed by the user. See [deployment evidence](DEPLOYMENT-v0.8.md).

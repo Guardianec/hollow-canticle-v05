@@ -2,7 +2,8 @@
 
 Implementation candidate, updated 2026-10-29. **Acceptance remains incomplete.**
 Package stays 0.7.0; multiplayer identifies protocol 8 / `0.8.0-candidate`.
-No merge or public deployment was performed. This report follows the requested
+The user subsequently authorized main and deployment; see the
+[publication record](DEPLOYMENT-v0.8.md). This report follows the requested
 29 delivery topics; [QA](QA-v0.8.md) records exact evidence and blockers.
 
 1. **Base:** `adb533e96da2565925a05ee3c58bc256733c4775`, accepted Living Steel
@@ -158,5 +159,5 @@ No merge or public deployment was performed. This report follows the requested
 | Extreme  | 1380 / 5 / 45                 | 5 / 32, up to three authored openings | 2.0 / 4096                |
 
 Actual density varies with intensity/combat; render scale also respects device pixel
-ratio. Keep this candidate separate from accepted v0.7. Resolve PARTIAL audit items,
-set 0.8.0 only after acceptance, repeat validation, then obtain merge approval.
+ratio. Accepted v0.7 history remains preserved. The user-authorized candidate is now
+published from main; resolve PARTIAL audit items and set 0.8.0 only after acceptance.

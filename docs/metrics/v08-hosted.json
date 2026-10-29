@@ -1,0 +1,22 @@
+{
+  "checkedAt": "2026-10-29T08:57:44.569Z",
+  "endpoint": "wss://hollow-canticle-online.onrender.com",
+  "protocol": 8,
+  "build": "0.8.0-candidate",
+  "coop": {
+    "clients": 4,
+    "classes": ["sword", "twins", "spear", "shinobi"],
+    "budget": 2.549999952316284,
+    "movementAcknowledged": true,
+    "reconnect": true,
+    "intentionalLeave": true,
+    "hostTransfer": true
+  },
+  "duel": {
+    "roundStarted": true,
+    "rangedAcknowledged": true,
+    "environmentalAreas": 0
+  },
+  "transport": "HTTPS matchmaking + secure WebSocket",
+  "note": "SDK smoke test, not a complete human floor/boss/Duel playtest."
+}
